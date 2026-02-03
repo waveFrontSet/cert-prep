@@ -38,3 +38,12 @@ executables:
       - brick
       - random
       - vty
+
+tests:
+  spec:
+    main: Main.hs
+    source-dirs: test
+    dependencies:
+      - aeson
+      - cert-prep
+      - hspec
