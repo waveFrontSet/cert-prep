@@ -1,0 +1,49 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.39.1.
+--
+-- see: https://github.com/sol/hpack
+
+name:               cert-prep
+version:            0.1.0.0
+license:            MIT
+license-file:       LICENSE
+author:             Paul Grillenberger
+maintainer:         grillenbergerpaul@gmail.com
+build-type:         Simple
+
+library
+    exposed-modules:
+        MyLib
+    other-modules:
+        Paths_cert_prep
+    build-depends:
+        aeson,
+        base <5,
+        containers,
+        text
+    hs-source-dirs:
+        src
+    default-extensions:
+        OverloadedStrings
+    ghc-options: -Wall -O2 -threaded
+    default-language: GHC2021
+
+executable cert-prep
+    main-is: Main.hs
+    other-modules:
+        Paths_cert_prep
+    build-depends:
+        base <5,
+        brick,
+        cert-prep,
+        containers,
+        random,
+        text,
+        vty
+    hs-source-dirs:
+        app
+    default-extensions:
+        OverloadedStrings
+    ghc-options: -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
+    default-language: GHC2021

@@ -1,0 +1,40 @@
+name: cert-prep
+version: 0.1.0.0
+license: MIT
+license-file: LICENSE
+author: Paul Grillenberger
+maintainer: grillenbergerpaul@gmail.com
+
+language: GHC2021
+default-extensions:
+  - OverloadedStrings
+
+dependencies:
+  - base < 5
+  - text
+  - containers
+
+library:
+  source-dirs: src
+  ghc-options:
+    - -Wall
+    - -O2
+    - -threaded
+  dependencies:
+    - aeson
+
+executables:
+  cert-prep:
+    main: Main.hs
+    source-dirs: app
+    ghc-options:
+      - -Wall
+      - -O2
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - cert-prep
+      - brick
+      - random
+      - vty
