@@ -1,7 +1,4 @@
-module TUI.Draw
-    ( drawUI
-    )
-where
+module TUI.Draw (drawUI) where
 
 import Brick
 import Brick.Widgets.Border

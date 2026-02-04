@@ -1,14 +1,11 @@
-module TUI.Event
-    ( handleEvent
-    )
-where
+module TUI.Event (handleEvent) where
 
 import Brick
 import Control.Monad (when)
 import Data.IntSet qualified as IS
 import Graphics.Vty qualified as V
 import Lens.Micro ((^.))
-import Lens.Micro.Mtl (use, (.=), (+=))
+import Lens.Micro.Mtl (use, (+=), (.=))
 import TUI.State
 import Types (Question (..), isCorrect)
 
