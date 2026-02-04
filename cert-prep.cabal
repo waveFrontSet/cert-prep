@@ -14,7 +14,6 @@ build-type:         Simple
 
 library
     exposed-modules:
-        MyLib
         Types
     other-modules:
         Paths_cert_prep
@@ -35,13 +34,19 @@ executable cert-prep
     other-modules:
         Paths_cert_prep
     build-depends:
+        aeson,
         base <5,
         brick,
+        bytestring,
         cert-prep,
         containers,
+        microlens,
+        microlens-mtl,
+        microlens-th,
         random,
         text,
-        vty
+        vty,
+        vty-crossplatform
     hs-source-dirs:
         app
     default-extensions:
