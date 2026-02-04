@@ -1,13 +1,13 @@
-module TUI.Attributes
-    ( selectedAttr
-    , correctAttr
-    , wrongAttr
-    , missedAttr
-    , submitAttr
-    , nextAttr
-    , focusedAttr
-    , theMap
-    )
+module TUI.Attributes (
+    selectedAttr,
+    correctAttr,
+    wrongAttr,
+    missedAttr,
+    submitAttr,
+    nextAttr,
+    focusedAttr,
+    theMap,
+)
 where
 
 import Brick (AttrMap, AttrName, attrMap, attrName, fg, on)

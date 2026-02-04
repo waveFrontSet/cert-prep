@@ -1,19 +1,19 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module TUI.State
-    ( Phase (..)
-    , Name (..)
-    , AppState (..)
-    , questions
-    , currentIndex
-    , selectedAnswers
-    , focusedAnswer
-    , phase
-    , score
-    , currentQuestion
-    , totalQuestions
-    , initialState
-    )
+module TUI.State (
+    Phase (..),
+    Name (..),
+    AppState (..),
+    questions,
+    currentIndex,
+    selectedAnswers,
+    focusedAnswer,
+    phase,
+    score,
+    currentQuestion,
+    totalQuestions,
+    initialState,
+)
 where
 
 import Data.IntSet (IntSet)
