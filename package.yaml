@@ -35,9 +35,15 @@ executables:
       - -with-rtsopts=-N
     dependencies:
       - cert-prep
+      - aeson
       - brick
+      - bytestring
+      - microlens
+      - microlens-mtl
+      - microlens-th
       - random
       - vty
+      - vty-crossplatform
 
 tests:
   spec:
