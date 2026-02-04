@@ -32,6 +32,10 @@ library
 executable cert-prep
     main-is: Main.hs
     other-modules:
+        TUI.Attributes
+        TUI.Draw
+        TUI.Event
+        TUI.State
         Paths_cert_prep
     build-depends:
         aeson,
