@@ -6,7 +6,7 @@ import Data.IntSet qualified as IS
 import Graphics.Vty qualified as V
 import Lens.Micro ((^.))
 import Lens.Micro.Mtl (use, (+=), (.=))
-import TUI.State
+import State
 import Types (Question (..), isCorrect)
 
 handleEvent :: BrickEvent Name e -> EventM Name AppState ()

@@ -6,8 +6,8 @@ import Brick.Widgets.Border.Style
 import Brick.Widgets.Center
 import Data.IntSet qualified as IS
 import Lens.Micro ((^.))
+import State
 import TUI.Attributes
-import TUI.State
 import Types (AnswerResult (..), Question (..), evalAnswer)
 
 drawUI :: AppState -> [Widget Name]
