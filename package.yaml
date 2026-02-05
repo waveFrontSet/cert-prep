@@ -22,6 +22,8 @@ library:
     - -threaded
   dependencies:
     - aeson
+    - microlens-th
+    - random
 
 executables:
   cert-prep:
@@ -40,7 +42,6 @@ executables:
       - bytestring
       - microlens
       - microlens-mtl
-      - microlens-th
       - random
       - vty
       - vty-crossplatform

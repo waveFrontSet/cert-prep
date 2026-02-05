@@ -1,4 +1,11 @@
-module Types (Question (..), Answer, isCorrect, AnswerResult (..), evalAnswer) where
+module Types (
+    Question (..),
+    Answer,
+    isCorrect,
+    AnswerResult (..),
+    evalAnswer,
+    Config (..),
+) where
 
 import Data.Aeson (
     FromJSON (parseJSON),
@@ -43,18 +50,27 @@ evalAnswer q ans =
 isCorrect :: Question -> Answer -> Bool
 isCorrect q ans = questionCorrectAnswer q == ans
 
+data Config = Config
+    { configQuestions :: [Question]
+    , configSampleAmount :: Int
+    }
+    deriving (Show, Eq, Generic)
+
 toLowerFirstLetter :: String -> String
 toLowerFirstLetter [] = []
 toLowerFirstLetter (x : xs) = toLower x : xs
 
-customOptions :: Options
-customOptions =
+prefixStripOptions :: String -> Options
+prefixStripOptions prefix =
     defaultOptions
         { fieldLabelModifier = \s ->
-            toLowerFirstLetter $ fromMaybe s (stripPrefix "question" s)
+            toLowerFirstLetter $ fromMaybe s (stripPrefix prefix s)
         }
 
 instance FromJSON Question where
-    parseJSON = genericParseJSON customOptions
+    parseJSON = genericParseJSON (prefixStripOptions "question")
 instance ToJSON Question where
-    toJSON = genericToJSON customOptions
+    toJSON = genericToJSON (prefixStripOptions "question")
+
+instance FromJSON Config where
+    parseJSON = genericParseJSON (prefixStripOptions "config")
