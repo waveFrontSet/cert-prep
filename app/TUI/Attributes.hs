@@ -13,7 +13,14 @@ where
 import Brick (AttrMap, AttrName, attrMap, attrName, fg, on)
 import Graphics.Vty qualified as V
 
-selectedAttr, correctAttr, wrongAttr, missedAttr, submitAttr, nextAttr, focusedAttr :: AttrName
+selectedAttr
+    , correctAttr
+    , wrongAttr
+    , missedAttr
+    , submitAttr
+    , nextAttr
+    , focusedAttr ::
+        AttrName
 selectedAttr = attrName "selected"
 correctAttr = attrName "correct"
 wrongAttr = attrName "wrong"
@@ -32,5 +39,5 @@ theMap =
         , (missedAttr, fg V.yellow `V.withStyle` V.bold)
         , (submitAttr, V.black `on` V.yellow)
         , (nextAttr, V.black `on` V.cyan)
-        , (focusedAttr, V.defAttr `V.withStyle` V.underline)
+        , (focusedAttr, V.defAttr `V.withStyle` V.reverseVideo)
         ]

@@ -1,4 +1,4 @@
-module TUI.Event (handleEvent) where
+module TUI.Event (CustomEvent (..), handleEvent) where
 
 import Brick
 import Control.Monad (when)
@@ -9,7 +9,9 @@ import Lens.Micro.Mtl (use, (+=), (.=))
 import State
 import Types (Question (..), isCorrect)
 
-handleEvent :: BrickEvent Name e -> EventM Name AppState ()
+data CustomEvent = Tick
+
+handleEvent :: BrickEvent Name CustomEvent -> EventM Name AppState ()
 handleEvent (VtyEvent (V.EvKey V.KEsc [])) = halt
 handleEvent (VtyEvent (V.EvKey (V.KChar 'q') [])) = halt
 handleEvent (VtyEvent (V.EvKey (V.KChar 'Q') [])) = halt
@@ -40,6 +42,9 @@ handleEvent (MouseDown SubmitButton _ _ _) = do
 handleEvent (MouseDown NextButton _ _ _) = do
     s <- get
     when (s ^. phase == Reviewing) nextQuestion
+handleEvent (AppEvent Tick) = do
+    p <- use phase
+    when (p /= Finished) $ elapsedSeconds += 1
 handleEvent _ = return ()
 
 toggleAnswer :: Int -> EventM Name AppState ()

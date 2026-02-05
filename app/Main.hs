@@ -1,7 +1,9 @@
 module Main where
 
 import Brick
-import Control.Monad (void, when)
+import Brick.BChan (newBChan, writeBChan)
+import Control.Concurrent (forkIO, threadDelay)
+import Control.Monad (forever, void, when)
 import Data.Aeson (eitherDecodeStrict)
 import Data.ByteString qualified as BS
 import Graphics.Vty qualified as V
@@ -13,10 +15,10 @@ import System.Exit (exitFailure)
 import System.Random (newStdGen)
 import TUI.Attributes (theMap)
 import TUI.Draw (drawUI)
-import TUI.Event (handleEvent)
+import TUI.Event (CustomEvent (..), handleEvent)
 import Types (Config (..))
 
-app :: App AppState e Name
+app :: App AppState CustomEvent Name
 app =
     App
         { appDraw = drawUI
@@ -51,6 +53,11 @@ main = do
         putStrLn "No questions found in config"
         exitFailure
 
+    chan <- newBChan 10
+    void $ forkIO $ forever $ do
+        threadDelay 1000000
+        writeBChan chan Tick
+
     let buildVty = mkVty V.defaultConfig
     initialVty <- buildVty
-    void $ customMain initialVty buildVty Nothing app (initialState sampledQuestions)
+    void $ customMain initialVty buildVty (Just chan) app (initialState sampledQuestions)

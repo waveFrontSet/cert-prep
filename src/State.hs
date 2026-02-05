@@ -10,6 +10,7 @@ module State (
     focusedAnswer,
     phase,
     score,
+    elapsedSeconds,
     currentQuestion,
     totalQuestions,
     initialState,
@@ -37,6 +38,7 @@ data AppState = AppState
     , _focusedAnswer :: Int
     , _phase :: Phase
     , _score :: Int
+    , _elapsedSeconds :: Int
     }
     deriving (Show)
 
@@ -60,4 +62,5 @@ initialState qs =
         , _focusedAnswer = 0
         , _phase = Answering
         , _score = 0
+        , _elapsedSeconds = 0
         }
