@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: cert-prep-linux-x86_64
+            exe: cert-prep
+          - os: macos-latest
+            artifact: cert-prep-macos-aarch64
+            exe: cert-prep
+          - os: windows-latest
+            artifact: cert-prep-windows-x86_64
+            exe: cert-prep.exe
+
+    runs-on: ${{ matrix.os }}
+    name: Build (${{ matrix.os }})
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: haskell-actions/setup@v2
+        with:
+          ghc-version: "9.8.4"
+          cabal-version: "latest"
+
+      - name: Cache cabal store
+        uses: actions/cache@v4
+        with:
+          path: ~/.cabal/store
+          key: ${{ runner.os }}-cabal-${{ hashFiles('**/*.cabal', 'cabal.project') }}
+          restore-keys: ${{ runner.os }}-cabal-
+
+      - name: Build
+        run: cabal build exe:cert-prep -O2
+
+      - name: Find and copy binary
+        shell: bash
+        run: |
+          BIN=$(cabal list-bin cert-prep)
+          mkdir -p out
+          cp "$BIN" "out/${{ matrix.exe }}"
+
+      - name: Strip binary (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: strip "out/${{ matrix.exe }}"
+
+      - name: Create tarball (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: tar -czf "${{ matrix.artifact }}.tar.gz" -C out "${{ matrix.exe }}"
+
+      - name: Create zip (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: cd out && 7z a -tzip "../${{ matrix.artifact }}.zip" "${{ matrix.exe }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}.*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            cert-prep-linux-x86_64.tar.gz
+            cert-prep-macos-aarch64.tar.gz
+            cert-prep-windows-x86_64.zip
