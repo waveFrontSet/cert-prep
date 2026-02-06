@@ -41,15 +41,10 @@ jobs:
           key: ${{ runner.os }}-cabal-${{ hashFiles('**/*.cabal', 'cabal.project') }}
           restore-keys: ${{ runner.os }}-cabal-
 
-      - name: Build
-        run: cabal build exe:cert-prep -O2
-
-      - name: Find and copy binary
-        shell: bash
+      - name: Build and install binary
         run: |
-          BIN=$(cabal list-bin cert-prep)
           mkdir -p out
-          cp "$BIN" "out/${{ matrix.exe }}"
+          cabal install exe:cert-prep -O2 --install-method=copy --overwrite-policy=always --installdir=out
 
       - name: Strip binary (Linux/macOS)
         if: runner.os != 'Windows'
