@@ -18,6 +18,7 @@ import Data.Aeson (
 import Data.Char (toLower)
 import Data.IntSet (IntSet, difference, intersection)
 import Data.List (stripPrefix)
+import Data.Map.Strict (Map)
 import Data.Maybe (fromMaybe)
 
 import GHC.Generics (Generic)
@@ -53,6 +54,7 @@ isCorrect q ans = questionCorrectAnswer q == ans
 data Config = Config
     { configQuestions :: [Question]
     , configSampleAmount :: Int
+    , configCategoryWeights :: Maybe (Map String Int)
     }
     deriving (Show, Eq, Generic)
 
@@ -74,3 +76,5 @@ instance ToJSON Question where
 
 instance FromJSON Config where
     parseJSON = genericParseJSON (prefixStripOptions "config")
+instance ToJSON Config where
+    toJSON = genericToJSON (prefixStripOptions "config")

@@ -42,15 +42,23 @@ executables:
       - bytestring
       - microlens
       - microlens-mtl
+      - optparse-applicative
       - random
       - vty
       - vty-crossplatform
 
 tests:
   spec:
-    main: Main.hs
+    main: Spec.hs
     source-dirs: test
+    ghc-options:
+      - -Wall
+    build-tools:
+      - hspec-discover
     dependencies:
       - aeson
       - cert-prep
+      - containers
       - hspec
+      - QuickCheck
+      - random
