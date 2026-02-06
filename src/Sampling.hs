@@ -55,7 +55,7 @@ capping at available questions per category.
 -}
 allocateWithRemainder :: Int -> Map String Int -> Map String Int -> Map String Int
 allocateWithRemainder n weights avails =
-    let activeWeights = Map.intersectionWith (\w _ -> w) weights avails
+    let activeWeights = Map.intersectionWith const weights avails
         totalWeight = sum activeWeights
      in if totalWeight == 0
             then Map.empty
@@ -91,7 +91,7 @@ allocateWithRemainder n weights avails =
                     extraCats = take remaining sortedByRemainder
 
                     withExtra =
-                        foldl (\m k -> Map.adjust (+ 1) k m) floorAlloc extraCats
+                        foldl (flip (Map.adjust (+ 1))) floorAlloc extraCats
                  in capAndRedistribute withExtra avails
 
 {- | Cap allocations at available question counts, redistributing surplus
@@ -135,12 +135,12 @@ distributeEvenly extra m avails =
                     keys = Map.keys eligible
                     bumped =
                         foldl
-                            (\acc k -> Map.adjust (+ perCat) k acc)
+                            (flip (Map.adjust (+ perCat)))
                             m
                             keys
                     withLeftover =
                         foldl
-                            (\acc k -> Map.adjust (+ 1) k acc)
+                            (flip (Map.adjust (+ 1)))
                             bumped
                             (take leftover keys)
                  in withLeftover
