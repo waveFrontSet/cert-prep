@@ -1,6 +1,7 @@
 module Types (
     Question (..),
     Answer,
+    Category,
     isCorrect,
     AnswerResult (..),
     evalAnswer,
@@ -25,12 +26,13 @@ import Data.Text (Text)
 import GHC.Generics (Generic)
 
 type Answer = IntSet
+type Category = Text
 
 data Question = Question
     { questionText :: Text
     , questionAnswerChoices :: [Text]
     , questionCorrectAnswer :: Answer
-    , questionCategory :: Maybe Text
+    , questionCategory :: Maybe Category
     }
     deriving (Show, Eq, Generic)
 
