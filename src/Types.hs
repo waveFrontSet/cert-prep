@@ -20,16 +20,17 @@ import Data.IntSet (IntSet, difference, intersection)
 import Data.List (stripPrefix)
 import Data.Map.Strict (Map)
 import Data.Maybe (fromMaybe)
+import Data.Text (Text)
 
 import GHC.Generics (Generic)
 
 type Answer = IntSet
 
 data Question = Question
-    { questionText :: String
-    , questionAnswerChoices :: [String]
+    { questionText :: Text
+    , questionAnswerChoices :: [Text]
     , questionCorrectAnswer :: Answer
-    , questionCategory :: Maybe String
+    , questionCategory :: Maybe Text
     }
     deriving (Show, Eq, Generic)
 
@@ -54,7 +55,7 @@ isCorrect q ans = questionCorrectAnswer q == ans
 data Config = Config
     { configQuestions :: [Question]
     , configSampleAmount :: Int
-    , configCategoryWeights :: Maybe (Map String Int)
+    , configCategoryWeights :: Maybe (Map Text Int)
     }
     deriving (Show, Eq, Generic)
 

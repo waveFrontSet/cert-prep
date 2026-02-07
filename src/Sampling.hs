@@ -6,31 +6,32 @@ module Sampling (
 import Data.List (sortBy)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
-import Data.Ord (comparing)
-import System.Random (RandomGen, uniformR)
+import Data.Ord (Down (..), comparing)
+import Data.Text (Text)
+import System.Random (RandomGen, SplitGen, splitGen, uniformR)
 import Types (Question (..))
 
 data SamplingStrategy
     = Uniform
-    | Stratified (Map String Int)
+    | Stratified (Map Text Int)
     deriving (Show, Eq)
 
 sampleQuestions ::
-    (RandomGen g) => g -> Int -> SamplingStrategy -> [Question] -> [Question]
+    (SplitGen g) => g -> Int -> SamplingStrategy -> [Question] -> [Question]
 sampleQuestions _ n _ _ | n <= 0 = []
 sampleQuestions gen n Uniform qs = sampleUniform gen n qs
 sampleQuestions gen n (Stratified weights) qs = sampleStratified gen n weights qs
 
-sampleUniform :: (RandomGen g) => g -> Int -> [Question] -> [Question]
+sampleUniform :: (SplitGen g) => g -> Int -> [Question] -> [Question]
 sampleUniform _ _ [] = []
 sampleUniform gen n qs
     | n >= length qs = qs
     | otherwise = take n $ shuffle gen qs
 
 sampleStratified ::
-    (RandomGen g) => g -> Int -> Map String Int -> [Question] -> [Question]
+    (SplitGen g) => g -> Int -> Map Text Int -> [Question] -> [Question]
 sampleStratified gen n weights qs =
-    let grouped :: Map String [Question]
+    let grouped :: Map Text [Question]
         grouped =
             Map.filterWithKey (\k _ -> Map.member k weights) $
                 foldl
@@ -41,7 +42,7 @@ sampleStratified gen n weights qs =
                     Map.empty
                     qs
 
-        avails :: Map String Int
+        avails :: Map Text Int
         avails = Map.map length grouped
 
         totalAvailable = sum avails
@@ -53,14 +54,14 @@ sampleStratified gen n weights qs =
 {- | Allocate n slots across categories using largest-remainder method,
 capping at available questions per category.
 -}
-allocateWithRemainder :: Int -> Map String Int -> Map String Int -> Map String Int
+allocateWithRemainder :: Int -> Map Text Int -> Map Text Int -> Map Text Int
 allocateWithRemainder n weights avails =
     let activeWeights = Map.intersectionWith const weights avails
         totalWeight = sum activeWeights
      in if totalWeight == 0
             then Map.empty
             else
-                let idealPerCat :: Map String Double
+                let idealPerCat :: Map Text Double
                     idealPerCat =
                         Map.map
                             ( \w ->
@@ -70,10 +71,10 @@ allocateWithRemainder n weights avails =
                             )
                             activeWeights
 
-                    floorAlloc :: Map String Int
+                    floorAlloc :: Map Text Int
                     floorAlloc = Map.map floor idealPerCat
 
-                    remainders :: Map String Double
+                    remainders :: Map Text Double
                     remainders =
                         Map.intersectionWith
                             (\ideal fl -> ideal - fromIntegral fl)
@@ -85,7 +86,7 @@ allocateWithRemainder n weights avails =
 
                     sortedByRemainder =
                         map fst $
-                            sortBy (flip $ comparing snd) $
+                            sortBy (comparing (Down . snd)) $
                                 Map.toList remainders
 
                     extraCats = take remaining sortedByRemainder
@@ -97,7 +98,7 @@ allocateWithRemainder n weights avails =
 {- | Cap allocations at available question counts, redistributing surplus
 to uncapped categories.
 -}
-capAndRedistribute :: Map String Int -> Map String Int -> Map String Int
+capAndRedistribute :: Map Text Int -> Map Text Int -> Map Text Int
 capAndRedistribute allocs avails =
     let (overAlloc, okAlloc) =
             Map.partitionWithKey
@@ -119,7 +120,7 @@ capAndRedistribute allocs avails =
                                 avails
 
 -- | Distribute extra slots among categories that still have room.
-distributeEvenly :: Int -> Map String Int -> Map String Int -> Map String Int
+distributeEvenly :: Int -> Map Text Int -> Map Text Int -> Map Text Int
 distributeEvenly 0 m _ = m
 distributeEvenly extra m avails =
     let eligible =
@@ -146,10 +147,10 @@ distributeEvenly extra m avails =
                  in withLeftover
 
 concatSamples ::
-    (RandomGen g) =>
+    (SplitGen g) =>
     g ->
-    Map String Int ->
-    Map String [Question] ->
+    Map Text Int ->
+    Map Text [Question] ->
     [Question]
 concatSamples gen0 allocs grouped =
     let cats = Map.toAscList allocs
@@ -161,12 +162,6 @@ concatSamples gen0 allocs grouped =
             (g1, g2) = splitGen g
             sampled = sampleUniform g1 count catQs
          in sampled ++ go g2 rest
-
-splitGen :: (RandomGen g) => g -> (g, g)
-splitGen g =
-    let (_, g1) = uniformR (0 :: Int, maxBound) g
-        (_, g2) = uniformR (0 :: Int, maxBound) g1
-     in (g1, g2)
 
 shuffle :: (RandomGen g) => g -> [a] -> [a]
 shuffle g xs =

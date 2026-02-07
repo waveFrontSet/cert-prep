@@ -15,7 +15,6 @@ build-type:         Simple
 library
     exposed-modules:
         Sampling
-        State
         Types
     other-modules:
         Paths_cert_prep
@@ -23,19 +22,19 @@ library
         aeson,
         base <5,
         containers,
-        microlens-th,
         random,
         text
     hs-source-dirs:
         src
     default-extensions:
         OverloadedStrings
-    ghc-options: -Wall -O2 -threaded
+    ghc-options: -Wall -O2
     default-language: GHC2021
 
 executable cert-prep
     main-is: Main.hs
     other-modules:
+        State
         TUI.Attributes
         TUI.Draw
         TUI.Event
@@ -49,6 +48,7 @@ executable cert-prep
         containers,
         microlens,
         microlens-mtl,
+        microlens-th,
         optparse-applicative,
         random,
         text,
@@ -66,11 +66,13 @@ test-suite spec
     main-is: Spec.hs
     other-modules:
         Generators
-        SamplingSpec
         TypesSpec
-        Paths_cert_prep
+        SamplingSpec
+        StateSpec
+        State
     hs-source-dirs:
         test
+        app
     default-extensions:
         OverloadedStrings
     ghc-options: -Wall
@@ -83,6 +85,8 @@ test-suite spec
         cert-prep,
         containers,
         hspec,
+        microlens,
+        microlens-th,
         random,
         text
     default-language: GHC2021

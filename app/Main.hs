@@ -9,6 +9,7 @@ import Data.Aeson (eitherDecodeStrict)
 import Data.ByteString qualified as BS
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromMaybe)
+import Data.Text qualified as T
 import Graphics.Vty qualified as V
 import Graphics.Vty.CrossPlatform (mkVty)
 import Options.Applicative qualified as Opt
@@ -94,7 +95,7 @@ main = do
     let sampleSize = fromMaybe (configSampleAmount config) (cliSampleAmount opts)
         strategy = case cliWeights opts of
             [] -> maybe Uniform Stratified $ configCategoryWeights config
-            ws -> Stratified (Map.fromList ws)
+            ws -> Stratified (Map.fromList [(T.pack k, v) | (k, v) <- ws])
         allQuestions = configQuestions config
         effectiveSize = min sampleSize (length allQuestions)
 
