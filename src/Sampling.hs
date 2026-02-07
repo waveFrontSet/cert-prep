@@ -3,7 +3,7 @@ module Sampling (
     sampleQuestions,
 ) where
 
-import Data.List (sortBy)
+import Data.List (foldl', sortBy)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Ord (Down (..), comparing)
@@ -34,7 +34,7 @@ sampleStratified gen n weights qs =
     let grouped :: Map Text [Question]
         grouped =
             Map.filterWithKey (\k _ -> Map.member k weights) $
-                foldl
+                foldl'
                     ( \acc q -> case questionCategory q of
                         Just cat -> Map.insertWith (++) cat [q] acc
                         Nothing -> acc
@@ -92,7 +92,7 @@ allocateWithRemainder n weights avails =
                     extraCats = take remaining sortedByRemainder
 
                     withExtra =
-                        foldl (flip (Map.adjust (+ 1))) floorAlloc extraCats
+                        foldl' (flip (Map.adjust (+ 1))) floorAlloc extraCats
                  in capAndRedistribute withExtra avails
 
 {- | Cap allocations at available question counts, redistributing surplus
@@ -135,12 +135,12 @@ distributeEvenly extra m avails =
                     leftover = extra `mod` eligibleCount
                     keys = Map.keys eligible
                     bumped =
-                        foldl
+                        foldl'
                             (flip (Map.adjust (+ perCat)))
                             m
                             keys
                     withLeftover =
-                        foldl
+                        foldl'
                             (flip (Map.adjust (+ 1)))
                             bumped
                             (take leftover keys)
@@ -167,7 +167,7 @@ shuffle :: (RandomGen g) => g -> [a] -> [a]
 shuffle g xs =
     map snd $ sortBy (comparing fst) tagged
   where
-    tagged = snd $ foldl step (g, []) xs
+    tagged = snd $ foldl' step (g, []) xs
     step (g', acc) x =
         let (r, g'') = uniformR (0 :: Int, maxBound) g'
          in (g'', (r, x) : acc)

@@ -6,11 +6,11 @@ import Brick.Widgets.Border.Style
 import Brick.Widgets.Center
 import Data.IntSet qualified as IS
 import Data.Text (Text)
-import Data.Text qualified as T
 import Lens.Micro ((^.))
 import State
 import TUI.Attributes
 import Types (AnswerResult (..), Question (..), evalAnswer)
+import Util (formatTime)
 
 drawUI :: AppState -> [Widget Name]
 drawUI s = [ui]
@@ -73,7 +73,7 @@ drawExam s =
                     padAll 1 $
                         case mQuestion of
                             Nothing -> str "No question"
-                            Just q -> strWrap (T.unpack $ questionText q)
+                            Just q -> txtWrap (questionText q)
 
     answersPanel =
         withBorderStyle unicode $
@@ -121,7 +121,7 @@ drawAnswer s result idx answerText =
 
     applyFocus w = if focused then withAttr focusedAttr w else w
 
-    wrappedText = strWrap (T.unpack answerText)
+    wrappedText = txtWrap answerText
 
     checkbox = case s ^. phase of
         Answering ->
@@ -143,10 +143,3 @@ drawAnswer s result idx answerText =
             | otherwise -> wrappedText
         _ -> wrappedText
 
-formatTime :: Int -> String
-formatTime totalSecs =
-    pad mins ++ ":" ++ pad secs
-  where
-    mins = totalSecs `div` 60
-    secs = totalSecs `mod` 60
-    pad n = if n < 10 then "0" ++ show n else show n

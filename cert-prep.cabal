@@ -16,6 +16,7 @@ library
     exposed-modules:
         Sampling
         Types
+        Util
     other-modules:
         Paths_cert_prep
     build-depends:
@@ -52,6 +53,7 @@ executable cert-prep
         optparse-applicative,
         random,
         text,
+        vector,
         vty,
         vty-crossplatform
     hs-source-dirs:
@@ -69,7 +71,10 @@ test-suite spec
         TypesSpec
         SamplingSpec
         StateSpec
+        UtilSpec
+        EventSpec
         State
+        TUI.Event
     hs-source-dirs:
         test
         app
@@ -82,11 +87,15 @@ test-suite spec
         QuickCheck,
         aeson,
         base <5,
+        brick,
         cert-prep,
         containers,
         hspec,
         microlens,
+        microlens-mtl,
         microlens-th,
         random,
-        text
+        text,
+        vector,
+        vty
     default-language: GHC2021
