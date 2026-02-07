@@ -43,6 +43,7 @@ executables:
       - microlens-th
       - optparse-applicative
       - random
+      - vector
       - vty
       - vty-crossplatform
 
@@ -61,13 +62,20 @@ tests:
       - TypesSpec
       - SamplingSpec
       - StateSpec
+      - UtilSpec
+      - EventSpec
       - State
+      - TUI.Event
     dependencies:
       - aeson
       - cert-prep
       - containers
       - hspec
       - microlens
+      - microlens-mtl
       - microlens-th
+      - brick
       - QuickCheck
       - random
+      - vector
+      - vty

@@ -24,6 +24,26 @@ spec = do
         it "roundtrips Question through JSON" $
             property $ \(q' :: Question) ->
                 decode (encode q') === Just q'
+        it "rejects JSON missing required fields" $ do
+            let noText = "{\"answerChoices\":[\"A\"],\"correctAnswer\":[0]}"
+                noChoices = "{\"text\":\"Q\",\"correctAnswer\":[0]}"
+                noAnswer = "{\"text\":\"Q\",\"answerChoices\":[\"A\"]}"
+            (decode noText :: Maybe Question) `shouldBe` Nothing
+            (decode noChoices :: Maybe Question) `shouldBe` Nothing
+            (decode noAnswer :: Maybe Question) `shouldBe` Nothing
+        it "rejects JSON with wrong field types" $ do
+            let textAsInt = "{\"text\":42,\"answerChoices\":[\"A\"],\"correctAnswer\":[0]}"
+                choicesAsStr = "{\"text\":\"Q\",\"answerChoices\":\"not-a-list\",\"correctAnswer\":[0]}"
+            (decode textAsInt :: Maybe Question) `shouldBe` Nothing
+            (decode choicesAsStr :: Maybe Question) `shouldBe` Nothing
+        it "rejects completely invalid JSON" $ do
+            (decode "not json at all" :: Maybe Question) `shouldBe` Nothing
+            (decode "" :: Maybe Question) `shouldBe` Nothing
+        it "accepts extra fields gracefully" $ do
+            let withExtra = "{\"text\":\"Q\",\"answerChoices\":[\"A\"],\"correctAnswer\":[0],\"bonus\":true}"
+            case decode withExtra :: Maybe Question of
+                Nothing -> expectationFailure "Should accept JSON with extra fields"
+                Just q' -> questionText q' `shouldBe` "Q"
 
     describe "Config JSON" $ do
         it "roundtrips Config through JSON" $
@@ -44,6 +64,21 @@ spec = do
                 Just c -> do
                     configSampleAmount c `shouldBe` 5
                     configCategoryWeights c `shouldBe` Nothing
+        it "rejects config missing required fields" $ do
+            let noQuestions = "{\"sampleAmount\":5}"
+                noSampleAmount = "{\"questions\":[]}"
+            (decode noQuestions :: Maybe Config) `shouldBe` Nothing
+            (decode noSampleAmount :: Maybe Config) `shouldBe` Nothing
+        it "parses config with zero sample amount" $ do
+            let raw = "{\"questions\":[],\"sampleAmount\":0}"
+            case decode raw :: Maybe Config of
+                Nothing -> expectationFailure "Failed to parse config with sampleAmount 0"
+                Just c -> configSampleAmount c `shouldBe` 0
+        it "parses config with negative sample amount" $ do
+            let raw = "{\"questions\":[],\"sampleAmount\":-5}"
+            case decode raw :: Maybe Config of
+                Nothing -> expectationFailure "Failed to parse config with negative sampleAmount"
+                Just c -> configSampleAmount c `shouldBe` (-5)
 
     describe "Eval Answers" $ do
         let q' = q{questionCorrectAnswer = fromList [1, 2]}
@@ -78,6 +113,16 @@ spec = do
             answerResultCorrect result `shouldBe` IS.empty
             answerResultMissing result `shouldBe` IS.empty
             answerResultWrong result `shouldBe` fromList [0, 1]
+        it "isCorrect with both empty correct set and empty answer" $ do
+            let emptyQ = q{questionCorrectAnswer = IS.empty}
+            isCorrect emptyQ IS.empty `shouldBe` True
+        it "handles question with zero answer choices" $ do
+            let noChoicesQ = mkQuestion "Empty?" [] [] Nothing
+                result = evalAnswer noChoicesQ IS.empty
+            answerResultCorrect result `shouldBe` IS.empty
+            answerResultMissing result `shouldBe` IS.empty
+            answerResultWrong result `shouldBe` IS.empty
+            isCorrect noChoicesQ IS.empty `shouldBe` True
         it "partitions into disjoint sets covering all relevant indices" $
             property $ \(q'' :: Question) ->
                 let numChoices = length (questionAnswerChoices q'')

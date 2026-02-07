@@ -1,8 +1,9 @@
 module SamplingSpec (spec) where
 
 import Data.Map.Strict qualified as Map
+import Data.Maybe (isJust)
 import Data.Text (Text)
-import Generators (largeQuestionsWithCategories, questionsWithCategories)
+import Generators (largeQuestionsWithCategories, mkQuestion, questionsWithCategories)
 import Sampling (SamplingStrategy (..), sampleQuestions)
 import System.Random (mkStdGen)
 import Test.Hspec
@@ -50,6 +51,19 @@ spec = do
         it "empty question list returns empty" $
             property $ \(Positive n) ->
                 sampleQuestions (mkStdGen 42) n Uniform [] === ([] :: [Question])
+
+        it "same seed always produces same result" $
+            property $ \(Positive n) ->
+                forAll (listOf1 arbitrary) $ \qs ->
+                    let r1 = sampleQuestions (mkStdGen 42) n Uniform qs
+                        r2 = sampleQuestions (mkStdGen 42) n Uniform qs
+                     in r1 === r2
+
+        it "n exactly equals bank size returns entire bank unchanged" $
+            property $
+                forAll (listOf1 arbitrary) $ \qs ->
+                    let result = sampleQuestions (mkStdGen 42) (length qs) Uniform qs
+                     in result === qs
 
     describe "Stratified sampling" $ do
         let cats = ["AWS Storage", "AWS Compute", "AWS Networking"]
@@ -111,6 +125,37 @@ spec = do
                 forAll (questionsWithCategories cats) $ \qs ->
                     let noMatchWeights = Map.fromList [("Nonexistent", 1)]
                      in sampleQuestions (mkStdGen 42) n (Stratified noMatchWeights) qs === []
+
+        it "same seed always produces same stratified result" $
+            property $ \(Positive n) ->
+                forAll (questionsWithCategories cats) $ \qs ->
+                    let r1 = sampleQuestions (mkStdGen 42) n (Stratified weights) qs
+                        r2 = sampleQuestions (mkStdGen 42) n (Stratified weights) qs
+                     in r1 === r2
+
+        it "questions with Nothing category are excluded" $ do
+            let noCatQs =
+                    [ mkQuestion "NC1" ["A", "B"] [0] Nothing
+                    , mkQuestion "NC2" ["A", "B"] [1] Nothing
+                    ]
+                catQs =
+                    [ mkQuestion "C1" ["A", "B"] [0] (Just "AWS Storage")
+                    , mkQuestion "C2" ["A", "B"] [1] (Just "AWS Compute")
+                    ]
+                allQs = noCatQs ++ catQs
+                result = sampleQuestions (mkStdGen 42) 10 (Stratified weights) allQs
+            all (isJust . questionCategory) result `shouldBe` True
+
+        it "single category in weights" $ do
+            let singleWeight = Map.fromList [("AWS Storage", 1)]
+                qs =
+                    [ mkQuestion "S1" ["A"] [0] (Just "AWS Storage")
+                    , mkQuestion "S2" ["B"] [0] (Just "AWS Storage")
+                    , mkQuestion "C1" ["C"] [0] (Just "AWS Compute")
+                    ]
+                result = sampleQuestions (mkStdGen 42) 3 (Stratified singleWeight) qs
+            length result `shouldBe` 2
+            all (\q -> questionCategory q == Just "AWS Storage") result `shouldBe` True
 
         it "per-category counts approximate weight proportions" $
             property $

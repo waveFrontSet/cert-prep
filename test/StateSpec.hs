@@ -1,6 +1,7 @@
 module StateSpec (spec) where
 
 import Data.IntSet qualified as IS
+import Data.Vector qualified as V
 import Generators (mkQuestion)
 import State
 import Test.Hspec
@@ -26,9 +27,11 @@ spec = do
         it "sets elapsedSeconds to 0" $
             _elapsedSeconds (initialState qs) `shouldBe` 0
         it "stores all questions" $
-            _questions (initialState qs) `shouldBe` qs
+            _questions (initialState qs) `shouldBe` V.fromList qs
         it "handles empty question list" $
-            _questions (initialState []) `shouldBe` []
+            _questions (initialState []) `shouldBe` V.empty
+        it "preserves question order" $
+            _questions (initialState [q3, q1, q2]) `shouldBe` V.fromList [q3, q1, q2]
 
     describe "currentQuestion" $ do
         it "returns the first question at index 0" $
@@ -41,6 +44,8 @@ spec = do
             currentQuestion ((initialState qs){_currentIndex = 2}) `shouldBe` Just q3
         it "returns Nothing for negative index" $
             currentQuestion ((initialState qs){_currentIndex = -1}) `shouldBe` Nothing
+        it "returns Nothing at index exactly equal to length" $
+            currentQuestion ((initialState qs){_currentIndex = 3}) `shouldBe` Nothing
 
     describe "totalQuestions" $ do
         it "returns the length of the question list" $

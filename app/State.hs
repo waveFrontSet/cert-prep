@@ -19,6 +19,8 @@ where
 
 import Data.IntSet (IntSet)
 import Data.IntSet qualified as IS
+import Data.Vector (Vector)
+import Data.Vector qualified as V
 import Lens.Micro.TH (makeLenses)
 import Types (Question)
 
@@ -32,7 +34,7 @@ data Name
     deriving (Show, Eq, Ord)
 
 data AppState = AppState
-    { _questions :: [Question]
+    { _questions :: Vector Question
     , _currentIndex :: Int
     , _selectedAnswers :: IntSet
     , _focusedAnswer :: Int
@@ -45,18 +47,15 @@ data AppState = AppState
 makeLenses ''AppState
 
 currentQuestion :: AppState -> Maybe Question
-currentQuestion s =
-    let idx = _currentIndex s
-        qs = _questions s
-     in if idx >= 0 && idx < length qs then Just (qs !! idx) else Nothing
+currentQuestion s = _questions s V.!? _currentIndex s
 
 totalQuestions :: AppState -> Int
-totalQuestions s = length (_questions s)
+totalQuestions s = V.length (_questions s)
 
 initialState :: [Question] -> AppState
 initialState qs =
     AppState
-        { _questions = qs
+        { _questions = V.fromList qs
         , _currentIndex = 0
         , _selectedAnswers = IS.empty
         , _focusedAnswer = 0
