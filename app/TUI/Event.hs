@@ -63,8 +63,9 @@ moveFocus delta = do
             Just q -> do
                 let numAnswers = length (questionAnswerChoices q)
                     current = s ^. focusedAnswer
-                    new = (current + delta) `mod` numAnswers
-                focusedAnswer .= new
+                when (numAnswers > 0) $ do
+                    let new = (current + delta) `mod` numAnswers
+                    focusedAnswer .= new
             Nothing -> return ()
 
 submitAnswer :: EventM Name AppState ()

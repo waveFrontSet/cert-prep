@@ -48,7 +48,7 @@ currentQuestion :: AppState -> Maybe Question
 currentQuestion s =
     let idx = _currentIndex s
         qs = _questions s
-     in if idx < length qs then Just (qs !! idx) else Nothing
+     in if idx >= 0 && idx < length qs then Just (qs !! idx) else Nothing
 
 totalQuestions :: AppState -> Int
 totalQuestions s = length (_questions s)

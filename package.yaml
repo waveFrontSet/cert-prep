@@ -19,10 +19,8 @@ library:
   ghc-options:
     - -Wall
     - -O2
-    - -threaded
   dependencies:
     - aeson
-    - microlens-th
     - random
 
 executables:
@@ -42,6 +40,7 @@ executables:
       - bytestring
       - microlens
       - microlens-mtl
+      - microlens-th
       - optparse-applicative
       - random
       - vty
@@ -50,15 +49,25 @@ executables:
 tests:
   spec:
     main: Spec.hs
-    source-dirs: test
+    source-dirs:
+      - test
+      - app
     ghc-options:
       - -Wall
     build-tools:
       - hspec-discover
+    other-modules:
+      - Generators
+      - TypesSpec
+      - SamplingSpec
+      - StateSpec
+      - State
     dependencies:
       - aeson
       - cert-prep
       - containers
       - hspec
+      - microlens
+      - microlens-th
       - QuickCheck
       - random
