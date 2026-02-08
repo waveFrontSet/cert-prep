@@ -55,7 +55,8 @@ isCorrect :: Question -> Answer -> Bool
 isCorrect q ans = questionCorrectAnswer q == ans
 
 data Config = Config
-    { configQuestions :: [Question]
+    { configTitle :: Text
+    , configQuestions :: [Question]
     , configSampleAmount :: Int
     , configCategoryWeights :: Maybe (Map Text Int)
     }

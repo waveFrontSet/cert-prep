@@ -64,16 +64,16 @@ drawExam s =
     mQuestion = currentQuestion s
 
     questionPanel =
-        withBorderStyle unicode $
-            borderWithLabel
+        withBorderStyle unicode
+            $ borderWithLabel
                 ( str $
                     " Question " ++ show (s ^. currentIndex + 1) ++ " of " ++ show (totalQuestions s) ++ " "
-                ) $
-                hLimitPercent 50 $
-                    padAll 1 $
-                        case mQuestion of
-                            Nothing -> str "No question"
-                            Just q -> txtWrap (questionText q)
+                )
+            $ hLimitPercent 50
+            $ padAll 1
+            $ case mQuestion of
+                Nothing -> str "No question"
+                Just q -> txtWrap (questionText q)
 
     answersPanel =
         withBorderStyle unicode $
@@ -142,4 +142,3 @@ drawAnswer s result idx answerText =
             | isWrong -> withAttr wrongAttr wrappedText
             | otherwise -> wrappedText
         _ -> wrappedText
-

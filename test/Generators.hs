@@ -77,18 +77,29 @@ largeQuestionsWithCategories cats = do
 instance Arbitrary Question where
     arbitrary = arbitraryQuestion
 
+titlePool :: [Text]
+titlePool =
+    [ "AWS Solutions Architect"
+    , "Azure Fundamentals"
+    , "GCP Associate"
+    , "Kubernetes Admin"
+    ]
+
 instance Arbitrary Config where
     arbitrary = do
+        title <- elements titlePool
         qs <- listOf arbitraryQuestion
         n <- chooseInt (0, 100)
         useWeights <- arbitrary
         weights <-
             if useWeights
-                then Just . Map.fromList <$> listOf ((,) <$> elements categoryPool <*> chooseInt (1, 10))
+                then
+                    Just . Map.fromList <$> listOf ((,) <$> elements categoryPool <*> chooseInt (1, 10))
                 else pure Nothing
         pure
             Config
-                { configQuestions = qs
+                { configTitle = title
+                , configQuestions = qs
                 , configSampleAmount = n
                 , configCategoryWeights = weights
                 }

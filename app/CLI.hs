@@ -7,7 +7,7 @@ import Options.Applicative
 data CLIOptions = CLIOptions
     { cliSampleAmount :: Maybe Int
     , cliWeights :: [(Text, Int)]
-    , cliConfigPath :: FilePath
+    , cliConfigPath :: Maybe FilePath
     }
 
 cliParser :: Parser CLIOptions
@@ -15,7 +15,7 @@ cliParser =
     CLIOptions
         <$> optional sampleAmount
         <*> many weights
-        <*> argument str (metavar "<config.json>")
+        <*> optional (argument str (metavar "<config.json>"))
   where
     sampleAmount =
         option
