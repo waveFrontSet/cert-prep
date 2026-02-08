@@ -21,7 +21,11 @@ library:
     - -O2
   dependencies:
     - aeson
+    - bytestring
+    - directory
+    - filepath
     - random
+    - time
 
 executables:
   cert-prep:
@@ -43,6 +47,7 @@ executables:
       - microlens-th
       - optparse-applicative
       - random
+      - time
       - vector
       - vty
       - vty-crossplatform
@@ -64,12 +69,15 @@ tests:
       - StateSpec
       - UtilSpec
       - EventSpec
+      - RegistrySpec
       - State
       - TUI.Event
     dependencies:
       - aeson
+      - bytestring
       - cert-prep
       - containers
+      - directory
       - hspec
       - microlens
       - microlens-mtl
@@ -77,5 +85,7 @@ tests:
       - brick
       - QuickCheck
       - random
+      - temporary
+      - time
       - vector
       - vty

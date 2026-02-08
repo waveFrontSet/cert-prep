@@ -14,6 +14,7 @@ build-type:         Simple
 
 library
     exposed-modules:
+        Registry
         Sampling
         Types
         Util
@@ -22,9 +23,13 @@ library
     build-depends:
         aeson,
         base <5,
+        bytestring,
         containers,
+        directory,
+        filepath,
         random,
-        text
+        text,
+        time
     hs-source-dirs:
         src
     default-extensions:
@@ -38,6 +43,7 @@ executable cert-prep
         CLI
         State
         TUI.Attributes
+        TUI.ConfigSelect
         TUI.Draw
         TUI.Event
         Paths_cert_prep
@@ -54,6 +60,7 @@ executable cert-prep
         optparse-applicative,
         random,
         text,
+        time,
         vector,
         vty,
         vty-crossplatform
@@ -74,6 +81,7 @@ test-suite spec
         StateSpec
         UtilSpec
         EventSpec
+        RegistrySpec
         State
         TUI.Event
     hs-source-dirs:
@@ -89,14 +97,18 @@ test-suite spec
         aeson,
         base <5,
         brick,
+        bytestring,
         cert-prep,
         containers,
+        directory,
         hspec,
         microlens,
         microlens-mtl,
         microlens-th,
         random,
+        temporary,
         text,
+        time,
         vector,
         vty
     default-language: GHC2021

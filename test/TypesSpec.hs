@@ -50,7 +50,8 @@ spec = do
             property $ \(c :: Config) ->
                 decode (encode c) === Just c
         it "parses config with category weights" $ do
-            let raw = "{\"questions\":[],\"sampleAmount\":10,\"categoryWeights\":{\"AWS Storage\":2}}"
+            let raw =
+                    "{\"title\":\"Test\",\"questions\":[],\"sampleAmount\":10,\"categoryWeights\":{\"AWS Storage\":2}}"
             case decode raw :: Maybe Config of
                 Nothing -> expectationFailure "Failed to parse config with weights"
                 Just c -> do
@@ -58,24 +59,26 @@ spec = do
                     configQuestions c `shouldBe` []
                     configCategoryWeights c `shouldNotBe` Nothing
         it "parses config without category weights" $ do
-            let raw = "{\"questions\":[],\"sampleAmount\":5}"
+            let raw = "{\"title\":\"Test\",\"questions\":[],\"sampleAmount\":5}"
             case decode raw :: Maybe Config of
                 Nothing -> expectationFailure "Failed to parse config without weights"
                 Just c -> do
                     configSampleAmount c `shouldBe` 5
                     configCategoryWeights c `shouldBe` Nothing
         it "rejects config missing required fields" $ do
-            let noQuestions = "{\"sampleAmount\":5}"
-                noSampleAmount = "{\"questions\":[]}"
+            let noQuestions = "{\"title\":\"T\",\"sampleAmount\":5}"
+                noSampleAmount = "{\"title\":\"T\",\"questions\":[]}"
+                noTitle = "{\"questions\":[],\"sampleAmount\":5}"
             (decode noQuestions :: Maybe Config) `shouldBe` Nothing
             (decode noSampleAmount :: Maybe Config) `shouldBe` Nothing
+            (decode noTitle :: Maybe Config) `shouldBe` Nothing
         it "parses config with zero sample amount" $ do
-            let raw = "{\"questions\":[],\"sampleAmount\":0}"
+            let raw = "{\"title\":\"Test\",\"questions\":[],\"sampleAmount\":0}"
             case decode raw :: Maybe Config of
                 Nothing -> expectationFailure "Failed to parse config with sampleAmount 0"
                 Just c -> configSampleAmount c `shouldBe` 0
         it "parses config with negative sample amount" $ do
-            let raw = "{\"questions\":[],\"sampleAmount\":-5}"
+            let raw = "{\"title\":\"Test\",\"questions\":[],\"sampleAmount\":-5}"
             case decode raw :: Maybe Config of
                 Nothing -> expectationFailure "Failed to parse config with negative sampleAmount"
                 Just c -> configSampleAmount c `shouldBe` (-5)
