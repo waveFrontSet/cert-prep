@@ -1,7 +1,13 @@
-module TUI.Event (CustomEvent (..), handleEvent) where
+module TUI.Event (
+    CustomEvent (..),
+    handleEvent,
+    toggleAnswerPure,
+    moveFocusPure,
+) where
 
 import Brick
 import Control.Monad (when)
+import Data.IntSet (IntSet)
 import Data.IntSet qualified as IS
 import Graphics.Vty qualified as V
 import Lens.Micro ((^.))
@@ -21,50 +27,56 @@ handleEvent (VtyEvent (V.EvKey V.KEnter [])) = do
         Answering -> submitAnswer
         Reviewing -> nextQuestion
         Finished -> halt
-handleEvent (VtyEvent (V.EvKey (V.KChar ' ') [])) = do
-    s <- get
-    when (s ^. phase == Answering) $ do
+handleEvent (VtyEvent (V.EvKey (V.KChar ' ') [])) =
+    whenPhase Answering $ do
         mQ <- gets currentQuestion
         case mQ of
             Just q -> do
+                s <- get
                 let numAnswers = length (questionAnswerChoices q)
                     idx = s ^. focusedAnswer
-                when (idx < numAnswers) $ toggleAnswer idx
+                when (idx < numAnswers) $
+                    selectedAnswers .= toggleAnswerPure idx (s ^. selectedAnswers)
             Nothing -> return ()
 handleEvent (VtyEvent (V.EvKey V.KUp [])) = moveFocus (-1)
 handleEvent (VtyEvent (V.EvKey V.KDown [])) = moveFocus 1
-handleEvent (MouseDown (AnswerChoice idx) _ _ _) = do
-    s <- get
-    when (s ^. phase == Answering) $ toggleAnswer idx
-handleEvent (MouseDown SubmitButton _ _ _) = do
-    s <- get
-    when (s ^. phase == Answering) submitAnswer
-handleEvent (MouseDown NextButton _ _ _) = do
-    s <- get
-    when (s ^. phase == Reviewing) nextQuestion
+handleEvent (MouseDown (AnswerChoice idx) _ _ _) =
+    whenPhase Answering $ do
+        sel <- use selectedAnswers
+        selectedAnswers .= toggleAnswerPure idx sel
+handleEvent (MouseDown SubmitButton _ _ _) =
+    whenPhase Answering submitAnswer
+handleEvent (MouseDown NextButton _ _ _) =
+    whenPhase Reviewing nextQuestion
 handleEvent (AppEvent Tick) = do
     p <- use phase
     when (p /= Finished) $ elapsedSeconds += 1
 handleEvent _ = return ()
 
-toggleAnswer :: Int -> EventM Name AppState ()
-toggleAnswer idx = do
-    sel <- use selectedAnswers
-    if IS.member idx sel
-        then selectedAnswers .= IS.delete idx sel
-        else selectedAnswers .= IS.insert idx sel
+whenPhase :: Phase -> EventM Name AppState () -> EventM Name AppState ()
+whenPhase p action = do
+    current <- use phase
+    when (current == p) action
+
+toggleAnswerPure :: Int -> IntSet -> IntSet
+toggleAnswerPure idx sel
+    | IS.member idx sel = IS.delete idx sel
+    | otherwise = IS.insert idx sel
+
+moveFocusPure :: Int -> Int -> Int -> Int
+moveFocusPure delta current numAnswers
+    | numAnswers <= 0 = current
+    | otherwise = (current + delta) `mod` numAnswers
 
 moveFocus :: Int -> EventM Name AppState ()
-moveFocus delta = do
-    s <- get
-    when (s ^. phase == Answering) $ do
+moveFocus delta =
+    whenPhase Answering $ do
         mQ <- gets currentQuestion
         case mQ of
             Just q -> do
+                current <- use focusedAnswer
                 let numAnswers = length (questionAnswerChoices q)
-                    current = s ^. focusedAnswer
-                    new = (current + delta) `mod` numAnswers
-                focusedAnswer .= new
+                focusedAnswer .= moveFocusPure delta current numAnswers
             Nothing -> return ()
 
 submitAnswer :: EventM Name AppState ()

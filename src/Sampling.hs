@@ -1,47 +1,46 @@
 module Sampling (
     SamplingStrategy (..),
+    Weight,
+    WeightMap,
     sampleQuestions,
 ) where
 
-import Data.List (sortBy)
+import Data.List (foldl', sortBy)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
-import Data.Ord (comparing)
-import System.Random (RandomGen, uniformR)
-import Types (Question (..))
+import Data.Maybe (fromJust, isJust)
+import Data.Ord (Down (..), comparing)
+import System.Random (RandomGen, SplitGen, splitGen, uniformR)
+import Types (Category, Question (..))
 
+type Weight = Int
+type WeightMap = Map Category Weight
 data SamplingStrategy
     = Uniform
-    | Stratified (Map String Int)
+    | Stratified WeightMap
     deriving (Show, Eq)
 
 sampleQuestions ::
-    (RandomGen g) => g -> Int -> SamplingStrategy -> [Question] -> [Question]
+    (SplitGen g) => g -> Int -> SamplingStrategy -> [Question] -> [Question]
 sampleQuestions _ n _ _ | n <= 0 = []
 sampleQuestions gen n Uniform qs = sampleUniform gen n qs
 sampleQuestions gen n (Stratified weights) qs = sampleStratified gen n weights qs
 
-sampleUniform :: (RandomGen g) => g -> Int -> [Question] -> [Question]
+sampleUniform :: (SplitGen g) => g -> Int -> [Question] -> [Question]
 sampleUniform _ _ [] = []
 sampleUniform gen n qs
     | n >= length qs = qs
     | otherwise = take n $ shuffle gen qs
 
-sampleStratified ::
-    (RandomGen g) => g -> Int -> Map String Int -> [Question] -> [Question]
+sampleStratified :: (SplitGen g) => g -> Int -> WeightMap -> [Question] -> [Question]
 sampleStratified gen n weights qs =
-    let grouped :: Map String [Question]
+    let grouped :: Map Category [Question]
         grouped =
-            Map.filterWithKey (\k _ -> Map.member k weights) $
-                foldl
-                    ( \acc q -> case questionCategory q of
-                        Just cat -> Map.insertWith (++) cat [q] acc
-                        Nothing -> acc
-                    )
-                    Map.empty
-                    qs
+            Map.fromListWith
+                (++)
+                [(fromJust (questionCategory q), [q]) | q <- qs, isJust (questionCategory q)]
 
-        avails :: Map String Int
+        avails :: Map Category Int
         avails = Map.map length grouped
 
         totalAvailable = sum avails
@@ -53,14 +52,14 @@ sampleStratified gen n weights qs =
 {- | Allocate n slots across categories using largest-remainder method,
 capping at available questions per category.
 -}
-allocateWithRemainder :: Int -> Map String Int -> Map String Int -> Map String Int
+allocateWithRemainder :: Int -> WeightMap -> Map Category Int -> Map Category Int
 allocateWithRemainder n weights avails =
     let activeWeights = Map.intersectionWith const weights avails
         totalWeight = sum activeWeights
      in if totalWeight == 0
             then Map.empty
             else
-                let idealPerCat :: Map String Double
+                let idealPerCat :: Map Category Double
                     idealPerCat =
                         Map.map
                             ( \w ->
@@ -70,10 +69,10 @@ allocateWithRemainder n weights avails =
                             )
                             activeWeights
 
-                    floorAlloc :: Map String Int
+                    floorAlloc :: Map Category Int
                     floorAlloc = Map.map floor idealPerCat
 
-                    remainders :: Map String Double
+                    remainders :: Map Category Double
                     remainders =
                         Map.intersectionWith
                             (\ideal fl -> ideal - fromIntegral fl)
@@ -85,19 +84,19 @@ allocateWithRemainder n weights avails =
 
                     sortedByRemainder =
                         map fst $
-                            sortBy (flip $ comparing snd) $
+                            sortBy (comparing (Down . snd)) $
                                 Map.toList remainders
 
                     extraCats = take remaining sortedByRemainder
 
                     withExtra =
-                        foldl (flip (Map.adjust (+ 1))) floorAlloc extraCats
+                        foldl' (flip (Map.adjust (+ 1))) floorAlloc extraCats
                  in capAndRedistribute withExtra avails
 
 {- | Cap allocations at available question counts, redistributing surplus
 to uncapped categories.
 -}
-capAndRedistribute :: Map String Int -> Map String Int -> Map String Int
+capAndRedistribute :: Map Category Int -> Map Category Int -> Map Category Int
 capAndRedistribute allocs avails =
     let (overAlloc, okAlloc) =
             Map.partitionWithKey
@@ -119,7 +118,7 @@ capAndRedistribute allocs avails =
                                 avails
 
 -- | Distribute extra slots among categories that still have room.
-distributeEvenly :: Int -> Map String Int -> Map String Int -> Map String Int
+distributeEvenly :: Int -> Map Category Int -> Map Category Int -> Map Category Int
 distributeEvenly 0 m _ = m
 distributeEvenly extra m avails =
     let eligible =
@@ -134,45 +133,38 @@ distributeEvenly extra m avails =
                     leftover = extra `mod` eligibleCount
                     keys = Map.keys eligible
                     bumped =
-                        foldl
+                        foldl'
                             (flip (Map.adjust (+ perCat)))
                             m
                             keys
                     withLeftover =
-                        foldl
+                        foldl'
                             (flip (Map.adjust (+ 1)))
                             bumped
                             (take leftover keys)
                  in withLeftover
 
 concatSamples ::
-    (RandomGen g) =>
+    (SplitGen g) =>
     g ->
-    Map String Int ->
-    Map String [Question] ->
+    Map Category Int ->
+    Map Category [Question] ->
     [Question]
-concatSamples gen0 allocs grouped =
-    let cats = Map.toAscList allocs
-     in go gen0 cats
+concatSamples gen0 allocs grouped = shuffle gen0 $ go gen0 cats
   where
+    cats = Map.toAscList allocs
     go _ [] = []
-    go g ((cat, count) : rest) =
-        let catQs = Map.findWithDefault [] cat grouped
-            (g1, g2) = splitGen g
-            sampled = sampleUniform g1 count catQs
-         in sampled ++ go g2 rest
-
-splitGen :: (RandomGen g) => g -> (g, g)
-splitGen g =
-    let (_, g1) = uniformR (0 :: Int, maxBound) g
-        (_, g2) = uniformR (0 :: Int, maxBound) g1
-     in (g1, g2)
+    go g ((cat, count) : rest) = sampled ++ go g2 rest
+      where
+        catQs = Map.findWithDefault [] cat grouped
+        (g1, g2) = splitGen g
+        sampled = sampleUniform g1 count catQs
 
 shuffle :: (RandomGen g) => g -> [a] -> [a]
 shuffle g xs =
     map snd $ sortBy (comparing fst) tagged
   where
-    tagged = snd $ foldl step (g, []) xs
+    tagged = snd $ foldl' step (g, []) xs
     step (g', acc) x =
         let (r, g'') = uniformR (0 :: Int, maxBound) g'
          in (g'', (r, x) : acc)

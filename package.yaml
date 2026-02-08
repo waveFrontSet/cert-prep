@@ -19,10 +19,8 @@ library:
   ghc-options:
     - -Wall
     - -O2
-    - -threaded
   dependencies:
     - aeson
-    - microlens-th
     - random
 
 executables:
@@ -42,23 +40,42 @@ executables:
       - bytestring
       - microlens
       - microlens-mtl
+      - microlens-th
       - optparse-applicative
       - random
+      - vector
       - vty
       - vty-crossplatform
 
 tests:
   spec:
     main: Spec.hs
-    source-dirs: test
+    source-dirs:
+      - test
+      - app
     ghc-options:
       - -Wall
     build-tools:
       - hspec-discover
+    other-modules:
+      - Generators
+      - TypesSpec
+      - SamplingSpec
+      - StateSpec
+      - UtilSpec
+      - EventSpec
+      - State
+      - TUI.Event
     dependencies:
       - aeson
       - cert-prep
       - containers
       - hspec
+      - microlens
+      - microlens-mtl
+      - microlens-th
+      - brick
       - QuickCheck
       - random
+      - vector
+      - vty

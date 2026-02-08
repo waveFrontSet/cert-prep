@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: haskell-actions/setup@v2
+        with:
+          ghc-version: "9.8.4"
+          cabal-version: "latest"
+
+      - name: Cache cabal store
+        uses: actions/cache@v4
+        with:
+          path: ~/.cabal/store
+          key: ${{ runner.os }}-cabal-${{ hashFiles('**/*.cabal', 'cabal.project') }}
+          restore-keys: ${{ runner.os }}-cabal-
+
+      - name: Build
+        run: cabal build
+
+      - name: Run tests
+        run: cabal test --test-show-details=always
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: haskell-actions/hlint-setup@v2
+
+      - uses: haskell-actions/hlint-run@v2
+        with:
+          path: '["src/", "app/", "test/"]'
+          fail-on: warning

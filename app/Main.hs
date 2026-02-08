@@ -9,6 +9,8 @@ import Data.Aeson (eitherDecodeStrict)
 import Data.ByteString qualified as BS
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromMaybe)
+import Data.Text (Text)
+import Data.Text qualified as T
 import Graphics.Vty qualified as V
 import Graphics.Vty.CrossPlatform (mkVty)
 import Options.Applicative qualified as Opt
@@ -23,7 +25,7 @@ import Types (Config (..))
 
 data CLIOptions = CLIOptions
     { cliSampleAmount :: Maybe Int
-    , cliWeights :: [(String, Int)]
+    , cliWeights :: [(Text, Int)]
     , cliConfigPath :: FilePath
     }
 
@@ -51,14 +53,14 @@ cliParser =
             )
         <*> Opt.argument Opt.str (Opt.metavar "<config.json>")
 
-parseWeight :: Opt.ReadM (String, Int)
+parseWeight :: Opt.ReadM (Text, Int)
 parseWeight = Opt.eitherReader $ \s ->
     case break (== ':') (reverse s) of
         (revW, _ : revCat)
             | not (null revW)
             , not (null revCat)
             , [(w, "")] <- reads (reverse revW) ->
-                Right (reverse revCat, w)
+                Right (T.pack (reverse revCat), w)
         _ -> Left $ "Invalid weight format: " ++ s ++ " (expected CATEGORY:WEIGHT)"
 
 cliInfo :: Opt.ParserInfo CLIOptions

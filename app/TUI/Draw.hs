@@ -5,10 +5,12 @@ import Brick.Widgets.Border
 import Brick.Widgets.Border.Style
 import Brick.Widgets.Center
 import Data.IntSet qualified as IS
+import Data.Text (Text)
 import Lens.Micro ((^.))
 import State
 import TUI.Attributes
 import Types (AnswerResult (..), Question (..), evalAnswer)
+import Util (formatTime)
 
 drawUI :: AppState -> [Widget Name]
 drawUI s = [ui]
@@ -71,7 +73,7 @@ drawExam s =
                     padAll 1 $
                         case mQuestion of
                             Nothing -> str "No question"
-                            Just q -> strWrap (questionText q)
+                            Just q -> txtWrap (questionText q)
 
     answersPanel =
         withBorderStyle unicode $
@@ -104,7 +106,7 @@ drawExam s =
                 , str "[q] Quit  [Space] Toggle  [Arrow Keys] Navigate"
                 ]
 
-drawAnswer :: AppState -> AnswerResult -> Int -> String -> Widget Name
+drawAnswer :: AppState -> AnswerResult -> Int -> Text -> Widget Name
 drawAnswer s result idx answerText =
     clickable (AnswerChoice idx) $
         padBottom (Pad 1) $
@@ -118,6 +120,8 @@ drawAnswer s result idx answerText =
     isWrong = IS.member idx (answerResultWrong result)
 
     applyFocus w = if focused then withAttr focusedAttr w else w
+
+    wrappedText = txtWrap answerText
 
     checkbox = case s ^. phase of
         Answering ->
@@ -133,16 +137,9 @@ drawAnswer s result idx answerText =
 
     answerWidget = case s ^. phase of
         Reviewing
-            | isCorrectSelection -> withAttr correctAttr $ strWrap answerText
-            | isMissed -> withAttr missedAttr $ strWrap answerText
-            | isWrong -> withAttr wrongAttr $ strWrap answerText
-            | otherwise -> strWrap answerText
-        _ -> strWrap answerText
+            | isCorrectSelection -> withAttr correctAttr wrappedText
+            | isMissed -> withAttr missedAttr wrappedText
+            | isWrong -> withAttr wrongAttr wrappedText
+            | otherwise -> wrappedText
+        _ -> wrappedText
 
-formatTime :: Int -> String
-formatTime totalSecs =
-    pad mins ++ ":" ++ pad secs
-  where
-    mins = totalSecs `div` 60
-    secs = totalSecs `mod` 60
-    pad n = if n < 10 then "0" ++ show n else show n
