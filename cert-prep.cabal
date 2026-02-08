@@ -35,6 +35,7 @@ library
 executable cert-prep
     main-is: Main.hs
     other-modules:
+        CLI
         State
         TUI.Attributes
         TUI.Draw
