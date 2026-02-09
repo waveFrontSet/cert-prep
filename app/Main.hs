@@ -56,13 +56,13 @@ main = do
             exitFailure
         Right c -> return c
 
-    registerConfig configPath (configTitle config)
+    registerConfig configPath (title config)
 
-    let sampleSize = fromMaybe (configSampleAmount config) (cliSampleAmount opts)
+    let sampleSize = fromMaybe (sampleAmount config) (cliSampleAmount opts)
         strategy = case cliWeights opts of
-            [] -> maybe Uniform Stratified $ configCategoryWeights config
+            [] -> maybe Uniform Stratified $ categoryWeights config
             ws -> Stratified (Map.fromList ws)
-        allQuestions = configQuestions config
+        allQuestions = questions config
         effectiveSize = min sampleSize (length allQuestions)
 
     gen <- newStdGen
