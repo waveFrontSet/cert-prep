@@ -62,49 +62,47 @@ drawExam s =
         ]
   where
     mQuestion = currentQuestion s
-
     questionPanel =
-        withBorderStyle unicode $
-            borderWithLabel
+        withBorderStyle unicode
+            $ borderWithLabel
                 ( str $
                     " Question " ++ show (s ^. currentIndex + 1) ++ " of " ++ show (totalQuestions s) ++ " "
-                ) $
-                hLimitPercent 50 $
-                    padAll 1 $
-                        case mQuestion of
-                            Nothing -> str "No question"
-                            Just q -> txtWrap (questionText q)
+                )
+            $ padAll 1
+            $ case mQuestion of
+                Nothing -> str "No question"
+                Just q -> txtWrap (text q)
 
     answersPanel =
         withBorderStyle unicode $
             borderWithLabel (str " Answers ") $
-                hLimitPercent 50 $
-                    padAll 1 $
-                        case mQuestion of
-                            Nothing -> str "No answers"
-                            Just q ->
-                                let result = evalAnswer q (s ^. selectedAnswers)
-                                 in vBox $ zipWith (drawAnswer s result) [0 ..] (questionAnswerChoices q)
+                padAll 1 $
+                    case mQuestion of
+                        Nothing -> str "No answers"
+                        Just q ->
+                            let result = evalAnswer q (s ^. selectedAnswers)
+                             in vBox $ zipWith (drawAnswer s result) [0 ..] (answerChoices q)
 
     statusBar =
         padLeftRight 1 $
-            hBox
-                [ str $ "Score: " ++ show (s ^. score) ++ "/" ++ show (s ^. currentIndex)
-                , str $ "  Time: " ++ formatTime (s ^. elapsedSeconds)
-                , fill ' '
-                , case s ^. phase of
-                    Answering ->
-                        clickable SubmitButton $
-                            withAttr submitAttr $
-                                str " [Enter] Submit "
-                    Reviewing ->
-                        clickable NextButton $
-                            withAttr nextAttr $
-                                str " [Enter] Next "
-                    Finished -> str ""
-                , fill ' '
-                , str "[q] Quit  [Space] Toggle  [Arrow Keys] Navigate"
-                ]
+            vLimitPercent 10 $
+                hBox
+                    [ str $ "Score: " ++ show (s ^. score) ++ "/" ++ show (totalQuestions s)
+                    , str $ "  Time: " ++ formatTime (s ^. elapsedSeconds)
+                    , fill ' '
+                    , case s ^. phase of
+                        Answering ->
+                            clickable SubmitButton $
+                                withAttr submitAttr $
+                                    str " [Enter] Submit "
+                        Reviewing ->
+                            clickable NextButton $
+                                withAttr nextAttr $
+                                    str " [Enter] Next "
+                        Finished -> str ""
+                    , fill ' '
+                    , str "[q] Quit  [Space] Toggle  [Arrow Keys] Navigate"
+                    ]
 
 drawAnswer :: AppState -> AnswerResult -> Int -> Text -> Widget Name
 drawAnswer s result idx answerText =
@@ -115,9 +113,9 @@ drawAnswer s result idx answerText =
   where
     selected = IS.member idx (s ^. selectedAnswers)
     focused = s ^. focusedAnswer == idx && s ^. phase == Answering
-    isCorrectSelection = IS.member idx (answerResultCorrect result)
-    isMissed = IS.member idx (answerResultMissing result)
-    isWrong = IS.member idx (answerResultWrong result)
+    isCorrectSelection = IS.member idx (correct result)
+    isMissed = IS.member idx (missing result)
+    isWrong = IS.member idx (wrong result)
 
     applyFocus w = if focused then withAttr focusedAttr w else w
 
@@ -142,4 +140,3 @@ drawAnswer s result idx answerText =
             | isWrong -> withAttr wrongAttr wrappedText
             | otherwise -> wrappedText
         _ -> wrappedText
-

@@ -18,28 +18,31 @@ import Types (Question (..), isCorrect)
 data CustomEvent = Tick
 
 handleEvent :: BrickEvent Name CustomEvent -> EventM Name AppState ()
-handleEvent (VtyEvent (V.EvKey V.KEsc [])) = halt
-handleEvent (VtyEvent (V.EvKey (V.KChar 'q') [])) = halt
-handleEvent (VtyEvent (V.EvKey (V.KChar 'Q') [])) = halt
-handleEvent (VtyEvent (V.EvKey V.KEnter [])) = do
-    s <- get
-    case s ^. phase of
-        Answering -> submitAnswer
-        Reviewing -> nextQuestion
-        Finished -> halt
-handleEvent (VtyEvent (V.EvKey (V.KChar ' ') [])) =
-    whenPhase Answering $ do
+handleEvent (VtyEvent (V.EvKey key [])) = case key of
+    V.KEsc -> halt
+    V.KChar 'q' -> halt
+    V.KChar 'Q' -> halt
+    V.KUp -> moveFocus (-1)
+    V.KChar 'k' -> moveFocus (-1)
+    V.KDown -> moveFocus 1
+    V.KChar 'j' -> moveFocus 1
+    V.KEnter -> do
+        s <- get
+        case s ^. phase of
+            Answering -> submitAnswer
+            Reviewing -> nextQuestion
+            Finished -> halt
+    V.KChar ' ' -> whenPhase Answering $ do
         mQ <- gets currentQuestion
         case mQ of
             Just q -> do
                 s <- get
-                let numAnswers = length (questionAnswerChoices q)
+                let numAnswers = length (answerChoices q)
                     idx = s ^. focusedAnswer
                 when (idx < numAnswers) $
                     selectedAnswers .= toggleAnswerPure idx (s ^. selectedAnswers)
             Nothing -> return ()
-handleEvent (VtyEvent (V.EvKey V.KUp [])) = moveFocus (-1)
-handleEvent (VtyEvent (V.EvKey V.KDown [])) = moveFocus 1
+    _ -> return ()
 handleEvent (MouseDown (AnswerChoice idx) _ _ _) =
     whenPhase Answering $ do
         sel <- use selectedAnswers
@@ -75,7 +78,7 @@ moveFocus delta =
         case mQ of
             Just q -> do
                 current <- use focusedAnswer
-                let numAnswers = length (questionAnswerChoices q)
+                let numAnswers = length (answerChoices q)
                 focusedAnswer .= moveFocusPure delta current numAnswers
             Nothing -> return ()
 

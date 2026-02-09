@@ -8,7 +8,6 @@ module Sampling (
 import Data.List (foldl', sortBy)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
-import Data.Maybe (fromJust, isJust)
 import Data.Ord (Down (..), comparing)
 import System.Random (RandomGen, SplitGen, splitGen, uniformR)
 import Types (Category, Question (..))
@@ -38,7 +37,7 @@ sampleStratified gen n weights qs =
         grouped =
             Map.fromListWith
                 (++)
-                [(fromJust (questionCategory q), [q]) | q <- qs, isJust (questionCategory q)]
+                [(cat, [q]) | q <- qs, Just cat <- [category q]]
 
         avails :: Map Category Int
         avails = Map.map length grouped
@@ -150,8 +149,9 @@ concatSamples ::
     Map Category Int ->
     Map Category [Question] ->
     [Question]
-concatSamples gen0 allocs grouped = shuffle gen0 $ go gen0 cats
+concatSamples gen0 allocs grouped = shuffle genShuffle $ go genSample cats
   where
+    (genSample, genShuffle) = splitGen gen0
     cats = Map.toAscList allocs
     go _ [] = []
     go g ((cat, count) : rest) = sampled ++ go g2 rest
