@@ -25,7 +25,7 @@ import System.Directory (
     doesFileExist,
     getXdgDirectory,
  )
-import System.FilePath (takeDirectory)
+import System.FilePath (takeDirectory, (</>))
 
 import Data.Aeson qualified as Aeson
 
@@ -44,7 +44,7 @@ instance ToJSON RegistryEntry
 registryFilePath :: IO FilePath
 registryFilePath = do
     dir <- getXdgDirectory XdgConfig "cert-prep"
-    pure $ dir <> "/registry.json"
+    pure $ dir </> "registry.json"
 
 loadRegistry :: IO Registry
 loadRegistry = do
