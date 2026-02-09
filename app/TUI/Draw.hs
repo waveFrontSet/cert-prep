@@ -71,7 +71,7 @@ drawExam s =
             $ padAll 1
             $ case mQuestion of
                 Nothing -> str "No question"
-                Just q -> txtWrap (questionText q)
+                Just q -> txtWrap (text q)
 
     answersPanel =
         withBorderStyle unicode $
@@ -81,7 +81,7 @@ drawExam s =
                         Nothing -> str "No answers"
                         Just q ->
                             let result = evalAnswer q (s ^. selectedAnswers)
-                             in vBox $ zipWith (drawAnswer s result) [0 ..] (questionAnswerChoices q)
+                             in vBox $ zipWith (drawAnswer s result) [0 ..] (answerChoices q)
 
     statusBar =
         padLeftRight 1 $
@@ -113,9 +113,9 @@ drawAnswer s result idx answerText =
   where
     selected = IS.member idx (s ^. selectedAnswers)
     focused = s ^. focusedAnswer == idx && s ^. phase == Answering
-    isCorrectSelection = IS.member idx (answerResultCorrect result)
-    isMissed = IS.member idx (answerResultMissing result)
-    isWrong = IS.member idx (answerResultWrong result)
+    isCorrectSelection = IS.member idx (correct result)
+    isMissed = IS.member idx (missing result)
+    isWrong = IS.member idx (wrong result)
 
     applyFocus w = if focused then withAttr focusedAttr w else w
 

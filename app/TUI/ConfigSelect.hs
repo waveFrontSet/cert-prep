@@ -5,7 +5,6 @@ import Brick.Widgets.Border
 import Brick.Widgets.Border.Style
 import Brick.Widgets.Center
 import Brick.Widgets.List qualified as L
-import Data.Text qualified as T
 import Data.Time (defaultTimeLocale, formatTime)
 import Data.Vector qualified as V
 import Graphics.Vty qualified as Vty
@@ -38,18 +37,17 @@ drawSelectUI (SelectState l) = [ui]
 renderEntry :: Bool -> RegistryEntry -> Widget SelectName
 renderEntry selected entry =
     let marker = if selected then ">" else " "
-        title = T.unpack (registryEntryTitle entry)
-        path = registryEntryPath entry
+        p = path entry
         time =
             formatTime
                 defaultTimeLocale
                 "%Y-%m-%d %H:%M"
-                (registryEntryLastUsed entry)
+                (lastUsed entry)
      in hBox
             [ str marker
             , str " "
-            , str title
-            , padLeft Max $ str (time ++ "  " ++ path)
+            , txt $ title entry
+            , padLeft Max $ str (time ++ "  " ++ p)
             ]
 
 handleSelectEvent ::
@@ -87,4 +85,4 @@ selectConfig entries = do
     initialVty <- buildVty
     finalState <- customMain initialVty buildVty Nothing app initial
     let mSelected = snd <$> L.listSelectedElement (_selectList finalState)
-    pure (registryEntryPath <$> mSelected)
+    pure (path <$> mSelected)
