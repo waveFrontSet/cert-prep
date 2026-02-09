@@ -11,9 +11,9 @@ import Test.Hspec
 mkEntry :: Text -> FilePath -> UTCTime -> RegistryEntry
 mkEntry title path lastUsed =
     RegistryEntry
-        { registryEntryTitle = title
-        , registryEntryPath = path
-        , registryEntryLastUsed = lastUsed
+        { title = title
+        , path = path
+        , lastUsed = lastUsed
         }
 
 spec :: Spec
@@ -61,7 +61,7 @@ spec = do
                 registerConfig configPath "My Config"
                 registry <- loadRegistry
                 case registry of
-                    [e] -> registryEntryTitle e `shouldBe` "My Config"
+                    [e] -> title e `shouldBe` "My Config"
                     _ -> expectationFailure $ "Expected 1 entry, got " ++ show (length registry)
 
         it "upserts existing entry by path" $ do
@@ -73,7 +73,7 @@ spec = do
                 registerConfig configPath "Title v2"
                 registry <- loadRegistry
                 case registry of
-                    [e] -> registryEntryTitle e `shouldBe` "Title v2"
+                    [e] -> title e `shouldBe` "Title v2"
                     _ -> expectationFailure $ "Expected 1 entry, got " ++ show (length registry)
 
         it "keeps entries sorted by lastUsed descending" $ do
@@ -87,5 +87,5 @@ spec = do
                 registerConfig pathB "Config B"
                 registry <- loadRegistry
                 case registry of
-                    (e : _) -> registryEntryTitle e `shouldBe` "Config B"
+                    (e : _) -> title e `shouldBe` "Config B"
                     [] -> expectationFailure "Expected non-empty registry"

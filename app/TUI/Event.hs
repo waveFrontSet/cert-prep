@@ -33,13 +33,15 @@ handleEvent (VtyEvent (V.EvKey (V.KChar ' ') [])) =
         case mQ of
             Just q -> do
                 s <- get
-                let numAnswers = length (questionAnswerChoices q)
+                let numAnswers = length (answerChoices q)
                     idx = s ^. focusedAnswer
                 when (idx < numAnswers) $
                     selectedAnswers .= toggleAnswerPure idx (s ^. selectedAnswers)
             Nothing -> return ()
 handleEvent (VtyEvent (V.EvKey V.KUp [])) = moveFocus (-1)
+handleEvent (VtyEvent (V.EvKey (V.KChar 'k') [])) = moveFocus (-1)
 handleEvent (VtyEvent (V.EvKey V.KDown [])) = moveFocus 1
+handleEvent (VtyEvent (V.EvKey (V.KChar 'j') [])) = moveFocus 1
 handleEvent (MouseDown (AnswerChoice idx) _ _ _) =
     whenPhase Answering $ do
         sel <- use selectedAnswers
@@ -75,7 +77,7 @@ moveFocus delta =
         case mQ of
             Just q -> do
                 current <- use focusedAnswer
-                let numAnswers = length (questionAnswerChoices q)
+                let numAnswers = length (answerChoices q)
                 focusedAnswer .= moveFocusPure delta current numAnswers
             Nothing -> return ()
 
