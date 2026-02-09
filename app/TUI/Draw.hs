@@ -62,14 +62,12 @@ drawExam s =
         ]
   where
     mQuestion = currentQuestion s
-
     questionPanel =
         withBorderStyle unicode
             $ borderWithLabel
                 ( str $
                     " Question " ++ show (s ^. currentIndex + 1) ++ " of " ++ show (totalQuestions s) ++ " "
                 )
-            $ hLimitPercent 50
             $ padAll 1
             $ case mQuestion of
                 Nothing -> str "No question"
@@ -78,33 +76,33 @@ drawExam s =
     answersPanel =
         withBorderStyle unicode $
             borderWithLabel (str " Answers ") $
-                hLimitPercent 50 $
-                    padAll 1 $
-                        case mQuestion of
-                            Nothing -> str "No answers"
-                            Just q ->
-                                let result = evalAnswer q (s ^. selectedAnswers)
-                                 in vBox $ zipWith (drawAnswer s result) [0 ..] (questionAnswerChoices q)
+                padAll 1 $
+                    case mQuestion of
+                        Nothing -> str "No answers"
+                        Just q ->
+                            let result = evalAnswer q (s ^. selectedAnswers)
+                             in vBox $ zipWith (drawAnswer s result) [0 ..] (questionAnswerChoices q)
 
     statusBar =
         padLeftRight 1 $
-            hBox
-                [ str $ "Score: " ++ show (s ^. score) ++ "/" ++ show (s ^. currentIndex)
-                , str $ "  Time: " ++ formatTime (s ^. elapsedSeconds)
-                , fill ' '
-                , case s ^. phase of
-                    Answering ->
-                        clickable SubmitButton $
-                            withAttr submitAttr $
-                                str " [Enter] Submit "
-                    Reviewing ->
-                        clickable NextButton $
-                            withAttr nextAttr $
-                                str " [Enter] Next "
-                    Finished -> str ""
-                , fill ' '
-                , str "[q] Quit  [Space] Toggle  [Arrow Keys] Navigate"
-                ]
+            vLimitPercent 10 $
+                hBox
+                    [ str $ "Score: " ++ show (s ^. score) ++ "/" ++ show (totalQuestions s)
+                    , str $ "  Time: " ++ formatTime (s ^. elapsedSeconds)
+                    , fill ' '
+                    , case s ^. phase of
+                        Answering ->
+                            clickable SubmitButton $
+                                withAttr submitAttr $
+                                    str " [Enter] Submit "
+                        Reviewing ->
+                            clickable NextButton $
+                                withAttr nextAttr $
+                                    str " [Enter] Next "
+                        Finished -> str ""
+                    , fill ' '
+                    , str "[q] Quit  [Space] Toggle  [Arrow Keys] Navigate"
+                    ]
 
 drawAnswer :: AppState -> AnswerResult -> Int -> Text -> Widget Name
 drawAnswer s result idx answerText =
