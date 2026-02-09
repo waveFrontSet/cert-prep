@@ -149,8 +149,9 @@ concatSamples ::
     Map Category Int ->
     Map Category [Question] ->
     [Question]
-concatSamples gen0 allocs grouped = shuffle gen0 $ go gen0 cats
+concatSamples gen0 allocs grouped = shuffle genShuffle $ go genSample cats
   where
+    (genSample, genShuffle) = splitGen gen0
     cats = Map.toAscList allocs
     go _ [] = []
     go g ((cat, count) : rest) = sampled ++ go g2 rest
