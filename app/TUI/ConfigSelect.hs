@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module TUI.ConfigSelect (selectConfig) where
 
 import Brick
@@ -9,6 +11,7 @@ import Data.Time (defaultTimeLocale, formatTime)
 import Data.Vector qualified as V
 import Graphics.Vty qualified as Vty
 import Graphics.Vty.CrossPlatform (mkVty)
+import Lens.Micro.TH (makeLenses)
 import Registry (Registry, RegistryEntry (..))
 
 data SelectName = SelectList
@@ -17,6 +20,8 @@ data SelectName = SelectList
 newtype SelectState = SelectState
     { _selectList :: L.List SelectName RegistryEntry
     }
+
+makeLenses ''SelectState
 
 drawSelectUI :: SelectState -> [Widget SelectName]
 drawSelectUI (SelectState l) = [ui]
@@ -53,12 +58,14 @@ renderEntry selected entry =
 handleSelectEvent ::
     BrickEvent SelectName e -> EventM SelectName SelectState ()
 handleSelectEvent (VtyEvent (Vty.EvKey Vty.KEsc [])) = halt
-handleSelectEvent (VtyEvent (Vty.EvKey (Vty.KChar 'q') [])) = halt
 handleSelectEvent (VtyEvent (Vty.EvKey Vty.KEnter [])) = halt
+handleSelectEvent (VtyEvent (Vty.EvKey (Vty.KChar c) [])) = case c of
+    'j' -> handleSelectEvent (VtyEvent (Vty.EvKey Vty.KDown []))
+    'k' -> handleSelectEvent (VtyEvent (Vty.EvKey Vty.KUp []))
+    'q' -> halt
+    _ -> return ()
 handleSelectEvent (VtyEvent e) = do
-    SelectState l <- get
-    l' <- nestEventM' l (L.handleListEvent e)
-    put (SelectState l')
+    zoom selectList $ L.handleListEvent e
 handleSelectEvent _ = return ()
 
 selectConfig :: Registry -> IO (Maybe FilePath)
