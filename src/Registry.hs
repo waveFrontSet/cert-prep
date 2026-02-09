@@ -8,18 +8,12 @@ module Registry (
 ) where
 
 import Data.Aeson (
-    FromJSON (parseJSON),
-    Options (fieldLabelModifier),
-    ToJSON (toJSON),
-    defaultOptions,
+    FromJSON,
+    ToJSON,
     eitherDecodeStrict,
-    genericParseJSON,
-    genericToJSON,
  )
 import Data.ByteString qualified as BS
-import Data.Char (toLower)
 import Data.List (sortBy)
-import Data.Maybe (fromMaybe)
 import Data.Ord (Down (..), comparing)
 import Data.Text (Text)
 import Data.Time (UTCTime, getCurrentTime)
@@ -36,38 +30,16 @@ import System.FilePath (takeDirectory)
 import Data.Aeson qualified as Aeson
 
 data RegistryEntry = RegistryEntry
-    { registryEntryTitle :: Text
-    , registryEntryPath :: FilePath
-    , registryEntryLastUsed :: UTCTime
+    { title :: Text
+    , path :: FilePath
+    , lastUsed :: UTCTime
     }
     deriving (Show, Eq, Generic)
 
 type Registry = [RegistryEntry]
 
-toLowerFirstLetter :: String -> String
-toLowerFirstLetter [] = []
-toLowerFirstLetter (x : xs) = toLower x : xs
-
-stripPrefix' :: String -> String -> String
-stripPrefix' prefix s =
-    toLowerFirstLetter $ fromMaybe s (stripPrefix prefix s)
-  where
-    stripPrefix [] ys = Just ys
-    stripPrefix _ [] = Nothing
-    stripPrefix (p : ps) (y : ys)
-        | p == y = stripPrefix ps ys
-        | otherwise = Nothing
-
-registryEntryOptions :: Options
-registryEntryOptions =
-    defaultOptions
-        { fieldLabelModifier = stripPrefix' "registryEntry"
-        }
-
-instance FromJSON RegistryEntry where
-    parseJSON = genericParseJSON registryEntryOptions
-instance ToJSON RegistryEntry where
-    toJSON = genericToJSON registryEntryOptions
+instance FromJSON RegistryEntry
+instance ToJSON RegistryEntry
 
 registryFilePath :: IO FilePath
 registryFilePath = do
@@ -88,22 +60,22 @@ loadRegistry = do
 
 saveRegistry :: Registry -> IO ()
 saveRegistry entries = do
-    path <- registryFilePath
-    createDirectoryIfMissing True (takeDirectory path)
-    BS.writeFile path (BS.toStrict $ Aeson.encode entries)
+    p <- registryFilePath
+    createDirectoryIfMissing True (takeDirectory p)
+    BS.writeFile p (BS.toStrict $ Aeson.encode entries)
 
 registerConfig :: FilePath -> Text -> IO ()
-registerConfig path title = do
-    canonPath <- canonicalizePath path
+registerConfig p title = do
+    canonPath <- canonicalizePath p
     now <- getCurrentTime
     existing <- loadRegistry
     let entry =
             RegistryEntry
-                { registryEntryTitle = title
-                , registryEntryPath = canonPath
-                , registryEntryLastUsed = now
+                { title = title
+                , path = canonPath
+                , lastUsed = now
                 }
         updated =
-            sortBy (comparing (Down . registryEntryLastUsed)) $
-                entry : filter (\e -> registryEntryPath e /= canonPath) existing
+            sortBy (comparing (Down . lastUsed)) $
+                entry : filter (\e -> path e /= canonPath) existing
     saveRegistry updated

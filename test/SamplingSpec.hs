@@ -111,7 +111,7 @@ spec = do
                                 (Stratified narrowWeights)
                                 qs
                      in all
-                            (\q -> questionCategory q == Just "AWS Storage")
+                            (\q -> category q == Just "AWS Storage")
                             result
                             === True
 
@@ -144,7 +144,7 @@ spec = do
                     ]
                 allQs = noCatQs ++ catQs
                 result = sampleQuestions (mkStdGen 42) 10 (Stratified weights) allQs
-            all (isJust . questionCategory) result `shouldBe` True
+            all (isJust . category) result `shouldBe` True
 
         it "single category in weights" $ do
             let singleWeight = Map.fromList [("AWS Storage", 1)]
@@ -155,7 +155,7 @@ spec = do
                     ]
                 result = sampleQuestions (mkStdGen 42) 3 (Stratified singleWeight) qs
             length result `shouldBe` 2
-            all (\q -> questionCategory q == Just "AWS Storage") result `shouldBe` True
+            all (\q -> category q == Just "AWS Storage") result `shouldBe` True
 
         it "per-category counts approximate weight proportions" $
             property $
@@ -164,7 +164,7 @@ spec = do
                             Map.fromListWith (+) $
                                 [ (c, 1 :: Int)
                                 | q <- qs
-                                , Just c <- [questionCategory q]
+                                , Just c <- [category q]
                                 , Map.member c weights
                                 ]
                         -- Only test when every weighted category has
@@ -184,7 +184,7 @@ spec = do
                                         countCat c =
                                             length $
                                                 filter
-                                                    (\q -> questionCategory q == Just c)
+                                                    (\q -> category q == Just c)
                                                     result
                                      in conjoin
                                             [ let ideal =
@@ -214,6 +214,6 @@ spec = do
                                             ]
 
 hasWeightedCategory :: Map.Map Text Int -> Question -> Bool
-hasWeightedCategory weights q = case questionCategory q of
+hasWeightedCategory weights q = case category q of
     Just c -> Map.member c weights
     Nothing -> False

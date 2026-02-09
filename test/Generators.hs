@@ -26,10 +26,10 @@ categoryPool =
 mkQuestion :: Text -> [Text] -> [Int] -> Maybe Text -> Question
 mkQuestion text choices correct cat =
     Question
-        { questionText = text
-        , questionAnswerChoices = choices
-        , questionCorrectAnswer = IS.fromList correct
-        , questionCategory = cat
+        { text = text
+        , answerChoices = choices
+        , correctAnswer = IS.fromList correct
+        , category = cat
         }
 
 arbitraryQuestion :: Gen Question
@@ -47,10 +47,10 @@ arbitraryQuestion = do
             else pure Nothing
     pure
         Question
-            { questionText = text
-            , questionAnswerChoices = choices
-            , questionCorrectAnswer = IS.fromList correctIndices
-            , questionCategory = cat
+            { text = text
+            , answerChoices = choices
+            , correctAnswer = IS.fromList correctIndices
+            , category = cat
             }
 
 questionsWithCategories :: [Text] -> Gen [Question]
@@ -62,7 +62,7 @@ questionsWithCategories cats = do
         n <- chooseInt (1, count)
         vectorOf n $ do
             q <- arbitraryQuestion
-            pure q{questionCategory = Just cat}
+            pure q{category = Just cat}
 
 largeQuestionsWithCategories :: [Text] -> Gen [Question]
 largeQuestionsWithCategories cats = do
@@ -72,7 +72,7 @@ largeQuestionsWithCategories cats = do
         n <- chooseInt (5, 10)
         vectorOf n $ do
             q <- arbitraryQuestion
-            pure q{questionCategory = Just cat}
+            pure q{category = Just cat}
 
 instance Arbitrary Question where
     arbitrary = arbitraryQuestion
@@ -98,8 +98,8 @@ instance Arbitrary Config where
                 else pure Nothing
         pure
             Config
-                { configTitle = title
-                , configQuestions = qs
-                , configSampleAmount = n
-                , configCategoryWeights = weights
+                { title = title
+                , questions = qs
+                , sampleAmount = n
+                , categoryWeights = weights
                 }
