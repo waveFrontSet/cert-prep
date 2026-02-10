@@ -9,18 +9,28 @@ import Data.Text (Text)
 import Lens.Micro ((^.))
 import State
 import TUI.Attributes
-import Types (AnswerResult (..), Question (..), evalAnswer)
+import Types (AnswerResult (..), Question (..))
 import Util (formatTime)
 
-drawUI :: AppState -> [Widget Name]
-drawUI s = [ui]
-  where
-    ui = case s ^. phase of
-        Finished -> drawFinished s
-        _ -> drawExam s
+drawUI :: ExamPhase -> [Widget Name]
+drawUI (Finished fs) = [drawFinished fs]
+drawUI (Answering ap) =
+    [ drawExam
+        (ap ^. activeCore)
+        (ap ^. activeQuestion)
+        (drawAnswerAnswering ap)
+        drawStatusAnswering
+    ]
+drawUI (Reviewing ap) =
+    [ drawExam
+        (ap ^. activeCore)
+        (ap ^. activeQuestion)
+        (drawAnswerReviewing ap)
+        drawStatusReviewing
+    ]
 
-drawFinished :: AppState -> Widget Name
-drawFinished s =
+drawFinished :: FinishedState -> Widget Name
+drawFinished fs =
     withBorderStyle unicode $
         borderWithLabel (str " Exam Complete ") $
             center $
@@ -28,10 +38,10 @@ drawFinished s =
                     [ str ""
                     , hCenter $ str "Your Results"
                     , str ""
-                    , hCenter $ str $ "Score: " ++ show (s ^. score) ++ " / " ++ show (totalQuestions s)
+                    , hCenter $ str $ "Score: " ++ show (fs ^. finalScore) ++ " / " ++ show (fs ^. finalTotal)
                     , hCenter $ str $ "Percentage: " ++ show percentage ++ "%"
                     , str ""
-                    , hCenter $ str $ "Total time: " ++ formatTime (s ^. elapsedSeconds)
+                    , hCenter $ str $ "Total time: " ++ formatTime (fs ^. finalElapsed)
                     , hCenter $ str $ "Avg per question: " ++ formatTime avgTime
                     , str ""
                     , hCenter $ str "Press 'q' or Esc to exit"
@@ -40,17 +50,18 @@ drawFinished s =
   where
     percentage :: Int
     percentage =
-        if totalQuestions s == 0
+        if fs ^. finalTotal == 0
             then 0
-            else (s ^. score * 100) `div` totalQuestions s
+            else (fs ^. finalScore * 100) `div` (fs ^. finalTotal)
     avgTime :: Int
     avgTime =
-        if totalQuestions s == 0
+        if fs ^. finalTotal == 0
             then 0
-            else (s ^. elapsedSeconds + totalQuestions s - 1) `div` totalQuestions s
+            else (fs ^. finalElapsed + fs ^. finalTotal - 1) `div` (fs ^. finalTotal)
 
-drawExam :: AppState -> Widget Name
-drawExam s =
+drawExam ::
+    ExamCore -> Question -> (Int -> Text -> Widget Name) -> Widget Name -> Widget Name
+drawExam core q drawAnswer statusButton =
     vBox
         [ hBox
             [ questionPanel
@@ -61,82 +72,88 @@ drawExam s =
         , statusBar
         ]
   where
-    mQuestion = currentQuestion s
     questionPanel =
         withBorderStyle unicode
             $ borderWithLabel
                 ( str $
-                    " Question " ++ show (s ^. currentIndex + 1) ++ " of " ++ show (totalQuestions s) ++ " "
+                    " Question "
+                        ++ show (core ^. currentIndex + 1)
+                        ++ " of "
+                        ++ show (totalQuestions core)
+                        ++ " "
                 )
             $ padAll 1
-            $ case mQuestion of
-                Nothing -> str "No question"
-                Just q -> txtWrap (text q)
+            $ txtWrap (text q)
 
     answersPanel =
         withBorderStyle unicode $
             borderWithLabel (str " Answers ") $
                 padAll 1 $
-                    case mQuestion of
-                        Nothing -> str "No answers"
-                        Just q ->
-                            let result = evalAnswer q (s ^. selectedAnswers)
-                             in vBox $ zipWith (drawAnswer s result) [0 ..] (answerChoices q)
+                    vBox $
+                        zipWith drawAnswer [0 ..] (answerChoices q)
 
     statusBar =
         padLeftRight 1 $
             vLimitPercent 10 $
                 hBox
-                    [ str $ "Score: " ++ show (s ^. score) ++ "/" ++ show (totalQuestions s)
-                    , str $ "  Time: " ++ formatTime (s ^. elapsedSeconds)
+                    [ str $ "Score: " ++ show (core ^. score) ++ "/" ++ show (totalQuestions core)
+                    , str $ "  Time: " ++ formatTime (core ^. elapsedSeconds)
                     , fill ' '
-                    , case s ^. phase of
-                        Answering ->
-                            clickable SubmitButton $
-                                withAttr submitAttr $
-                                    str " [Enter] Submit "
-                        Reviewing ->
-                            clickable NextButton $
-                                withAttr nextAttr $
-                                    str " [Enter] Next "
-                        Finished -> str ""
+                    , statusButton
                     , fill ' '
                     , str "[q] Quit  [Space] Toggle  [Arrow Keys] Navigate"
                     ]
 
-drawAnswer :: AppState -> AnswerResult -> Int -> Text -> Widget Name
-drawAnswer s result idx answerText =
+drawAnswerAnswering :: ActivePhase AnsweringData -> Int -> Text -> Widget Name
+drawAnswerAnswering ap idx answerText =
     clickable (AnswerChoice idx) $
         padBottom (Pad 1) $
             applyFocus $
-                hBox [checkbox, str " ", answerWidget]
+                hBox [checkbox, str " ", wrappedText]
   where
-    selected = IS.member idx (s ^. selectedAnswers)
-    focused = s ^. focusedAnswer == idx && s ^. phase == Answering
+    selected = IS.member idx (ap ^. phaseData . selectedAnswers)
+    focused = ap ^. phaseData . focusedAnswer == idx
+
+    applyFocus w = if focused then withAttr focusedAttr w else w
+    wrappedText = txtWrap answerText
+    checkbox =
+        if selected
+            then withAttr selectedAttr $ str "[X]"
+            else str "[ ]"
+
+drawAnswerReviewing :: ActivePhase ReviewingData -> Int -> Text -> Widget Name
+drawAnswerReviewing ap idx answerText =
+    clickable (AnswerChoice idx) $
+        padBottom (Pad 1) $
+            hBox [checkbox, str " ", answerWidget]
+  where
+    result = ap ^. phaseData . answerResult
     isCorrectSelection = IS.member idx (correct result)
     isMissed = IS.member idx (missing result)
     isWrong = IS.member idx (wrong result)
 
-    applyFocus w = if focused then withAttr focusedAttr w else w
-
     wrappedText = txtWrap answerText
 
-    checkbox = case s ^. phase of
-        Answering ->
-            if selected
-                then withAttr selectedAttr $ str "[X]"
-                else str "[ ]"
-        Reviewing
-            | isCorrectSelection -> withAttr correctAttr $ str "[+]"
-            | isMissed -> withAttr missedAttr $ str "[O]"
-            | isWrong -> withAttr wrongAttr $ str "[X]"
-            | otherwise -> str "[ ]"
-        Finished -> str "[ ]"
+    checkbox
+        | isCorrectSelection = withAttr correctAttr $ str "[+]"
+        | isMissed = withAttr missedAttr $ str "[O]"
+        | isWrong = withAttr wrongAttr $ str "[X]"
+        | otherwise = str "[ ]"
 
-    answerWidget = case s ^. phase of
-        Reviewing
-            | isCorrectSelection -> withAttr correctAttr wrappedText
-            | isMissed -> withAttr missedAttr wrappedText
-            | isWrong -> withAttr wrongAttr wrappedText
-            | otherwise -> wrappedText
-        _ -> wrappedText
+    answerWidget
+        | isCorrectSelection = withAttr correctAttr wrappedText
+        | isMissed = withAttr missedAttr wrappedText
+        | isWrong = withAttr wrongAttr wrappedText
+        | otherwise = wrappedText
+
+drawStatusAnswering :: Widget Name
+drawStatusAnswering =
+    clickable SubmitButton $
+        withAttr submitAttr $
+            str " [Enter] Submit "
+
+drawStatusReviewing :: Widget Name
+drawStatusReviewing =
+    clickable NextButton $
+        withAttr nextAttr $
+            str " [Enter] Next "

@@ -1,8 +1,12 @@
 module EventSpec (spec) where
 
 import Data.IntSet qualified as IS
+import Data.Vector qualified as V
+import Generators (mkQuestion)
+import Lens.Micro ((^.))
+import State
+import TUI.Event (moveFocusPure, nextQuestion, submitAnswer, toggleAnswerPure)
 import Test.Hspec
-import TUI.Event (moveFocusPure, toggleAnswerPure)
 
 spec :: Spec
 spec = do
@@ -32,3 +36,82 @@ spec = do
             moveFocusPure 1 0 (-1) `shouldBe` 0
         it "handles single answer" $
             moveFocusPure 1 0 1 `shouldBe` 0
+
+    describe "submitAnswer" $ do
+        let q1 = mkQuestion "Q1" ["A", "B", "C"] [0] Nothing
+            q2 = mkQuestion "Q2" ["X", "Y"] [1] Nothing
+            mkAnswering qs idx sel =
+                ActivePhase
+                    { _activeCore =
+                        ExamCore
+                            { _questions = V.fromList qs
+                            , _currentIndex = idx
+                            , _score = 0
+                            , _elapsedSeconds = 0
+                            }
+                    , _activeQuestion = qs !! idx
+                    , _phaseData =
+                        AnsweringData
+                            { _selectedAnswers = sel
+                            , _focusedAnswer = 0
+                            }
+                    }
+        it "transitions to Reviewing" $
+            case submitAnswer (mkAnswering [q1, q2] 0 (IS.fromList [0])) of
+                Reviewing _ -> True
+                _ -> False
+                `shouldBe` True
+        it "increments score for correct answer" $
+            case submitAnswer (mkAnswering [q1, q2] 0 (IS.fromList [0])) of
+                Reviewing ap -> ap ^. activeCore . score `shouldBe` 1
+                _ -> expectationFailure "expected Reviewing"
+        it "does not increment score for wrong answer" $
+            case submitAnswer (mkAnswering [q1, q2] 0 (IS.fromList [1])) of
+                Reviewing ap -> ap ^. activeCore . score `shouldBe` 0
+                _ -> expectationFailure "expected Reviewing"
+
+    describe "nextQuestion" $ do
+        let q1 = mkQuestion "Q1" ["A", "B", "C"] [0] Nothing
+            q2 = mkQuestion "Q2" ["X", "Y"] [1] Nothing
+            mkReviewing qs idx scr =
+                ActivePhase
+                    { _activeCore =
+                        ExamCore
+                            { _questions = V.fromList qs
+                            , _currentIndex = idx
+                            , _score = scr
+                            , _elapsedSeconds = 42
+                            }
+                    , _activeQuestion = qs !! idx
+                    , _phaseData =
+                        ReviewingData
+                            { _answerResult = undefined
+                            , _lastSelected = IS.empty
+                            }
+                    }
+        it "transitions to Answering when more questions remain" $
+            case nextQuestion (mkReviewing [q1, q2] 0 1) of
+                Answering _ -> True
+                _ -> False
+                `shouldBe` True
+        it "advances currentIndex" $
+            case nextQuestion (mkReviewing [q1, q2] 0 1) of
+                Answering ap -> ap ^. activeCore . currentIndex `shouldBe` 1
+                _ -> expectationFailure "expected Answering"
+        it "resets selectedAnswers" $
+            case nextQuestion (mkReviewing [q1, q2] 0 1) of
+                Answering ap -> ap ^. phaseData . selectedAnswers `shouldBe` IS.empty
+                _ -> expectationFailure "expected Answering"
+        it "transitions to Finished on last question" $
+            case nextQuestion (mkReviewing [q1, q2] 1 2) of
+                Finished _ -> True
+                _ -> False
+                `shouldBe` True
+        it "carries score into Finished" $
+            case nextQuestion (mkReviewing [q1, q2] 1 2) of
+                Finished fs -> fs ^. finalScore `shouldBe` 2
+                _ -> expectationFailure "expected Finished"
+        it "carries elapsed time into Finished" $
+            case nextQuestion (mkReviewing [q1, q2] 1 2) of
+                Finished fs -> fs ^. finalElapsed `shouldBe` 42
+                _ -> expectationFailure "expected Finished"

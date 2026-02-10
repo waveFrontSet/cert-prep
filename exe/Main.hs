@@ -4,16 +4,17 @@ import Brick
 import Brick.BChan (newBChan, writeBChan)
 import CLI (CLIOptions (..), parseCLIOpts)
 import Control.Concurrent (forkIO, threadDelay)
-import Control.Monad (forever, void, when)
+import Control.Monad (forever, void)
 import Data.Aeson (eitherDecodeStrict)
 import Data.ByteString qualified as BS
+import Data.List.NonEmpty qualified as NE
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromMaybe)
 import Graphics.Vty qualified as V
 import Graphics.Vty.CrossPlatform (mkVty)
 import Registry (loadRegistry, registerConfig)
 import Sampling (SamplingStrategy (..), sampleQuestions)
-import State (AppState, Name, initialState)
+import State (ExamPhase, Name, initialState)
 import System.Exit (exitFailure)
 import System.Random (newStdGen)
 import TUI.Attributes (theMap)
@@ -22,7 +23,7 @@ import TUI.Draw (drawUI)
 import TUI.Event (CustomEvent (..), handleEvent)
 import Types (Config (..))
 
-app :: App AppState CustomEvent Name
+app :: App ExamPhase CustomEvent Name
 app =
     App
         { appDraw = drawUI
@@ -69,9 +70,11 @@ main = do
     let sampledQuestions =
             sampleQuestions gen effectiveSize strategy allQuestions
 
-    when (null sampledQuestions) $ do
-        putStrLn "No questions found in config"
-        exitFailure
+    sampledQuestionsNE <- case NE.nonEmpty sampledQuestions of
+        Nothing -> do
+            putStrLn "No questions found in config"
+            exitFailure
+        Just ne -> pure ne
 
     chan <- newBChan 10
     void $ forkIO $ forever $ do
@@ -86,4 +89,4 @@ main = do
             buildVty
             (Just chan)
             app
-            (initialState sampledQuestions)
+            (initialState sampledQuestionsNE)
