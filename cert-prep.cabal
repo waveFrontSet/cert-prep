@@ -1,4 +1,4 @@
-cabal-version: 1.12
+cabal-version: 2.0
 
 -- This file has been generated from package.yaml by hpack version 0.39.1.
 --
@@ -20,6 +20,8 @@ library
         Util
     other-modules:
         Paths_cert_prep
+    autogen-modules:
+        Paths_cert_prep
     build-depends:
         aeson,
         base <5,
@@ -37,15 +39,44 @@ library
     ghc-options: -Wall -O2
     default-language: GHC2021
 
-executable cert-prep
-    main-is: Main.hs
-    other-modules:
+library cert-prep-tui
+    exposed-modules:
         CLI
         State
         TUI.Attributes
         TUI.ConfigSelect
         TUI.Draw
         TUI.Event
+    other-modules:
+        Paths_cert_prep
+    autogen-modules:
+        Paths_cert_prep
+    hs-source-dirs:
+        app
+    default-extensions:
+        OverloadedStrings
+    ghc-options: -Wall -O2
+    build-depends:
+        base <5,
+        brick,
+        cert-prep,
+        containers,
+        microlens,
+        microlens-mtl,
+        microlens-th,
+        optparse-applicative,
+        text,
+        time,
+        vector,
+        vty,
+        vty-crossplatform
+    default-language: GHC2021
+
+executable cert-prep
+    main-is: Main.hs
+    other-modules:
+        Paths_cert_prep
+    autogen-modules:
         Paths_cert_prep
     build-depends:
         aeson,
@@ -53,19 +84,14 @@ executable cert-prep
         brick,
         bytestring,
         cert-prep,
+        cert-prep-tui,
         containers,
-        microlens,
-        microlens-mtl,
-        microlens-th,
-        optparse-applicative,
         random,
         text,
-        time,
-        vector,
         vty,
         vty-crossplatform
     hs-source-dirs:
-        app
+        exe
     default-extensions:
         OverloadedStrings
     ghc-options: -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
@@ -75,18 +101,18 @@ test-suite spec
     type: exitcode-stdio-1.0
     main-is: Spec.hs
     other-modules:
+        EventSpec
         Generators
-        TypesSpec
+        RegistrySpec
         SamplingSpec
         StateSpec
+        TypesSpec
         UtilSpec
-        EventSpec
-        RegistrySpec
-        State
-        TUI.Event
+        Paths_cert_prep
+    autogen-modules:
+        Paths_cert_prep
     hs-source-dirs:
         test
-        app
     default-extensions:
         OverloadedStrings
     ghc-options: -Wall
@@ -96,19 +122,15 @@ test-suite spec
         QuickCheck,
         aeson,
         base <5,
-        brick,
         bytestring,
         cert-prep,
+        cert-prep-tui,
         containers,
         directory,
         hspec,
-        microlens,
-        microlens-mtl,
-        microlens-th,
         random,
         temporary,
         text,
         time,
-        vector,
-        vty
+        vector
     default-language: GHC2021

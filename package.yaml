@@ -27,10 +27,28 @@ library:
     - random
     - time
 
+internal-libraries:
+  cert-prep-tui:
+    source-dirs: app
+    ghc-options:
+      - -Wall
+      - -O2
+    dependencies:
+      - cert-prep
+      - brick
+      - microlens
+      - microlens-mtl
+      - microlens-th
+      - optparse-applicative
+      - time
+      - vector
+      - vty
+      - vty-crossplatform
+
 executables:
   cert-prep:
     main: Main.hs
-    source-dirs: app
+    source-dirs: exe
     ghc-options:
       - -Wall
       - -O2
@@ -39,53 +57,31 @@ executables:
       - -with-rtsopts=-N
     dependencies:
       - cert-prep
+      - cert-prep-tui
       - aeson
       - brick
       - bytestring
-      - microlens
-      - microlens-mtl
-      - microlens-th
-      - optparse-applicative
       - random
-      - time
-      - vector
       - vty
       - vty-crossplatform
 
 tests:
   spec:
     main: Spec.hs
-    source-dirs:
-      - test
-      - app
+    source-dirs: test
     ghc-options:
       - -Wall
     build-tools:
       - hspec-discover
-    other-modules:
-      - Generators
-      - TypesSpec
-      - SamplingSpec
-      - StateSpec
-      - UtilSpec
-      - EventSpec
-      - RegistrySpec
-      - State
-      - TUI.Event
     dependencies:
+      - cert-prep
+      - cert-prep-tui
       - aeson
       - bytestring
-      - cert-prep
-      - containers
       - directory
       - hspec
-      - microlens
-      - microlens-mtl
-      - microlens-th
-      - brick
       - QuickCheck
       - random
       - temporary
       - time
       - vector
-      - vty
