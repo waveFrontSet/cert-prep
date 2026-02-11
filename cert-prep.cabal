@@ -16,6 +16,7 @@ library
     exposed-modules:
         Registry
         Sampling
+        Trophy
         Types
         Util
     other-modules:
@@ -47,6 +48,7 @@ library cert-prep-tui
         TUI.ConfigSelect
         TUI.Draw
         TUI.Event
+        TUI.Trophy
     other-modules:
         Paths_cert_prep
     autogen-modules:
@@ -86,6 +88,7 @@ executable cert-prep
         cert-prep,
         cert-prep-tui,
         containers,
+        directory,
         random,
         text,
         vty,
@@ -106,6 +109,7 @@ test-suite spec
         RegistrySpec
         SamplingSpec
         StateSpec
+        TrophySpec
         TypesSpec
         UtilSpec
         Paths_cert_prep

@@ -9,25 +9,28 @@ import Data.Text (Text)
 import Lens.Micro ((^.))
 import State
 import TUI.Attributes
+import TUI.Trophy (drawTrophyAwarded)
 import Types (AnswerResult (..), Question (..))
 import Util (formatTime)
 
-drawUI :: ExamPhase -> [Widget Name]
-drawUI (Finished fs) = [drawFinished fs]
-drawUI (Answering ap) =
-    [ drawExam
-        (ap ^. activeCore)
-        (ap ^. activeQuestion)
-        (drawAnswerAnswering ap)
-        drawStatusAnswering
-    ]
-drawUI (Reviewing ap) =
-    [ drawExam
-        (ap ^. activeCore)
-        (ap ^. activeQuestion)
-        (drawAnswerReviewing ap)
-        drawStatusReviewing
-    ]
+drawUI :: AppState -> [Widget Name]
+drawUI appState = case appState ^. examPhase of
+    Finished fs -> [drawFinished fs]
+    Answering ap ->
+        [ drawExam
+            (ap ^. activeCore)
+            (ap ^. activeQuestion)
+            (drawAnswerAnswering ap)
+            drawStatusAnswering
+        ]
+    Reviewing ap ->
+        [ drawExam
+            (ap ^. activeCore)
+            (ap ^. activeQuestion)
+            (drawAnswerReviewing ap)
+            drawStatusReviewing
+        ]
+    TrophyAwarded tad -> [drawTrophyAwarded tad]
 
 drawFinished :: FinishedState -> Widget Name
 drawFinished fs =

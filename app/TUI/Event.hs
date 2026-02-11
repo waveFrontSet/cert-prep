@@ -5,29 +5,43 @@ module TUI.Event (
     nextQuestion,
     toggleAnswerPure,
     moveFocusPure,
+    totalAnimFrames,
 ) where
 
 import Brick
+import Control.Monad.IO.Class (liftIO)
 import Data.IntSet (IntSet)
 import Data.IntSet qualified as IS
+import Data.Set qualified as Set
 import Data.Vector qualified as Vec
 import Graphics.Vty qualified as V
 import Lens.Micro ((%~), (&), (.~), (^.))
+import Lens.Micro.Mtl (use, (%=), (.=))
 import State
+import Trophy (
+    TrophyDef (..),
+    checkAfterSubmit,
+    checkAtFinish,
+    saveEarnedTrophies,
+ )
 import Types (Question (..), evalAnswer, isCorrect)
 
 data CustomEvent = Tick
 
-handleEvent :: BrickEvent Name CustomEvent -> EventM Name ExamPhase ()
+totalAnimFrames :: Int
+totalAnimFrames = 5
+
+handleEvent :: BrickEvent Name CustomEvent -> EventM Name AppState ()
 handleEvent (VtyEvent (V.EvKey key [])) = case key of
     V.KEsc -> halt
     V.KChar 'q' -> halt
     V.KChar 'Q' -> halt
     V.KEnter -> do
-        s <- get
-        case s of
-            Answering ap -> put (submitAnswer ap)
-            Reviewing ap -> put (nextQuestion ap)
+        phase <- use examPhase
+        case phase of
+            Answering ap -> handleSubmit ap
+            Reviewing ap -> handleNextQuestion ap
+            TrophyAwarded tad -> handleTrophyDismiss tad
             Finished _ -> halt
     V.KUp -> modifyAnswering (moveFocus (-1))
     V.KChar 'k' -> modifyAnswering (moveFocus (-1))
@@ -39,26 +53,138 @@ handleEvent (MouseDown (AnswerChoice idx) _ _ _) =
     modifyAnswering $ \ap ->
         ap & phaseData . selectedAnswers %~ toggleAnswerPure idx
 handleEvent (MouseDown SubmitButton _ _ _) = do
-    s <- get
-    case s of
-        Answering ap -> put (submitAnswer ap)
+    phase <- use examPhase
+    case phase of
+        Answering ap -> handleSubmit ap
         _ -> return ()
 handleEvent (MouseDown NextButton _ _ _) = do
-    s <- get
-    case s of
-        Reviewing ap -> put (nextQuestion ap)
+    phase <- use examPhase
+    case phase of
+        Reviewing ap -> handleNextQuestion ap
         _ -> return ()
-handleEvent (AppEvent Tick) =
-    modify $ overActiveCore (elapsedSeconds %~ (+ 1))
+handleEvent (AppEvent Tick) = do
+    phase <- use examPhase
+    case phase of
+        TrophyAwarded tad -> handleTrophyTick tad
+        _ -> examPhase %= overActiveCore (elapsedSeconds %~ (+ 1))
 handleEvent _ = return ()
+
+handleSubmit :: ActivePhase AnsweringData -> EventM Name AppState ()
+handleSubmit ap = do
+    let q = ap ^. activeQuestion
+        userAnswer = ap ^. phaseData . selectedAnswers
+        core = ap ^. activeCore
+        wasCorrect = isCorrect q userAnswer
+        newCore =
+            if wasCorrect
+                then core & score %~ (+ 1)
+                else core
+        questionTime = (core ^. elapsedSeconds) - (core ^. questionStartTime)
+
+    oldStreak <- use currentStreak
+    let newStreak = if wasCorrect then oldStreak + 1 else 0
+    currentStreak .= newStreak
+
+    earned <- use earnedTrophies
+    let newTrophies = checkAfterSubmit wasCorrect newStreak questionTime earned
+
+    let reviewPhase =
+            Reviewing
+                ActivePhase
+                    { _activeCore = newCore
+                    , _activeQuestion = q
+                    , _phaseData =
+                        ReviewingData
+                            { _answerResult = evalAnswer q userAnswer
+                            , _lastSelected = userAnswer
+                            }
+                    }
+
+    case newTrophies of
+        [] -> examPhase .= reviewPhase
+        (t : ts) -> do
+            let trophyIds = Set.fromList (map trophyDefId newTrophies)
+            earnedTrophies %= Set.union trophyIds
+            newEarned <- use earnedTrophies
+            cp <- use configPath
+            liftIO $ saveEarnedTrophies cp newEarned
+            examPhase
+                .= TrophyAwarded
+                    TrophyAwardedData
+                        { _awardedTrophy = t
+                        , _animationFrame = 0
+                        , _pendingTrophies = ts
+                        , _returnPhase = reviewPhase
+                        }
+
+handleNextQuestion :: ActivePhase ReviewingData -> EventM Name AppState ()
+handleNextQuestion ap = do
+    let nextPhase = nextQuestion ap
+    case nextPhase of
+        Finished fs -> do
+            earned <- use earnedTrophies
+            let finishTrophies =
+                    checkAtFinish (fs ^. finalScore) (fs ^. finalTotal) earned
+            case finishTrophies of
+                [] -> examPhase .= Finished fs
+                (t : ts) -> do
+                    let trophyIds =
+                            Set.fromList (map trophyDefId finishTrophies)
+                    earnedTrophies %= Set.union trophyIds
+                    newEarned <- use earnedTrophies
+                    cp <- use configPath
+                    liftIO $ saveEarnedTrophies cp newEarned
+                    examPhase
+                        .= TrophyAwarded
+                            TrophyAwardedData
+                                { _awardedTrophy = t
+                                , _animationFrame = 0
+                                , _pendingTrophies = ts
+                                , _returnPhase = Finished fs
+                                }
+        Answering newAp -> do
+            let core = newAp ^. activeCore
+                updatedCore = core & questionStartTime .~ (core ^. elapsedSeconds)
+            examPhase .= Answering (newAp & activeCore .~ updatedCore)
+        _ -> examPhase .= nextPhase
+
+handleTrophyDismiss :: TrophyAwardedData -> EventM Name AppState ()
+handleTrophyDismiss tad = case tad ^. pendingTrophies of
+    (t : ts) ->
+        examPhase
+            .= TrophyAwarded
+                TrophyAwardedData
+                    { _awardedTrophy = t
+                    , _animationFrame = 0
+                    , _pendingTrophies = ts
+                    , _returnPhase = tad ^. returnPhase
+                    }
+    [] -> do
+        let rp = tad ^. returnPhase
+        examPhase .= rp
+        -- If returning to Answering, reset questionStartTime
+        case rp of
+            Answering newAp -> do
+                let core = newAp ^. activeCore
+                    updatedCore =
+                        core & questionStartTime .~ (core ^. elapsedSeconds)
+                examPhase .= Answering (newAp & activeCore .~ updatedCore)
+            _ -> return ()
+
+handleTrophyTick :: TrophyAwardedData -> EventM Name AppState ()
+handleTrophyTick tad = do
+    let newFrame = tad ^. animationFrame + 1
+    if newFrame >= totalAnimFrames
+        then handleTrophyDismiss tad
+        else examPhase .= TrophyAwarded (tad & animationFrame .~ newFrame)
 
 modifyAnswering ::
     (ActivePhase AnsweringData -> ActivePhase AnsweringData) ->
-    EventM Name ExamPhase ()
+    EventM Name AppState ()
 modifyAnswering f = do
-    s <- get
-    case s of
-        Answering ap -> put (Answering (f ap))
+    phase <- use examPhase
+    case phase of
+        Answering ap -> examPhase .= Answering (f ap)
         _ -> return ()
 
 toggleSelected :: ActivePhase AnsweringData -> ActivePhase AnsweringData

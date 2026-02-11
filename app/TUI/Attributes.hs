@@ -6,6 +6,9 @@ module TUI.Attributes (
     submitAttr,
     nextAttr,
     focusedAttr,
+    trophyTitleAttr,
+    trophyIconAttr,
+    trophySparkleAttr,
     theMap,
 )
 where
@@ -19,7 +22,10 @@ selectedAttr
     , missedAttr
     , submitAttr
     , nextAttr
-    , focusedAttr ::
+    , focusedAttr
+    , trophyTitleAttr
+    , trophyIconAttr
+    , trophySparkleAttr ::
         AttrName
 selectedAttr = attrName "selected"
 correctAttr = attrName "correct"
@@ -28,6 +34,9 @@ missedAttr = attrName "missed"
 submitAttr = attrName "submit"
 nextAttr = attrName "next"
 focusedAttr = attrName "focused"
+trophyTitleAttr = attrName "trophyTitle"
+trophyIconAttr = attrName "trophyIcon"
+trophySparkleAttr = attrName "trophySparkle"
 
 theMap :: AttrMap
 theMap =
@@ -40,4 +49,7 @@ theMap =
         , (submitAttr, V.black `on` V.yellow)
         , (nextAttr, V.black `on` V.cyan)
         , (focusedAttr, V.defAttr `V.withStyle` V.reverseVideo)
+        , (trophyTitleAttr, fg V.yellow `V.withStyle` V.bold)
+        , (trophyIconAttr, fg V.cyan `V.withStyle` V.bold)
+        , (trophySparkleAttr, fg V.magenta `V.withStyle` V.bold)
         ]

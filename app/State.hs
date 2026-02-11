@@ -8,11 +8,14 @@ module State (
     ReviewingData (..),
     ActivePhase (..),
     FinishedState (..),
+    TrophyAwardedData (..),
     ExamPhase (..),
+    AppState (..),
     questions,
     currentIndex,
     score,
     elapsedSeconds,
+    questionStartTime,
     selectedAnswers,
     focusedAnswer,
     activeCore,
@@ -23,6 +26,14 @@ module State (
     finalScore,
     finalTotal,
     finalElapsed,
+    awardedTrophy,
+    animationFrame,
+    pendingTrophies,
+    returnPhase,
+    examPhase,
+    currentStreak,
+    earnedTrophies,
+    configPath,
     overActiveCore,
     finishExam,
     totalQuestions,
@@ -37,12 +48,14 @@ import Data.Vector (Vector)
 import Data.Vector qualified as V
 import Lens.Micro ((%~), (&), (^.))
 import Lens.Micro.TH (makeLenses)
+import Trophy (EarnedTrophies, TrophyDef)
 import Types (AnswerResult, Question)
 
 data Name
     = AnswerChoice Int
     | SubmitButton
     | NextButton
+    | TrophyDismiss
     deriving (Show, Eq, Ord)
 
 data ExamCore = ExamCore
@@ -50,6 +63,7 @@ data ExamCore = ExamCore
     , _currentIndex :: Int
     , _score :: Int
     , _elapsedSeconds :: Int
+    , _questionStartTime :: Int
     }
     deriving (Show)
 
@@ -89,11 +103,35 @@ data FinishedState = FinishedState
 
 makeLenses ''FinishedState
 
+-- TrophyAwardedData and ExamPhase are mutually recursive,
+-- so they must be in the same TH splice group.
+
+data TrophyAwardedData = TrophyAwardedData
+    { _awardedTrophy :: TrophyDef
+    , _animationFrame :: Int
+    , _pendingTrophies :: [TrophyDef]
+    , _returnPhase :: ExamPhase
+    }
+    deriving (Show)
+
 data ExamPhase
     = Answering (ActivePhase AnsweringData)
     | Reviewing (ActivePhase ReviewingData)
+    | TrophyAwarded TrophyAwardedData
     | Finished FinishedState
     deriving (Show)
+
+makeLenses ''TrophyAwardedData
+
+data AppState = AppState
+    { _examPhase :: ExamPhase
+    , _currentStreak :: Int
+    , _earnedTrophies :: EarnedTrophies
+    , _configPath :: FilePath
+    }
+    deriving (Show)
+
+makeLenses ''AppState
 
 overActiveCore :: (ExamCore -> ExamCore) -> ExamPhase -> ExamPhase
 overActiveCore f (Answering ap) = Answering (ap & activeCore %~ f)
@@ -111,18 +149,24 @@ finishExam c =
 totalQuestions :: ExamCore -> Int
 totalQuestions c = V.length (c ^. questions)
 
-initialState :: NonEmpty Question -> ExamPhase
-initialState (q :| qs) =
-    Answering
-        ActivePhase
-            { _activeCore = core
-            , _activeQuestion = q
-            , _phaseData =
-                AnsweringData
-                    { _selectedAnswers = IS.empty
-                    , _focusedAnswer = 0
+initialState :: NonEmpty Question -> FilePath -> EarnedTrophies -> AppState
+initialState (q :| qs) cfgPath earned =
+    AppState
+        { _examPhase =
+            Answering
+                ActivePhase
+                    { _activeCore = core
+                    , _activeQuestion = q
+                    , _phaseData =
+                        AnsweringData
+                            { _selectedAnswers = IS.empty
+                            , _focusedAnswer = 0
+                            }
                     }
-            }
+        , _currentStreak = 0
+        , _earnedTrophies = earned
+        , _configPath = cfgPath
+        }
   where
     core =
         ExamCore
@@ -130,4 +174,5 @@ initialState (q :| qs) =
             , _currentIndex = 0
             , _score = 0
             , _elapsedSeconds = 0
+            , _questionStartTime = 0
             }

@@ -14,16 +14,18 @@ import Graphics.Vty qualified as V
 import Graphics.Vty.CrossPlatform (mkVty)
 import Registry (loadRegistry, registerConfig)
 import Sampling (SamplingStrategy (..), sampleQuestions)
-import State (ExamPhase, Name, initialState)
+import State (AppState, Name, initialState)
+import System.Directory (canonicalizePath)
 import System.Exit (exitFailure)
 import System.Random (newStdGen)
 import TUI.Attributes (theMap)
 import TUI.ConfigSelect (selectConfig)
 import TUI.Draw (drawUI)
 import TUI.Event (CustomEvent (..), handleEvent)
+import Trophy (loadEarnedTrophies)
 import Types (Config (..))
 
-app :: App ExamPhase CustomEvent Name
+app :: App AppState CustomEvent Name
 app =
     App
         { appDraw = drawUI
@@ -59,6 +61,9 @@ main = do
 
     registerConfig configPath (title config)
 
+    canonPath <- canonicalizePath configPath
+    earned <- loadEarnedTrophies canonPath
+
     let sampleSize = fromMaybe (sampleAmount config) (cliSampleAmount opts)
         strategy = case cliWeights opts of
             [] -> maybe Uniform Stratified $ categoryWeights config
@@ -89,4 +94,4 @@ main = do
             buildVty
             (Just chan)
             app
-            (initialState sampledQuestionsNE)
+            (initialState sampledQuestionsNE canonPath earned)

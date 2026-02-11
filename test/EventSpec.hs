@@ -48,6 +48,7 @@ spec = do
                             , _currentIndex = idx
                             , _score = 0
                             , _elapsedSeconds = 0
+                            , _questionStartTime = 0
                             }
                     , _activeQuestion = qs !! idx
                     , _phaseData =
@@ -81,6 +82,7 @@ spec = do
                             , _currentIndex = idx
                             , _score = scr
                             , _elapsedSeconds = 42
+                            , _questionStartTime = 0
                             }
                     , _activeQuestion = qs !! idx
                     , _phaseData =

@@ -61,6 +61,7 @@ executables:
       - aeson
       - brick
       - bytestring
+      - directory
       - random
       - vty
       - vty-crossplatform
