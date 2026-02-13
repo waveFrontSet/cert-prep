@@ -6,14 +6,16 @@ import Brick.Widgets.Border.Style
 import Brick.Widgets.Center
 import Data.IntSet qualified as IS
 import Data.Text (Text)
+import Data.Text qualified as T
 import Lens.Micro ((^.))
 import State
 import TUI.Attributes
-import Types (AnswerResult (..), Question (..))
+import Types (AnswerResult (..), Question (..), Trophy (..), TrophyIcon (..))
 import Util (formatTime)
 
 drawUI :: ExamPhase -> [Widget Name]
 drawUI (Finished fs) = [drawFinished fs]
+drawUI (TrophyReveal ap) = [drawTrophyReveal ap]
 drawUI (Answering ap) =
     [ drawExam
         (ap ^. activeCore)
@@ -157,3 +159,76 @@ drawStatusReviewing =
     clickable NextButton $
         withAttr nextAttr $
             str " [Enter] Next "
+
+drawTrophyReveal :: ActivePhase TrophyData -> Widget Name
+drawTrophyReveal ap =
+    let trophy = ap ^. phaseData . trophyToShow
+        frame = ap ^. phaseData . trophyAnimationFrame
+        scale = if frame `mod` 4 < 2 then 2 else 3
+     in withBorderStyle unicode $
+            borderWithLabel (str " Trophy Achieved ") $
+                center $
+                    vBox
+                        [ str ""
+                        , hCenter $ withAttr trophyTitleAttr $ str "TROPHY UNLOCKED"
+                        , str ""
+                        , hCenter $ drawPixelArt scale (trophyIconGrid (trophyIcon trophy))
+                        , str ""
+                        , hCenter $ withAttr trophyTitleAttr $ txt $ "Trophy achieved: " <> trophyName trophy
+                        , str ""
+                        , hCenter $ str "Press [Enter] to continue"
+                        , str ""
+                        ]
+
+trophyIconGrid :: TrophyIcon -> [Text]
+trophyIconGrid PixelRocket =
+    [ "..AA.."
+    , ".ABBA."
+    , ".ABBA."
+    , ".ACCA."
+    , "ADCCDA"
+    , "..DD.."
+    ]
+trophyIconGrid PixelFire =
+    [ "..AA.."
+    , ".ABBA."
+    , ".BCCA."
+    , ".CCCA."
+    , "..DD.."
+    , "..DD.."
+    ]
+trophyIconGrid PixelCrown =
+    [ "A....A"
+    , "AB..BA"
+    , "ABCCBA"
+    , "ABCCBA"
+    , "ADDDDA"
+    , "......"
+    ]
+trophyIconGrid PixelBolt =
+    [ "..AA.."
+    , ".AAB.."
+    , "..BA.."
+    , ".BA..."
+    , ".AB..."
+    , "..BB.."
+    ]
+
+drawPixelArt :: Int -> [Text] -> Widget Name
+drawPixelArt scale rows =
+    vBox $
+        concatMap (replicate scale . drawPixelRow scale) rows
+
+drawPixelRow :: Int -> Text -> Widget Name
+drawPixelRow scale row =
+    hBox $
+        concatMap (\c -> replicate scale (drawPixel c)) (T.unpack row)
+
+drawPixel :: Char -> Widget Name
+drawPixel c =
+    case c of
+        'A' -> withAttr trophyPixelGoldAttr $ str "  "
+        'B' -> withAttr trophyPixelRedAttr $ str "  "
+        'C' -> withAttr trophyPixelBlueAttr $ str "  "
+        'D' -> withAttr trophyPixelCyanAttr $ str "  "
+        _ -> str "  "

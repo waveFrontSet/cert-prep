@@ -1,12 +1,14 @@
 module EventSpec (spec) where
 
 import Data.IntSet qualified as IS
+import Data.Set qualified as Set
 import Data.Vector qualified as V
 import Generators (mkQuestion)
 import Lens.Micro ((^.))
 import State
-import TUI.Event (moveFocusPure, nextQuestion, submitAnswer, toggleAnswerPure)
+import TUI.Event (continueFromTrophy, moveFocusPure, nextQuestion, submitAnswer, toggleAnswerPure)
 import Test.Hspec
+import Types (Trophy (..), TrophyCondition (..), TrophyIcon (..))
 
 spec :: Spec
 spec = do
@@ -48,6 +50,10 @@ spec = do
                             , _currentIndex = idx
                             , _score = 0
                             , _elapsedSeconds = 0
+                            , _questionStartedAt = 0
+                            , _correctStreak = 0
+                            , _unlockedTrophyIds = Set.empty
+                            , _availableTrophies = []
                             }
                     , _activeQuestion = qs !! idx
                     , _phaseData =
@@ -81,12 +87,17 @@ spec = do
                             , _currentIndex = idx
                             , _score = scr
                             , _elapsedSeconds = 42
+                            , _questionStartedAt = 41
+                            , _correctStreak = 0
+                            , _unlockedTrophyIds = Set.empty
+                            , _availableTrophies = []
                             }
                     , _activeQuestion = qs !! idx
                     , _phaseData =
                         ReviewingData
                             { _answerResult = undefined
                             , _lastSelected = IS.empty
+                            , _newlyUnlocked = []
                             }
                     }
         it "transitions to Answering when more questions remain" $
@@ -115,3 +126,48 @@ spec = do
             case nextQuestion (mkReviewing [q1, q2] 1 2) of
                 Finished fs -> fs ^. finalElapsed `shouldBe` 42
                 _ -> expectationFailure "expected Finished"
+
+    describe "trophy transitions" $ do
+        let q1 = mkQuestion "Q1" ["A", "B", "C"] [0] Nothing
+            coreWithQuestion =
+                ExamCore
+                    { _questions = V.fromList [q1]
+                    , _currentIndex = 0
+                    , _score = 1
+                    , _elapsedSeconds = 3
+                    , _questionStartedAt = 0
+                    , _correctStreak = 1
+                    , _unlockedTrophyIds = Set.empty
+                    , _availableTrophies = []
+                    }
+            unlocked =
+                Trophy
+                    { trophyId = "one-and-done"
+                    , trophyName = "One and Done"
+                    , trophyCondition = TotalCorrectAtLeast 1
+                    , trophyIcon = PixelRocket
+                    }
+            reviewingWithUnlock =
+                ActivePhase
+                    { _activeCore = coreWithQuestion
+                    , _activeQuestion = q1
+                    , _phaseData =
+                        ReviewingData
+                            { _answerResult = undefined
+                            , _lastSelected = IS.empty
+                            , _newlyUnlocked = [unlocked]
+                            }
+                    }
+        it "goes to TrophyReveal when review has unlocked trophies" $
+            case nextQuestion reviewingWithUnlock of
+                TrophyReveal _ -> True
+                _ -> False
+                `shouldBe` True
+        it "continues from TrophyReveal to Finished when no remaining trophies and no questions remain" $
+            case nextQuestion reviewingWithUnlock of
+                TrophyReveal tap ->
+                    case continueFromTrophy tap of
+                        Finished _ -> True
+                        _ -> False
+                        `shouldBe` True
+                _ -> expectationFailure "expected TrophyReveal"

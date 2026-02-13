@@ -6,6 +6,11 @@ module TUI.Attributes (
     submitAttr,
     nextAttr,
     focusedAttr,
+    trophyTitleAttr,
+    trophyPixelGoldAttr,
+    trophyPixelRedAttr,
+    trophyPixelBlueAttr,
+    trophyPixelCyanAttr,
     theMap,
 )
 where
@@ -19,7 +24,12 @@ selectedAttr
     , missedAttr
     , submitAttr
     , nextAttr
-    , focusedAttr ::
+    , focusedAttr
+    , trophyTitleAttr
+    , trophyPixelGoldAttr
+    , trophyPixelRedAttr
+    , trophyPixelBlueAttr
+    , trophyPixelCyanAttr ::
         AttrName
 selectedAttr = attrName "selected"
 correctAttr = attrName "correct"
@@ -28,6 +38,11 @@ missedAttr = attrName "missed"
 submitAttr = attrName "submit"
 nextAttr = attrName "next"
 focusedAttr = attrName "focused"
+trophyTitleAttr = attrName "trophyTitle"
+trophyPixelGoldAttr = attrName "trophyPixelGold"
+trophyPixelRedAttr = attrName "trophyPixelRed"
+trophyPixelBlueAttr = attrName "trophyPixelBlue"
+trophyPixelCyanAttr = attrName "trophyPixelCyan"
 
 theMap :: AttrMap
 theMap =
@@ -40,4 +55,9 @@ theMap =
         , (submitAttr, V.black `on` V.yellow)
         , (nextAttr, V.black `on` V.cyan)
         , (focusedAttr, V.defAttr `V.withStyle` V.reverseVideo)
+        , (trophyTitleAttr, fg V.yellow `V.withStyle` V.bold)
+        , (trophyPixelGoldAttr, V.black `on` V.yellow)
+        , (trophyPixelRedAttr, V.black `on` V.red)
+        , (trophyPixelBlueAttr, V.black `on` V.blue)
+        , (trophyPixelCyanAttr, V.black `on` V.cyan)
         ]

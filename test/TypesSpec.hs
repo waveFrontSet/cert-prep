@@ -65,6 +65,14 @@ spec = do
                 Just c -> do
                     sampleAmount c `shouldBe` 5
                     categoryWeights c `shouldBe` Nothing
+                    trophies c `shouldBe` Nothing
+        it "parses config with trophies" $ do
+            let raw =
+                    "{\"title\":\"Test\",\"questions\":[],\"sampleAmount\":5,\"trophies\":[{\"trophyId\":\"streak-3\",\"trophyName\":\"Threepeater Supreme\",\"trophyCondition\":{\"tag\":\"CorrectStreakAtLeast\",\"contents\":3},\"trophyIcon\":\"PixelFire\"}]}"
+            case decode raw :: Maybe Config of
+                Nothing -> expectationFailure "Failed to parse config with trophies"
+                Just c ->
+                    trophies c `shouldSatisfy` maybe False (not . null)
         it "rejects config missing required fields" $ do
             let noQuestions = "{\"title\":\"T\",\"sampleAmount\":5}"
                 noSampleAmount = "{\"title\":\"T\",\"questions\":[]}"

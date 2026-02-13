@@ -6,6 +6,7 @@ module State (
     ExamCore (..),
     AnsweringData (..),
     ReviewingData (..),
+    TrophyData (..),
     ActivePhase (..),
     FinishedState (..),
     ExamPhase (..),
@@ -13,6 +14,10 @@ module State (
     currentIndex,
     score,
     elapsedSeconds,
+    questionStartedAt,
+    correctStreak,
+    unlockedTrophyIds,
+    availableTrophies,
     selectedAnswers,
     focusedAnswer,
     activeCore,
@@ -20,6 +25,10 @@ module State (
     phaseData,
     answerResult,
     lastSelected,
+    newlyUnlocked,
+    trophyToShow,
+    trophyAnimationFrame,
+    remainingTrophies,
     finalScore,
     finalTotal,
     finalElapsed,
@@ -33,11 +42,14 @@ where
 import Data.IntSet (IntSet)
 import Data.IntSet qualified as IS
 import Data.List.NonEmpty (NonEmpty (..))
+import Data.Set (Set)
+import Data.Set qualified as Set
+import Data.Text (Text)
 import Data.Vector (Vector)
 import Data.Vector qualified as V
 import Lens.Micro ((%~), (&), (^.))
 import Lens.Micro.TH (makeLenses)
-import Types (AnswerResult, Question)
+import Types (AnswerResult, Question, Trophy)
 
 data Name
     = AnswerChoice Int
@@ -50,6 +62,10 @@ data ExamCore = ExamCore
     , _currentIndex :: Int
     , _score :: Int
     , _elapsedSeconds :: Int
+    , _questionStartedAt :: Int
+    , _correctStreak :: Int
+    , _unlockedTrophyIds :: Set Text
+    , _availableTrophies :: [Trophy]
     }
     deriving (Show)
 
@@ -66,10 +82,20 @@ makeLenses ''AnsweringData
 data ReviewingData = ReviewingData
     { _answerResult :: AnswerResult
     , _lastSelected :: IntSet
+    , _newlyUnlocked :: [Trophy]
     }
     deriving (Show)
 
 makeLenses ''ReviewingData
+
+data TrophyData = TrophyData
+    { _trophyToShow :: Trophy
+    , _trophyAnimationFrame :: Int
+    , _remainingTrophies :: [Trophy]
+    }
+    deriving (Show)
+
+makeLenses ''TrophyData
 
 data ActivePhase a = ActivePhase
     { _activeCore :: ExamCore
@@ -92,12 +118,14 @@ makeLenses ''FinishedState
 data ExamPhase
     = Answering (ActivePhase AnsweringData)
     | Reviewing (ActivePhase ReviewingData)
+    | TrophyReveal (ActivePhase TrophyData)
     | Finished FinishedState
     deriving (Show)
 
 overActiveCore :: (ExamCore -> ExamCore) -> ExamPhase -> ExamPhase
 overActiveCore f (Answering ap) = Answering (ap & activeCore %~ f)
 overActiveCore f (Reviewing ap) = Reviewing (ap & activeCore %~ f)
+overActiveCore f (TrophyReveal ap) = TrophyReveal (ap & activeCore %~ f)
 overActiveCore _ p = p
 
 finishExam :: ExamCore -> FinishedState
@@ -111,8 +139,8 @@ finishExam c =
 totalQuestions :: ExamCore -> Int
 totalQuestions c = V.length (c ^. questions)
 
-initialState :: NonEmpty Question -> ExamPhase
-initialState (q :| qs) =
+initialState :: NonEmpty Question -> [Trophy] -> ExamPhase
+initialState (q :| qs) trophies =
     Answering
         ActivePhase
             { _activeCore = core
@@ -130,4 +158,8 @@ initialState (q :| qs) =
             , _currentIndex = 0
             , _score = 0
             , _elapsedSeconds = 0
+            , _questionStartedAt = 0
+            , _correctStreak = 0
+            , _unlockedTrophyIds = Set.empty
+            , _availableTrophies = trophies
             }

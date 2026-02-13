@@ -7,6 +7,7 @@ import Generators (mkQuestion)
 import Lens.Micro ((^.))
 import State
 import Test.Hspec
+import Types (defaultTrophies)
 
 spec :: Spec
 spec = do
@@ -21,34 +22,39 @@ spec = do
 
     describe "initialState" $ do
         it "returns an Answering phase" $
-            case initialState qs of
+            case initialState qs defaultTrophies of
                 Answering _ -> True
                 _ -> False
                 `shouldBe` True
         it "sets currentIndex to 0" $
-            let ap = unwrapAnswering (initialState qs)
+            let ap = unwrapAnswering (initialState qs defaultTrophies)
              in ap ^. activeCore . currentIndex `shouldBe` 0
         it "sets selectedAnswers to empty" $
-            let ap = unwrapAnswering (initialState qs)
+            let ap = unwrapAnswering (initialState qs defaultTrophies)
              in ap ^. phaseData . selectedAnswers `shouldBe` IS.empty
         it "sets focusedAnswer to 0" $
-            let ap = unwrapAnswering (initialState qs)
+            let ap = unwrapAnswering (initialState qs defaultTrophies)
              in ap ^. phaseData . focusedAnswer `shouldBe` 0
         it "sets score to 0" $
-            let ap = unwrapAnswering (initialState qs)
+            let ap = unwrapAnswering (initialState qs defaultTrophies)
              in ap ^. activeCore . score `shouldBe` 0
         it "sets elapsedSeconds to 0" $
-            let ap = unwrapAnswering (initialState qs)
+            let ap = unwrapAnswering (initialState qs defaultTrophies)
              in ap ^. activeCore . elapsedSeconds `shouldBe` 0
         it "stores all questions" $
-            let ap = unwrapAnswering (initialState qs)
+            let ap = unwrapAnswering (initialState qs defaultTrophies)
              in ap ^. activeCore . questions `shouldBe` V.fromList [q1, q2, q3]
         it "preserves question order" $
-            let ap = unwrapAnswering (initialState (NE.fromList [q3, q1, q2]))
+            let ap =
+                    unwrapAnswering
+                        (initialState (NE.fromList [q3, q1, q2]) defaultTrophies)
              in ap ^. activeCore . questions `shouldBe` V.fromList [q3, q1, q2]
+        it "initializes available trophies from config" $
+            let ap = unwrapAnswering (initialState qs defaultTrophies)
+             in ap ^. activeCore . availableTrophies `shouldBe` defaultTrophies
 
     describe "totalQuestions" $ do
-        let ap = unwrapAnswering (initialState qs)
+        let ap = unwrapAnswering (initialState qs defaultTrophies)
             core = ap ^. activeCore
         it "returns the length of the question list" $
             totalQuestions core `shouldBe` 3

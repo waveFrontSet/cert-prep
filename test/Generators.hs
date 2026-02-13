@@ -12,7 +12,7 @@ import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Data.Text qualified as T
 import Test.QuickCheck
-import Types (Config (..), Question (..))
+import Types (Config (..), Question (..), Trophy (..), TrophyCondition (..), TrophyIcon (..))
 
 categoryPool :: [Text]
 categoryPool =
@@ -102,4 +102,29 @@ instance Arbitrary Config where
                 , questions = qs
                 , sampleAmount = n
                 , categoryWeights = weights
+                , trophies = Nothing
+                }
+
+instance Arbitrary TrophyCondition where
+    arbitrary =
+        oneof
+            [ CorrectStreakAtLeast <$> chooseInt (2, 8)
+            , TotalCorrectAtLeast <$> chooseInt (1, 20)
+            , FastCorrectAtMost <$> chooseInt (3, 20)
+            ]
+
+instance Arbitrary TrophyIcon where
+    arbitrary = elements [PixelRocket, PixelFire, PixelCrown, PixelBolt]
+
+instance Arbitrary Trophy where
+    arbitrary = do
+        suffix <- chooseInt (1, 1000)
+        condition <- arbitrary
+        icon <- arbitrary
+        pure
+            Trophy
+                { trophyId = "trophy-" <> T.pack (show suffix)
+                , trophyName = "Trophy " <> T.pack (show suffix)
+                , trophyCondition = condition
+                , trophyIcon = icon
                 }

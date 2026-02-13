@@ -21,7 +21,7 @@ import TUI.Attributes (theMap)
 import TUI.ConfigSelect (selectConfig)
 import TUI.Draw (drawUI)
 import TUI.Event (CustomEvent (..), handleEvent)
-import Types (Config (..))
+import Types (Config (..), configTrophies)
 
 app :: App ExamPhase CustomEvent Name
 app =
@@ -79,7 +79,10 @@ main = do
     chan <- newBChan 10
     void $ forkIO $ forever $ do
         threadDelay 1000000
-        writeBChan chan Tick
+        writeBChan chan SecondTick
+    void $ forkIO $ forever $ do
+        threadDelay 120000
+        writeBChan chan AnimationTick
 
     let buildVty = mkVty V.defaultConfig
     initialVty <- buildVty
@@ -89,4 +92,4 @@ main = do
             buildVty
             (Just chan)
             app
-            (initialState sampledQuestionsNE)
+            (initialState sampledQuestionsNE (configTrophies config))

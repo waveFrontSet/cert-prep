@@ -3,6 +3,7 @@ module TUI.Event (
     handleEvent,
     submitAnswer,
     nextQuestion,
+    continueFromTrophy,
     toggleAnswerPure,
     moveFocusPure,
 ) where
@@ -10,13 +11,16 @@ module TUI.Event (
 import Brick
 import Data.IntSet (IntSet)
 import Data.IntSet qualified as IS
+import Data.Set qualified as Set
 import Data.Vector qualified as Vec
 import Graphics.Vty qualified as V
 import Lens.Micro ((%~), (&), (.~), (^.))
 import State
-import Types (Question (..), evalAnswer, isCorrect)
+import Types (Question (..), Trophy (..), TrophyCondition (..), evalAnswer, isCorrect)
 
-data CustomEvent = Tick
+data CustomEvent
+    = SecondTick
+    | AnimationTick
 
 handleEvent :: BrickEvent Name CustomEvent -> EventM Name ExamPhase ()
 handleEvent (VtyEvent (V.EvKey key [])) = case key of
@@ -28,6 +32,7 @@ handleEvent (VtyEvent (V.EvKey key [])) = case key of
         case s of
             Answering ap -> put (submitAnswer ap)
             Reviewing ap -> put (nextQuestion ap)
+            TrophyReveal ap -> put (continueFromTrophy ap)
             Finished _ -> halt
     V.KUp -> modifyAnswering (moveFocus (-1))
     V.KChar 'k' -> modifyAnswering (moveFocus (-1))
@@ -47,9 +52,12 @@ handleEvent (MouseDown NextButton _ _ _) = do
     s <- get
     case s of
         Reviewing ap -> put (nextQuestion ap)
+        TrophyReveal ap -> put (continueFromTrophy ap)
         _ -> return ()
-handleEvent (AppEvent Tick) =
+handleEvent (AppEvent SecondTick) =
     modify $ overActiveCore (elapsedSeconds %~ (+ 1))
+handleEvent (AppEvent AnimationTick) =
+    modify updateAnimation
 handleEvent _ = return ()
 
 modifyAnswering ::
@@ -92,32 +100,73 @@ submitAnswer ap =
     let q = ap ^. activeQuestion
         userAnswer = ap ^. phaseData . selectedAnswers
         core = ap ^. activeCore
+        answerIsCorrect = isCorrect q userAnswer
+        responseSeconds = core ^. elapsedSeconds - core ^. questionStartedAt
         newCore =
-            if isCorrect q userAnswer
-                then core & score %~ (+ 1)
-                else core
+            core
+                & score %~ (\s -> if answerIsCorrect then s + 1 else s)
+                & correctStreak .~ if answerIsCorrect then core ^. correctStreak + 1 else 0
+        unlockedNow = unlockedTrophies newCore answerIsCorrect responseSeconds
+        unlockedIdsNow = Set.fromList (map trophyId unlockedNow)
      in Reviewing
             ActivePhase
-                { _activeCore = newCore
+                { _activeCore = newCore & unlockedTrophyIds %~ Set.union unlockedIdsNow
                 , _activeQuestion = q
                 , _phaseData =
                     ReviewingData
                         { _answerResult = evalAnswer q userAnswer
                         , _lastSelected = userAnswer
+                        , _newlyUnlocked = unlockedNow
                         }
                 }
 
 nextQuestion :: ActivePhase ReviewingData -> ExamPhase
 nextQuestion ap =
-    let core = ap ^. activeCore
-        nextIdx = core ^. currentIndex + 1
+    case ap ^. phaseData . newlyUnlocked of
+        t : ts ->
+            TrophyReveal
+                ActivePhase
+                    { _activeCore = ap ^. activeCore
+                    , _activeQuestion = ap ^. activeQuestion
+                    , _phaseData =
+                        TrophyData
+                            { _trophyToShow = t
+                            , _trophyAnimationFrame = 0
+                            , _remainingTrophies = ts
+                            }
+                    }
+        [] -> advanceToNextQuestion (ap ^. activeCore)
+
+continueFromTrophy :: ActivePhase TrophyData -> ExamPhase
+continueFromTrophy ap =
+    case ap ^. phaseData . remainingTrophies of
+        t : ts ->
+            TrophyReveal
+                ActivePhase
+                    { _activeCore = ap ^. activeCore
+                    , _activeQuestion = ap ^. activeQuestion
+                    , _phaseData =
+                        TrophyData
+                            { _trophyToShow = t
+                            , _trophyAnimationFrame = 0
+                            , _remainingTrophies = ts
+                            }
+                    }
+        [] -> advanceToNextQuestion (ap ^. activeCore)
+
+advanceToNextQuestion :: ExamCore -> ExamPhase
+advanceToNextQuestion core =
+    let nextIdx = core ^. currentIndex + 1
      in if nextIdx >= totalQuestions core
             then Finished (finishExam core)
             else
                 let nextQ = (core ^. questions) Vec.! nextIdx
                  in Answering
                         ActivePhase
-                            { _activeCore = core & currentIndex .~ nextIdx
+                            { _activeCore =
+                                core
+                                    & currentIndex .~ nextIdx
+                                    & questionStartedAt .~ (core ^. elapsedSeconds)
                             , _activeQuestion = nextQ
                             , _phaseData =
                                 AnsweringData
@@ -125,3 +174,20 @@ nextQuestion ap =
                                     , _focusedAnswer = 0
                                     }
                             }
+
+updateAnimation :: ExamPhase -> ExamPhase
+updateAnimation (TrophyReveal ap) =
+    TrophyReveal (ap & phaseData . trophyAnimationFrame %~ (\f -> (f + 1) `mod` 8))
+updateAnimation p = p
+
+unlockedTrophies :: ExamCore -> Bool -> Int -> [Trophy]
+unlockedTrophies core answerIsCorrect responseSeconds =
+    filter (\t -> Set.notMember (trophyId t) (core ^. unlockedTrophyIds))
+        $ filter (isUnlockedBy core answerIsCorrect responseSeconds) (core ^. availableTrophies)
+
+isUnlockedBy :: ExamCore -> Bool -> Int -> Trophy -> Bool
+isUnlockedBy core answerIsCorrect responseSeconds trophy =
+    case trophyCondition trophy of
+        CorrectStreakAtLeast n -> core ^. correctStreak >= n
+        TotalCorrectAtLeast n -> core ^. score >= n
+        FastCorrectAtMost n -> answerIsCorrect && responseSeconds <= n
