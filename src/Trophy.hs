@@ -1,6 +1,10 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeFamilies #-}
+
 module Trophy (
     TrophyId (..),
     TrophyDef (..),
+    TrophyState (..),
     EarnedTrophies,
     checkAfterSubmit,
     checkAtFinish,
@@ -47,7 +51,26 @@ data TrophyDef = TrophyDef
     }
     deriving (Show, Eq)
 
+data TrophyState = TrophyState
+    { currentStreak :: Int
+    , lastQuestionSeconds :: Int
+    }
+    deriving (Show, Eq)
+
+data TrophyCheckTime = WhenReviewing | WhenFinishing
+
+type family CondInput (t :: TrophyCheckTime) where
+    CondInput 'WhenReviewing = TrophyState
+    CondInput 'WhenFinishing = TrophyState
+
+data TrophyData (t :: TrophyCheckTime) = TrophyData
+    { trophyDef :: TrophyDef
+    , trophyCond :: CondInput t -> Bool
+    }
+
 -- Trophy definitions
+currentStreakGte :: Int -> TrophyState -> Bool
+currentStreakGte n ts = currentStreak ts >= n
 
 firstBloodDef :: TrophyDef
 firstBloodDef =
@@ -66,6 +89,9 @@ firstBloodDef =
             ]
         }
 
+firstBlood :: TrophyData 'WhenReviewing
+firstBlood = TrophyData{trophyDef = firstBloodDef, trophyCond = currentStreakGte 1}
+
 hatTrickDef :: TrophyDef
 hatTrickDef =
     TrophyDef
@@ -82,6 +108,9 @@ hatTrickDef =
             , "   \9608\9608\9608\9608\9608\9608   "
             ]
         }
+
+hatTrick :: TrophyData 'WhenReviewing
+hatTrick = TrophyData{trophyDef = hatTrickDef, trophyCond = currentStreakGte 3}
 
 onFireDef :: TrophyDef
 onFireDef =
@@ -100,6 +129,9 @@ onFireDef =
             ]
         }
 
+onFire :: TrophyData 'WhenReviewing
+onFire = TrophyData{trophyDef = onFireDef, trophyCond = currentStreakGte 5}
+
 speedDemonDef :: TrophyDef
 speedDemonDef =
     TrophyDef
@@ -116,6 +148,12 @@ speedDemonDef =
             , "   \9600\9608\9608\9608\9608\9600   "
             ]
         }
+
+questionSecondsLt :: Int -> TrophyState -> Bool
+questionSecondsLt n ts = lastQuestionSeconds ts < n
+
+speedDemon :: TrophyData 'WhenReviewing
+speedDemon = TrophyData{trophyDef = speedDemonDef, trophyCond = questionSecondsLt 5}
 
 flawlessVictoryDef :: TrophyDef
 flawlessVictoryDef =
@@ -169,15 +207,15 @@ marathonerDef =
         }
 
 -- | Check for trophies earned after submitting an answer.
-checkAfterSubmit ::
-    Bool -> Int -> Int -> EarnedTrophies -> [TrophyDef]
-checkAfterSubmit wasCorrect newStreak questionSeconds alreadyEarned =
-    filter (not . (`Set.member` alreadyEarned) . trophyDefId) $
-        concat
-            [ [firstBloodDef | wasCorrect]
-            , [hatTrickDef | wasCorrect, newStreak >= 3]
-            , [onFireDef | wasCorrect, newStreak >= 5]
-            , [speedDemonDef | wasCorrect, questionSeconds < 5]
+checkAfterSubmit :: Bool -> TrophyState -> [TrophyDef]
+checkAfterSubmit wasCorrect ts =
+    map trophyDef $
+        filter
+            (\t -> wasCorrect && trophyCond t ts)
+            [ firstBlood
+            , hatTrick
+            , onFire
+            , speedDemon
             ]
 
 -- | Check for trophies earned at the end of an exam.

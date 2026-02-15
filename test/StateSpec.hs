@@ -8,6 +8,7 @@ import Generators (mkQuestion)
 import Lens.Micro ((^.))
 import State
 import Test.Hspec
+import Trophy (TrophyState (..))
 
 spec :: Spec
 spec = do
@@ -53,7 +54,8 @@ spec = do
                 ap = unwrapAnswering (as' ^. examPhase)
              in ap ^. activeCore . questions `shouldBe` V.fromList [q3, q1, q2]
         it "initializes currentStreak to 0" $
-            appState0 ^. currentStreak `shouldBe` 0
+            appState0 ^. trophyState
+                `shouldBe` TrophyState{currentStreak = 0, lastQuestionSeconds = 0}
         it "stores the config path" $
             appState0 ^. configPath `shouldBe` "/test/config.json"
         it "stores earned trophies" $

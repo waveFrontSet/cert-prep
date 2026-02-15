@@ -20,9 +20,13 @@ import Lens.Micro.Mtl (use, (%=), (.=))
 import State
 import Trophy (
     TrophyDef (..),
+    TrophyState (..),
     checkAfterSubmit,
     checkAtFinish,
+    currentStreak,
+    lastQuestionSeconds,
     saveEarnedTrophies,
+    trophyDefId,
  )
 import Types (Question (..), evalAnswer, isCorrect)
 
@@ -81,12 +85,21 @@ handleSubmit ap = do
                 else core
         questionTime = (core ^. elapsedSeconds) - (core ^. questionStartTime)
 
-    oldStreak <- use currentStreak
-    let newStreak = if wasCorrect then oldStreak + 1 else 0
-    currentStreak .= newStreak
+    oldTrophyState@TrophyState{currentStreak = cs} <- use trophyState
+    let newTrophyState =
+            oldTrophyState
+                { currentStreak = if wasCorrect then cs + 1 else 0
+                , lastQuestionSeconds = questionTime
+                }
+    trophyState .= newTrophyState
 
     earned <- use earnedTrophies
-    let newTrophies = checkAfterSubmit wasCorrect newStreak questionTime earned
+    let newTrophies =
+            filter
+                (not . (`Set.member` earned) . trophyDefId)
+                $ checkAfterSubmit
+                    wasCorrect
+                    newTrophyState
 
     let reviewPhase =
             Reviewing

@@ -31,7 +31,7 @@ module State (
     pendingTrophies,
     returnPhase,
     examPhase,
-    currentStreak,
+    trophyState,
     earnedTrophies,
     configPath,
     overActiveCore,
@@ -48,7 +48,7 @@ import Data.Vector (Vector)
 import Data.Vector qualified as V
 import Lens.Micro ((%~), (&), (^.))
 import Lens.Micro.TH (makeLenses)
-import Trophy (EarnedTrophies, TrophyDef)
+import Trophy (EarnedTrophies, TrophyDef, TrophyState (..))
 import Types (AnswerResult, Question)
 
 data Name
@@ -125,7 +125,7 @@ makeLenses ''TrophyAwardedData
 
 data AppState = AppState
     { _examPhase :: ExamPhase
-    , _currentStreak :: Int
+    , _trophyState :: TrophyState
     , _earnedTrophies :: EarnedTrophies
     , _configPath :: FilePath
     }
@@ -163,7 +163,7 @@ initialState (q :| qs) cfgPath earned =
                             , _focusedAnswer = 0
                             }
                     }
-        , _currentStreak = 0
+        , _trophyState = TrophyState{currentStreak = 0, lastQuestionSeconds = 0}
         , _earnedTrophies = earned
         , _configPath = cfgPath
         }

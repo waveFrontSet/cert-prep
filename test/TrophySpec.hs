@@ -10,43 +10,39 @@ spec :: Spec
 spec = do
     describe "checkAfterSubmit" $ do
         it "awards FirstBlood for first correct answer" $
-            checkAfterSubmit True 1 10 Set.empty
+            checkAfterSubmit True (TrophyState 1 10)
                 `shouldSatisfy` any ((== FirstBlood) . trophyDefId)
 
-        it "does not award FirstBlood when already earned" $
-            checkAfterSubmit True 1 10 (Set.singleton FirstBlood)
-                `shouldSatisfy` all ((/= FirstBlood) . trophyDefId)
-
         it "does not award anything for wrong answer" $
-            checkAfterSubmit False 0 10 Set.empty
+            checkAfterSubmit False (TrophyState 0 10)
                 `shouldBe` []
 
         it "awards HatTrick for 3 correct streak" $
-            checkAfterSubmit True 3 10 Set.empty
+            checkAfterSubmit True (TrophyState 3 10)
                 `shouldSatisfy` any ((== HatTrick) . trophyDefId)
 
         it "does not award HatTrick for 2 streak" $
-            checkAfterSubmit True 2 10 (Set.singleton FirstBlood)
+            checkAfterSubmit True (TrophyState 2 10)
                 `shouldSatisfy` all ((/= HatTrick) . trophyDefId)
 
         it "awards OnFire for 5 correct streak" $
-            checkAfterSubmit True 5 10 Set.empty
+            checkAfterSubmit True (TrophyState 5 10)
                 `shouldSatisfy` any ((== OnFire) . trophyDefId)
 
         it "does not award OnFire for 4 streak" $
-            checkAfterSubmit True 4 10 (Set.singleton FirstBlood)
+            checkAfterSubmit True (TrophyState 4 10)
                 `shouldSatisfy` all ((/= OnFire) . trophyDefId)
 
         it "awards SpeedDemon for answer in under 5 seconds" $
-            checkAfterSubmit True 1 4 Set.empty
+            checkAfterSubmit True (TrophyState 1 4)
                 `shouldSatisfy` any ((== SpeedDemon) . trophyDefId)
 
         it "does not award SpeedDemon for 5+ seconds" $
-            checkAfterSubmit True 1 5 (Set.singleton FirstBlood)
+            checkAfterSubmit True (TrophyState 1 5)
                 `shouldSatisfy` all ((/= SpeedDemon) . trophyDefId)
 
         it "awards multiple trophies at once" $ do
-            let trophies = checkAfterSubmit True 5 3 Set.empty
+            let trophies = checkAfterSubmit True (TrophyState 5 3)
                 ids = map trophyDefId trophies
             ids `shouldSatisfy` elem FirstBlood
             ids `shouldSatisfy` elem HatTrick
