@@ -15,7 +15,7 @@ import Data.IntSet qualified as IS
 import Data.Set qualified as Set
 import Data.Vector qualified as Vec
 import Graphics.Vty qualified as V
-import Lens.Micro ((%~), (&), (.~), (^.))
+import Lens.Micro ((%~), (&), (+~), (.~), (^.))
 import Lens.Micro.Mtl (use, (%=), (.=))
 import State
 import Trophy (
@@ -70,7 +70,7 @@ handleEvent (AppEvent Tick) = do
     phase <- use examPhase
     case phase of
         TrophyAwarded tad -> handleTrophyTick tad
-        _ -> examPhase %= overActiveCore (elapsedSeconds %~ (+ 1))
+        _ -> examPhase %= overActiveCore (elapsedSeconds +~ 1)
 handleEvent _ = return ()
 
 handleSubmit :: ActivePhase AnsweringData -> EventM Name AppState ()
@@ -81,7 +81,7 @@ handleSubmit ap = do
         wasCorrect = isCorrect q userAnswer
         newCore =
             if wasCorrect
-                then core & score %~ (+ 1)
+                then core & score +~ 1
                 else core
         questionTime = (core ^. elapsedSeconds) - (core ^. questionStartTime)
 
@@ -102,16 +102,14 @@ handleSubmit ap = do
                     newTrophyState
 
     let reviewPhase =
-            Reviewing
-                ActivePhase
-                    { _activeCore = newCore
-                    , _activeQuestion = q
-                    , _phaseData =
-                        ReviewingData
+            Reviewing $
+                ap
+                    & activeCore .~ newCore
+                    & phaseData
+                        .~ ReviewingData
                             { _answerResult = evalAnswer q userAnswer
                             , _lastSelected = userAnswer
                             }
-                    }
 
     case newTrophies of
         [] -> examPhase .= reviewPhase
@@ -233,7 +231,7 @@ submitAnswer ap =
         core = ap ^. activeCore
         newCore =
             if isCorrect q userAnswer
-                then core & score %~ (+ 1)
+                then core & score +~ 1
                 else core
      in Reviewing
             ActivePhase
