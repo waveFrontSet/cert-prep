@@ -19,6 +19,7 @@ import Lens.Micro ((%~), (&), (+~), (.~), (^.))
 import Lens.Micro.Mtl (use, (%=), (.=))
 import State
 import Trophy (
+    FinalStatistics (..),
     TrophyDef (..),
     TrophyState (..),
     checkAfterSubmit,
@@ -135,7 +136,9 @@ handleNextQuestion ap = do
         Finished fs -> do
             earned <- use earnedTrophies
             let finishTrophies =
-                    checkAtFinish (fs ^. finalScore) (fs ^. finalTotal) earned
+                    filter (not . (`Set.member` earned) . trophyDefId) $
+                        checkAtFinish $
+                            FinalStatistics (fs ^. finalScore) (fs ^. finalTotal)
             case finishTrophies of
                 [] -> examPhase .= Finished fs
                 (t : ts) -> do

@@ -51,39 +51,35 @@ spec = do
 
     describe "checkAtFinish" $ do
         it "awards FlawlessVictory for perfect score" $
-            checkAtFinish 10 10 Set.empty
+            checkAtFinish (FinalStatistics 10 10)
                 `shouldSatisfy` any ((== FlawlessVictory) . trophyDefId)
 
         it "does not award FlawlessVictory for imperfect score" $
-            checkAtFinish 9 10 Set.empty
+            checkAtFinish (FinalStatistics 9 10)
                 `shouldSatisfy` all ((/= FlawlessVictory) . trophyDefId)
 
         it "awards ScholarSupreme for 90%+ with 10+ questions" $
-            checkAtFinish 9 10 Set.empty
+            checkAtFinish (FinalStatistics 9 10)
                 `shouldSatisfy` any ((== ScholarSupreme) . trophyDefId)
 
         it "does not award ScholarSupreme for < 10 questions" $
-            checkAtFinish 9 9 Set.empty
+            checkAtFinish (FinalStatistics 9 9)
                 `shouldSatisfy` all ((/= ScholarSupreme) . trophyDefId)
 
         it "does not award ScholarSupreme for < 90%" $
-            checkAtFinish 8 10 Set.empty
+            checkAtFinish (FinalStatistics 8 10)
                 `shouldSatisfy` all ((/= ScholarSupreme) . trophyDefId)
 
         it "awards Marathoner for 20+ questions" $
-            checkAtFinish 10 20 Set.empty
+            checkAtFinish (FinalStatistics 10 20)
                 `shouldSatisfy` any ((== Marathoner) . trophyDefId)
 
         it "does not award Marathoner for < 20 questions" $
-            checkAtFinish 10 19 Set.empty
+            checkAtFinish (FinalStatistics 10 19)
                 `shouldSatisfy` all ((/= Marathoner) . trophyDefId)
 
         it "does not award FlawlessVictory for 0 questions" $
-            checkAtFinish 0 0 Set.empty
-                `shouldSatisfy` all ((/= FlawlessVictory) . trophyDefId)
-
-        it "does not re-award already earned trophies" $
-            checkAtFinish 10 10 (Set.singleton FlawlessVictory)
+            checkAtFinish (FinalStatistics 0 0)
                 `shouldSatisfy` all ((/= FlawlessVictory) . trophyDefId)
 
     describe "persistence" $ do

@@ -6,6 +6,7 @@ module Trophy (
     TrophyDef (..),
     TrophyState (..),
     EarnedTrophies,
+    FinalStatistics (..),
     checkAfterSubmit,
     checkAtFinish,
     trophyFilePath,
@@ -57,11 +58,16 @@ data TrophyState = TrophyState
     }
     deriving (Show, Eq)
 
+data FinalStatistics = FinalStatistics
+    { nCorrectQuestions :: Int
+    , nQuestions :: Int
+    }
+
 data TrophyCheckTime = WhenReviewing | WhenFinishing
 
 type family CondInput (t :: TrophyCheckTime) where
     CondInput 'WhenReviewing = TrophyState
-    CondInput 'WhenFinishing = TrophyState
+    CondInput 'WhenFinishing = FinalStatistics
 
 data TrophyData (t :: TrophyCheckTime) = TrophyData
     { trophyDef :: TrophyDef
@@ -172,6 +178,13 @@ flawlessVictoryDef =
             ]
         }
 
+flawlessVictory :: TrophyData 'WhenFinishing
+flawlessVictory =
+    TrophyData
+        { trophyDef = flawlessVictoryDef
+        , trophyCond = \fs -> nQuestions fs > 0 && nCorrectQuestions fs == nQuestions fs
+        }
+
 scholarSupremeDef :: TrophyDef
 scholarSupremeDef =
     TrophyDef
@@ -187,6 +200,13 @@ scholarSupremeDef =
             , "  \9608\9608\9608\9608\9608\9608\9608\9608\9608\9608"
             , "   \9608\9608\9608\9608\9608\9608\9608\9608 "
             ]
+        }
+
+scholarSupreme :: TrophyData 'WhenFinishing
+scholarSupreme =
+    TrophyData
+        { trophyDef = scholarSupremeDef
+        , trophyCond = \fs -> nQuestions fs >= 10 && (nCorrectQuestions fs * 100 `div` nQuestions fs) >= 90
         }
 
 marathonerDef :: TrophyDef
@@ -206,12 +226,15 @@ marathonerDef =
             ]
         }
 
+marathoner :: TrophyData 'WhenFinishing
+marathoner = TrophyData{trophyDef = marathonerDef, trophyCond = (>= 20) . nQuestions}
+
 -- | Check for trophies earned after submitting an answer.
 checkAfterSubmit :: Bool -> TrophyState -> [TrophyDef]
 checkAfterSubmit wasCorrect ts =
     map trophyDef $
         filter
-            (\t -> wasCorrect && trophyCond t ts)
+            ((&&) wasCorrect . flip trophyCond ts)
             [ firstBlood
             , hatTrick
             , onFire
@@ -219,19 +242,12 @@ checkAfterSubmit wasCorrect ts =
             ]
 
 -- | Check for trophies earned at the end of an exam.
-checkAtFinish :: Int -> Int -> EarnedTrophies -> [TrophyDef]
-checkAtFinish finalScore totalQs alreadyEarned =
-    filter (not . (`Set.member` alreadyEarned) . trophyDefId) $
-        concat
-            [ [flawlessVictoryDef | finalScore == totalQs, totalQs > 0]
-            , [scholarSupremeDef | totalQs >= 10, percentage >= 90]
-            , [marathonerDef | totalQs >= 20]
-            ]
-  where
-    percentage :: Int
-    percentage
-        | totalQs == 0 = 0
-        | otherwise = (finalScore * 100) `div` totalQs
+checkAtFinish :: FinalStatistics -> [TrophyDef]
+checkAtFinish fs =
+    map trophyDef $
+        filter
+            (`trophyCond` fs)
+            [flawlessVictory, scholarSupreme, marathoner]
 
 -- Persistence
 
