@@ -2,6 +2,7 @@ module CLI (CLIOptions (..), parseCLIOpts) where
 
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Text.Read (decimal)
 import Options.Applicative
 
 data CLIOptions = CLIOptions
@@ -37,12 +38,8 @@ cliParser =
 
 parseWeight :: ReadM (Text, Int)
 parseWeight = eitherReader $ \s ->
-    case break (== ':') (reverse s) of
-        (revW, _ : revCat)
-            | not (null revW)
-            , not (null revCat)
-            , [(w, "")] <- reads (reverse revW) ->
-                Right (T.pack (reverse revCat), w)
+    case T.splitOn ":" (T.pack s) of
+        [cat, wText] | Right (w, "") <- decimal wText -> Right (cat, w)
         _ -> Left $ "Invalid weight format: " ++ s ++ " (expected CATEGORY:WEIGHT)"
 
 cliInfo :: ParserInfo CLIOptions
