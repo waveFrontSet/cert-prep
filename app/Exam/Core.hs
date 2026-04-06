@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
-module State (
+module Exam.Core (
     Name (..),
     ExamCore (..),
     AnsweringData (..),
@@ -34,19 +34,14 @@ module State (
     trophyState,
     earnedTrophies,
     configPath,
-    overActiveCore,
-    finishExam,
     totalQuestions,
-    initialState,
 )
 where
 
 import Data.IntSet (IntSet)
-import Data.IntSet qualified as IS
-import Data.List.NonEmpty (NonEmpty (..))
 import Data.Vector (Vector)
 import Data.Vector qualified as V
-import Lens.Micro ((%~), (&), (^.))
+import Lens.Micro ((^.))
 import Lens.Micro.TH (makeLenses)
 import Trophy (EarnedTrophies, TrophyDef, TrophyState (..))
 import Types (AnswerResult, Question)
@@ -117,6 +112,7 @@ data TrophyAwardedData = TrophyAwardedData
 data ExamPhase
     = Answering (ActivePhase AnsweringData)
     | Reviewing (ActivePhase ReviewingData)
+    | CheckingTrophies ExamCore
     | TrophyAwarded TrophyAwardedData
     | Finished FinishedState
     deriving (Show)
@@ -133,46 +129,5 @@ data AppState = AppState
 
 makeLenses ''AppState
 
-overActiveCore :: (ExamCore -> ExamCore) -> ExamPhase -> ExamPhase
-overActiveCore f (Answering ap) = Answering (ap & activeCore %~ f)
-overActiveCore f (Reviewing ap) = Reviewing (ap & activeCore %~ f)
-overActiveCore _ p = p
-
-finishExam :: ExamCore -> FinishedState
-finishExam c =
-    FinishedState
-        { _finalScore = c ^. score
-        , _finalTotal = totalQuestions c
-        , _finalElapsed = c ^. elapsedSeconds
-        }
-
 totalQuestions :: ExamCore -> Int
 totalQuestions c = V.length (c ^. questions)
-
-initialState :: NonEmpty Question -> FilePath -> EarnedTrophies -> AppState
-initialState (q :| qs) cfgPath earned =
-    AppState
-        { _examPhase =
-            Answering
-                ActivePhase
-                    { _activeCore = core
-                    , _activeQuestion = q
-                    , _phaseData =
-                        AnsweringData
-                            { _selectedAnswers = IS.empty
-                            , _focusedAnswer = 0
-                            }
-                    }
-        , _trophyState = TrophyState{currentStreak = 0, lastQuestionSeconds = 0}
-        , _earnedTrophies = earned
-        , _configPath = cfgPath
-        }
-  where
-    core =
-        ExamCore
-            { _questions = V.fromList (q : qs)
-            , _currentIndex = 0
-            , _score = 0
-            , _elapsedSeconds = 0
-            , _questionStartTime = 0
-            }

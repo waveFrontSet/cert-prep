@@ -4,8 +4,9 @@ import Data.IntSet qualified as IS
 import Data.Vector qualified as V
 import Generators (mkQuestion)
 import Lens.Micro ((^.))
-import State
-import TUI.Event (moveFocusPure, nextQuestion, submitAnswer, toggleAnswerPure)
+import Exam.Core
+import Exam.Transition (advanceExam, nextQuestion, submitAnswer)
+import TUI.Event (moveFocusPure, toggleAnswerPure)
 import Test.Hspec
 
 spec :: Spec
@@ -71,49 +72,66 @@ spec = do
                 Reviewing ap -> ap ^. activeCore . score `shouldBe` 0
                 _ -> expectationFailure "expected Reviewing"
 
+    let mkCore qs idx scr =
+            ExamCore
+                { _questions = V.fromList qs
+                , _currentIndex = idx
+                , _score = scr
+                , _elapsedSeconds = 42
+                , _questionStartTime = 0
+                }
+        q1 = mkQuestion "Q1" ["A", "B", "C"] [0] Nothing
+        q2 = mkQuestion "Q2" ["X", "Y"] [1] Nothing
+        mkReviewing qs idx scr =
+            ActivePhase
+                { _activeCore = mkCore qs idx scr
+                , _activeQuestion = qs !! idx
+                , _phaseData =
+                    ReviewingData
+                        { _answerResult = undefined
+                        , _lastSelected = IS.empty
+                        }
+                }
+
     describe "nextQuestion" $ do
-        let q1 = mkQuestion "Q1" ["A", "B", "C"] [0] Nothing
-            q2 = mkQuestion "Q2" ["X", "Y"] [1] Nothing
-            mkReviewing qs idx scr =
-                ActivePhase
-                    { _activeCore =
-                        ExamCore
-                            { _questions = V.fromList qs
-                            , _currentIndex = idx
-                            , _score = scr
-                            , _elapsedSeconds = 42
-                            , _questionStartTime = 0
-                            }
-                    , _activeQuestion = qs !! idx
-                    , _phaseData =
-                        ReviewingData
-                            { _answerResult = undefined
-                            , _lastSelected = IS.empty
-                            }
-                    }
-        it "transitions to Answering when more questions remain" $
+        it "transitions to CheckingTrophies" $
             case nextQuestion (mkReviewing [q1, q2] 0 1) of
+                CheckingTrophies _ -> True
+                _ -> False
+                `shouldBe` True
+        it "carries the exam core through" $
+            case nextQuestion (mkReviewing [q1, q2] 0 1) of
+                CheckingTrophies core -> core ^. score `shouldBe` 1
+                _ -> expectationFailure "expected CheckingTrophies"
+
+    describe "advanceExam" $ do
+        it "transitions to Answering when more questions remain" $
+            case advanceExam (mkCore [q1, q2] 0 1) of
                 Answering _ -> True
                 _ -> False
                 `shouldBe` True
         it "advances currentIndex" $
-            case nextQuestion (mkReviewing [q1, q2] 0 1) of
+            case advanceExam (mkCore [q1, q2] 0 1) of
                 Answering ap -> ap ^. activeCore . currentIndex `shouldBe` 1
                 _ -> expectationFailure "expected Answering"
         it "resets selectedAnswers" $
-            case nextQuestion (mkReviewing [q1, q2] 0 1) of
+            case advanceExam (mkCore [q1, q2] 0 1) of
                 Answering ap -> ap ^. phaseData . selectedAnswers `shouldBe` IS.empty
                 _ -> expectationFailure "expected Answering"
+        it "sets questionStartTime to elapsedSeconds" $
+            case advanceExam (mkCore [q1, q2] 0 1) of
+                Answering ap -> ap ^. activeCore . questionStartTime `shouldBe` 42
+                _ -> expectationFailure "expected Answering"
         it "transitions to Finished on last question" $
-            case nextQuestion (mkReviewing [q1, q2] 1 2) of
+            case advanceExam (mkCore [q1, q2] 1 2) of
                 Finished _ -> True
                 _ -> False
                 `shouldBe` True
         it "carries score into Finished" $
-            case nextQuestion (mkReviewing [q1, q2] 1 2) of
+            case advanceExam (mkCore [q1, q2] 1 2) of
                 Finished fs -> fs ^. finalScore `shouldBe` 2
                 _ -> expectationFailure "expected Finished"
         it "carries elapsed time into Finished" $
-            case nextQuestion (mkReviewing [q1, q2] 1 2) of
+            case advanceExam (mkCore [q1, q2] 1 2) of
                 Finished fs -> fs ^. finalElapsed `shouldBe` 42
                 _ -> expectationFailure "expected Finished"

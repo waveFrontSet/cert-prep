@@ -1,8 +1,6 @@
 module TUI.Event (
     CustomEvent (..),
     handleEvent,
-    submitAnswer,
-    nextQuestion,
     toggleAnswerPure,
     moveFocusPure,
     totalAnimFrames,
@@ -12,24 +10,19 @@ import Brick
 import Control.Monad.IO.Class (liftIO)
 import Data.IntSet (IntSet)
 import Data.IntSet qualified as IS
-import Data.Set qualified as Set
-import Data.Vector qualified as Vec
 import Graphics.Vty qualified as V
 import Lens.Micro ((%~), (&), (+~), (.~), (^.))
 import Lens.Micro.Mtl (use, (%=), (.=))
-import State
-import Trophy (
-    FinalStatistics (..),
-    TrophyDef (..),
-    TrophyState (..),
-    checkAfterSubmit,
-    checkAtFinish,
-    currentStreak,
-    lastQuestionSeconds,
-    saveEarnedTrophies,
-    trophyDefId,
+
+import Exam.Core
+import Exam.Transition (advanceExam, overActiveCore, submitAnswer)
+import Exam.Trophy (
+    checkAllTrophies,
+    persistTrophies,
+    updateTrophyState,
+    wrapWithTrophies,
  )
-import Types (Question (..), evalAnswer, isCorrect)
+import Types (Question (..), isCorrect)
 
 data CustomEvent = Tick
 
@@ -46,6 +39,7 @@ handleEvent (VtyEvent (V.EvKey key [])) = case key of
         case phase of
             Answering ap -> handleSubmit ap
             Reviewing ap -> handleNextQuestion ap
+            CheckingTrophies core -> handleCheckTrophies core
             TrophyAwarded tad -> handleTrophyDismiss tad
             Finished _ -> halt
     V.KUp -> modifyAnswering (moveFocus (-1))
@@ -71,6 +65,7 @@ handleEvent (AppEvent Tick) = do
     phase <- use examPhase
     case phase of
         TrophyAwarded tad -> handleTrophyTick tad
+        CheckingTrophies core -> handleCheckTrophies core
         _ -> examPhase %= overActiveCore (elapsedSeconds +~ 1)
 handleEvent _ = return ()
 
@@ -78,89 +73,33 @@ handleSubmit :: ActivePhase AnsweringData -> EventM Name AppState ()
 handleSubmit ap = do
     let q = ap ^. activeQuestion
         userAnswer = ap ^. phaseData . selectedAnswers
-        core = ap ^. activeCore
         wasCorrect = isCorrect q userAnswer
-        newCore =
-            if wasCorrect
-                then core & score +~ 1
-                else core
+        core = ap ^. activeCore
         questionTime = (core ^. elapsedSeconds) - (core ^. questionStartTime)
 
-    oldTrophyState@TrophyState{currentStreak = cs} <- use trophyState
-    let newTrophyState =
-            oldTrophyState
-                { currentStreak = if wasCorrect then cs + 1 else 0
-                , lastQuestionSeconds = questionTime
-                }
-    trophyState .= newTrophyState
+    oldTS <- use trophyState
+    trophyState .= updateTrophyState wasCorrect questionTime oldTS
 
-    earned <- use earnedTrophies
-    let newTrophies =
-            filter
-                (not . (`Set.member` earned) . trophyDefId)
-                $ checkAfterSubmit
-                    wasCorrect
-                    newTrophyState
-
-    let reviewPhase =
-            Reviewing $
-                ap
-                    & activeCore .~ newCore
-                    & phaseData
-                        .~ ReviewingData
-                            { _answerResult = evalAnswer q userAnswer
-                            , _lastSelected = userAnswer
-                            }
-
-    case newTrophies of
-        [] -> examPhase .= reviewPhase
-        (t : ts) -> do
-            let trophyIds = Set.fromList (map trophyDefId newTrophies)
-            earnedTrophies %= Set.union trophyIds
-            newEarned <- use earnedTrophies
-            cp <- use configPath
-            liftIO $ saveEarnedTrophies cp newEarned
-            examPhase
-                .= TrophyAwarded
-                    TrophyAwardedData
-                        { _awardedTrophy = t
-                        , _animationFrame = 0
-                        , _pendingTrophies = ts
-                        , _returnPhase = reviewPhase
-                        }
+    examPhase .= submitAnswer ap
 
 handleNextQuestion :: ActivePhase ReviewingData -> EventM Name AppState ()
-handleNextQuestion ap = do
-    let nextPhase = nextQuestion ap
-    case nextPhase of
-        Finished fs -> do
-            earned <- use earnedTrophies
-            let finishTrophies =
-                    filter (not . (`Set.member` earned) . trophyDefId) $
-                        checkAtFinish $
-                            FinalStatistics (fs ^. finalScore) (fs ^. finalTotal)
-            case finishTrophies of
-                [] -> examPhase .= Finished fs
-                (t : ts) -> do
-                    let trophyIds =
-                            Set.fromList (map trophyDefId finishTrophies)
-                    earnedTrophies %= Set.union trophyIds
-                    newEarned <- use earnedTrophies
-                    cp <- use configPath
-                    liftIO $ saveEarnedTrophies cp newEarned
-                    examPhase
-                        .= TrophyAwarded
-                            TrophyAwardedData
-                                { _awardedTrophy = t
-                                , _animationFrame = 0
-                                , _pendingTrophies = ts
-                                , _returnPhase = Finished fs
-                                }
-        Answering newAp -> do
-            let core = newAp ^. activeCore
-                updatedCore = core & questionStartTime .~ (core ^. elapsedSeconds)
-            examPhase .= Answering (newAp & activeCore .~ updatedCore)
-        _ -> examPhase .= nextPhase
+handleNextQuestion ap = handleCheckTrophies (ap ^. activeCore)
+
+handleCheckTrophies :: ExamCore -> EventM Name AppState ()
+handleCheckTrophies core = do
+    ts <- use trophyState
+    earned <- use earnedTrophies
+    let allTrophies = checkAllTrophies ts earned core
+        nextPhase = advanceExam core
+
+    case allTrophies of
+        [] -> pure ()
+        _ -> do
+            cp <- use configPath
+            newEarned <- liftIO $ persistTrophies allTrophies cp earned
+            earnedTrophies .= newEarned
+
+    examPhase .= wrapWithTrophies allTrophies nextPhase
 
 handleTrophyDismiss :: TrophyAwardedData -> EventM Name AppState ()
 handleTrophyDismiss tad = case tad ^. pendingTrophies of
@@ -176,7 +115,6 @@ handleTrophyDismiss tad = case tad ^. pendingTrophies of
     [] -> do
         let rp = tad ^. returnPhase
         examPhase .= rp
-        -- If returning to Answering, reset questionStartTime
         case rp of
             Answering newAp -> do
                 let core = newAp ^. activeCore
@@ -226,42 +164,3 @@ moveFocusPure :: Int -> Int -> Int -> Int
 moveFocusPure delta current numAnswers
     | numAnswers <= 0 = current
     | otherwise = (current + delta) `mod` numAnswers
-
-submitAnswer :: ActivePhase AnsweringData -> ExamPhase
-submitAnswer ap =
-    let q = ap ^. activeQuestion
-        userAnswer = ap ^. phaseData . selectedAnswers
-        core = ap ^. activeCore
-        newCore =
-            if isCorrect q userAnswer
-                then core & score +~ 1
-                else core
-     in Reviewing
-            ActivePhase
-                { _activeCore = newCore
-                , _activeQuestion = q
-                , _phaseData =
-                    ReviewingData
-                        { _answerResult = evalAnswer q userAnswer
-                        , _lastSelected = userAnswer
-                        }
-                }
-
-nextQuestion :: ActivePhase ReviewingData -> ExamPhase
-nextQuestion ap =
-    let core = ap ^. activeCore
-        nextIdx = core ^. currentIndex + 1
-     in if nextIdx >= totalQuestions core
-            then Finished (finishExam core)
-            else
-                let nextQ = (core ^. questions) Vec.! nextIdx
-                 in Answering
-                        ActivePhase
-                            { _activeCore = core & currentIndex .~ nextIdx
-                            , _activeQuestion = nextQ
-                            , _phaseData =
-                                AnsweringData
-                                    { _selectedAnswers = IS.empty
-                                    , _focusedAnswer = 0
-                                    }
-                            }

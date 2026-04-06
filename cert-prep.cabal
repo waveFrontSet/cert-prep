@@ -43,7 +43,10 @@ library
 library cert-prep-tui
     exposed-modules:
         CLI
-        State
+        Exam
+        Exam.Core
+        Exam.Transition
+        Exam.Trophy
         TUI.Attributes
         TUI.ConfigSelect
         TUI.Draw
@@ -105,10 +108,10 @@ test-suite spec
     main-is: Spec.hs
     other-modules:
         EventSpec
+        ExamSpec
         Generators
         RegistrySpec
         SamplingSpec
-        StateSpec
         TrophySpec
         TypesSpec
         UtilSpec

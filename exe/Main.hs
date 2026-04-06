@@ -14,7 +14,7 @@ import Graphics.Vty qualified as V
 import Graphics.Vty.CrossPlatform (mkVty)
 import Registry (loadRegistry, registerConfig)
 import Sampling (SamplingStrategy (..), sampleQuestions)
-import State (AppState, Name, initialState)
+import Exam (AppState, Name, initialState)
 import System.Directory (canonicalizePath)
 import System.Exit (exitFailure)
 import System.Random (newStdGen)

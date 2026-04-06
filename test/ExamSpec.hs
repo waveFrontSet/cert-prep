@@ -1,4 +1,4 @@
-module StateSpec (spec) where
+module ExamSpec (spec) where
 
 import Data.IntSet qualified as IS
 import Data.List.NonEmpty qualified as NE
@@ -6,7 +6,8 @@ import Data.Set qualified as Set
 import Data.Vector qualified as V
 import Generators (mkQuestion)
 import Lens.Micro ((^.))
-import State
+import Exam.Core
+import Exam.Transition (initialState)
 import Test.Hspec
 import Trophy (TrophyState (..))
 

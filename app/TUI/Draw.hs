@@ -7,7 +7,7 @@ import Brick.Widgets.Center
 import Data.IntSet qualified as IS
 import Data.Text (Text)
 import Lens.Micro ((^.))
-import State
+import Exam.Core
 import TUI.Attributes
 import TUI.Trophy (drawTrophyAwarded)
 import Types (AnswerResult (..), Question (..))
@@ -30,6 +30,7 @@ drawUI appState = case appState ^. examPhase of
             (drawAnswerReviewing ap)
             drawStatusReviewing
         ]
+    CheckingTrophies _ -> [emptyWidget]
     TrophyAwarded tad -> [drawTrophyAwarded tad]
 
 drawFinished :: FinishedState -> Widget Name

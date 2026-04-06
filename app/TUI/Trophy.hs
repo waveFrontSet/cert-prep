@@ -5,7 +5,7 @@ import Brick.Widgets.Border
 import Brick.Widgets.Border.Style
 import Brick.Widgets.Center
 import Lens.Micro ((^.))
-import State (Name, TrophyAwardedData, animationFrame, awardedTrophy)
+import Exam.Core (Name, TrophyAwardedData, animationFrame, awardedTrophy)
 import TUI.Attributes (trophyIconAttr, trophySparkleAttr, trophyTitleAttr)
 import Trophy (TrophyDef (..))
 
