@@ -2,10 +2,10 @@ module EventSpec (spec) where
 
 import Data.IntSet qualified as IS
 import Data.Vector qualified as V
-import Generators (mkQuestion)
-import Lens.Micro ((^.))
 import Exam.Core
 import Exam.Transition (advanceExam, nextQuestion, submitAnswer)
+import Generators (mkQuestion)
+import Lens.Micro ((^.))
 import TUI.Event (moveFocusPure, toggleAnswerPure)
 import Test.Hspec
 
@@ -50,6 +50,7 @@ spec = do
                             , _score = 0
                             , _elapsedSeconds = 0
                             , _questionStartTime = 0
+                            , _userAnswers = V.empty
                             }
                     , _activeQuestion = qs !! idx
                     , _phaseData =
@@ -79,6 +80,7 @@ spec = do
                 , _score = scr
                 , _elapsedSeconds = 42
                 , _questionStartTime = 0
+                , _userAnswers = V.empty
                 }
         q1 = mkQuestion "Q1" ["A", "B", "C"] [0] Nothing
         q2 = mkQuestion "Q2" ["X", "Y"] [1] Nothing

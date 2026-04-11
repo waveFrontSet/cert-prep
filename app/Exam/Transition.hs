@@ -57,6 +57,7 @@ initialState (q :| qs) cfgPath earned =
             , _score = 0
             , _elapsedSeconds = 0
             , _questionStartTime = 0
+            , _userAnswers = V.empty
             }
 
 submitAnswer :: ActivePhase AnsweringData -> ExamPhase

@@ -35,6 +35,7 @@ module Exam.Core (
     earnedTrophies,
     configPath,
     totalQuestions,
+    userAnswers,
 )
 where
 
@@ -44,7 +45,7 @@ import Data.Vector qualified as V
 import Lens.Micro ((^.))
 import Lens.Micro.TH (makeLenses)
 import Trophy (EarnedTrophies, TrophyDef, TrophyState (..))
-import Types (AnswerResult, Question)
+import Types (Answer, AnswerResult, Question)
 
 data Name
     = AnswerChoice Int
@@ -59,6 +60,7 @@ data ExamCore = ExamCore
     , _score :: Int
     , _elapsedSeconds :: Int
     , _questionStartTime :: Int
+    , _userAnswers :: Vector Answer
     }
     deriving (Show)
 
