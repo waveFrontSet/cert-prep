@@ -15,7 +15,7 @@ import Lens.Micro ((%~), (&), (+~), (.~), (^.))
 
 import Exam.Core
 import Trophy (EarnedTrophies, TrophyState (..))
-import Types (Question (..), evalAnswer, isCorrect)
+import Types (Answer, Question (..), evalAnswer, isCorrect)
 
 overActiveCore :: (ExamCore -> ExamCore) -> ExamPhase -> ExamPhase
 overActiveCore f (Answering ap) = Answering (ap & activeCore %~ f)
@@ -63,12 +63,13 @@ initialState (q :| qs) cfgPath earned =
 submitAnswer :: ActivePhase AnsweringData -> ExamPhase
 submitAnswer ap =
     let q = ap ^. activeQuestion
+        userAnswer :: Answer
         userAnswer = ap ^. phaseData . selectedAnswers
         core = ap ^. activeCore
         newCore =
-            if isCorrect q userAnswer
-                then core & score +~ 1
-                else core
+            core
+                & userAnswers %~ (`V.snoc` userAnswer)
+                & score +~ (if isCorrect q userAnswer then 1 else 0)
      in Reviewing
             ActivePhase
                 { _activeCore = newCore
