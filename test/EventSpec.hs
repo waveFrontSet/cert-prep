@@ -84,7 +84,7 @@ spec = do
                 , _score = scr
                 , _elapsedSeconds = 42
                 , _questionStartTime = 0
-                , _userAnswers = V.empty
+                , _userAnswers = V.fromList $ replicate (idx + 1) (IS.fromList [0])
                 }
         q1 = mkQuestion "Q1" ["A", "B", "C"] [0] Nothing
         q2 = mkQuestion "Q2" ["X", "Y"] [1] Nothing

@@ -105,7 +105,7 @@ nextQuestion ap = CheckingTrophies (ap ^. activeCore)
 
 advanceExam :: ExamCore -> ExamPhase
 advanceExam core =
-    let nextIdx = core ^. currentIndex + 1
+    let nextIdx = length $ core ^. userAnswers
      in if nextIdx >= totalQuestions core
             then Finished (finishExam core)
             else

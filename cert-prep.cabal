@@ -108,6 +108,7 @@ test-suite spec
     main-is: Spec.hs
     other-modules:
         EventSpec
+        Exam.TransitionSpec
         ExamSpec
         Generators
         RegistrySpec

@@ -15,7 +15,7 @@ import Lens.Micro ((%~), (&), (+~), (.~), (^.))
 import Lens.Micro.Mtl (use, (%=), (.=))
 
 import Exam.Core
-import Exam.Transition (advanceExam, overActiveCore, submitAnswer)
+import Exam.Transition (advanceExam, overActiveCore, submitAnswer, travelToQuestion)
 import Exam.Trophy (
     checkAllTrophies,
     persistTrophies,
@@ -47,6 +47,8 @@ handleEvent (VtyEvent (V.EvKey key [])) = case key of
     V.KDown -> modifyAnswering (moveFocus 1)
     V.KChar 'j' -> modifyAnswering (moveFocus 1)
     V.KChar ' ' -> modifyAnswering toggleSelected
+    V.KChar 'l' -> modifyReviewing (travelToQuestion 1)
+    V.KChar 'h' -> modifyReviewing (travelToQuestion (-1))
     _ -> return ()
 handleEvent (MouseDown (AnswerChoice idx) _ _ _) =
     modifyAnswering $ \ap ->
@@ -137,6 +139,15 @@ modifyAnswering f = do
     phase <- use examPhase
     case phase of
         Answering ap -> examPhase .= Answering (f ap)
+        _ -> return ()
+
+modifyReviewing ::
+    (ActivePhase ReviewingData -> ActivePhase ReviewingData) ->
+    EventM Name AppState ()
+modifyReviewing f = do
+    phase <- use examPhase
+    case phase of
+        Reviewing ap -> examPhase .= Reviewing (f ap)
         _ -> return ()
 
 toggleSelected :: ActivePhase AnsweringData -> ActivePhase AnsweringData
