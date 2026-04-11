@@ -5,6 +5,7 @@ module Exam.Transition (
     submitAnswer,
     nextQuestion,
     advanceExam,
+    travelToQuestion,
 )
 where
 
@@ -80,6 +81,24 @@ submitAnswer ap =
                         , _lastSelected = userAnswer
                         }
                 }
+
+travelToQuestion :: Int -> ActivePhase ReviewingData -> ActivePhase ReviewingData
+travelToQuestion i ap =
+    let core = ap ^. activeCore
+        currIndex = core ^. currentIndex
+        userAnswer = (core ^. userAnswers) V.! newIndex
+        newIndex = min (V.length (core ^. userAnswers) - 1) (max 0 (currIndex + i))
+        newCore = core & currentIndex .~ newIndex
+        qs = core ^. questions
+        q = qs V.! newIndex
+        newPhaseData =
+            ap ^. phaseData
+                & (answerResult .~ evalAnswer q userAnswer)
+                & (lastSelected .~ userAnswer)
+     in ap
+            & activeCore .~ newCore
+            & activeQuestion .~ q
+            & phaseData .~ newPhaseData
 
 nextQuestion :: ActivePhase ReviewingData -> ExamPhase
 nextQuestion ap = CheckingTrophies (ap ^. activeCore)
