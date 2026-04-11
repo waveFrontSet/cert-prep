@@ -6,8 +6,8 @@ import Brick.Widgets.Border.Style
 import Brick.Widgets.Center
 import Data.IntSet qualified as IS
 import Data.Text (Text)
-import Lens.Micro ((^.))
 import Exam.Core
+import Lens.Micro ((^.))
 import TUI.Attributes
 import TUI.Trophy (drawTrophyAwarded)
 import Types (AnswerResult (..), Question (..))
@@ -139,9 +139,9 @@ drawAnswerReviewing ap idx answerText =
     wrappedText = txtWrap answerText
 
     checkbox
-        | isCorrectSelection = withAttr correctAttr $ str "[+]"
-        | isMissed = withAttr missedAttr $ str "[O]"
-        | isWrong = withAttr wrongAttr $ str "[X]"
+        | isCorrectSelection = withAttr correctAttr $ str "✅"
+        | isMissed = withAttr missedAttr $ str "⚠️"
+        | isWrong = withAttr wrongAttr $ str "❌"
         | otherwise = str "[ ]"
 
     answerWidget
