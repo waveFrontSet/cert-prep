@@ -1,5 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-
 module TUI.ConfigSelect (selectConfig) where
 
 import Brick
@@ -10,21 +8,12 @@ import Brick.Widgets.List qualified as L
 import Data.Time (defaultTimeLocale, formatTime)
 import Data.Vector qualified as V
 import Graphics.Vty qualified as Vty
-import Graphics.Vty.CrossPlatform (mkVty)
-import Lens.Micro.TH (makeLenses)
 import Registry (Registry, RegistryEntry (..))
 
-data SelectName = SelectList
-    deriving (Show, Eq, Ord)
+type SelectState = L.List () RegistryEntry
 
-newtype SelectState = SelectState
-    { _selectList :: L.List SelectName RegistryEntry
-    }
-
-makeLenses ''SelectState
-
-drawSelectUI :: SelectState -> [Widget SelectName]
-drawSelectUI (SelectState l) = [ui]
+drawSelectUI :: SelectState -> [Widget ()]
+drawSelectUI l = [ui]
   where
     ui =
         withBorderStyle unicode $
@@ -39,24 +28,22 @@ drawSelectUI (SelectState l) = [ui]
                                     str "[Enter] Select  [q/Esc] Quit  [Arrow Keys] Navigate"
                                 ]
 
-renderEntry :: Bool -> RegistryEntry -> Widget SelectName
+renderEntry :: Bool -> RegistryEntry -> Widget ()
 renderEntry selected entry =
-    let marker = if selected then ">" else " "
+    let marker = if selected then "→" else " "
         p = path entry
         time =
             formatTime
                 defaultTimeLocale
                 "%Y-%m-%d %H:%M"
                 (lastUsed entry)
-     in hBox
-            [ str marker
-            , str " "
-            , txt $ title entry
-            , padLeft Max $ str (time ++ "  " ++ p)
-            ]
+     in withAttr (attrName "marker") (str marker)
+            <+> vBox
+                [ hCenter $ txt (title entry)
+                , hCenter $ str (time ++ "  " ++ p)
+                ]
 
-handleSelectEvent ::
-    BrickEvent SelectName e -> EventM SelectName SelectState ()
+handleSelectEvent :: BrickEvent () e -> EventM () SelectState ()
 handleSelectEvent (VtyEvent (Vty.EvKey Vty.KEsc [])) = halt
 handleSelectEvent (VtyEvent (Vty.EvKey Vty.KEnter [])) = halt
 handleSelectEvent (VtyEvent (Vty.EvKey (Vty.KChar c) [])) = case c of
@@ -64,32 +51,28 @@ handleSelectEvent (VtyEvent (Vty.EvKey (Vty.KChar c) [])) = case c of
     'k' -> handleSelectEvent (VtyEvent (Vty.EvKey Vty.KUp []))
     'q' -> halt
     _ -> return ()
-handleSelectEvent (VtyEvent e) = do
-    zoom selectList $ L.handleListEvent e
+handleSelectEvent (VtyEvent e) = L.handleListEvent e
 handleSelectEvent _ = return ()
+
+theMap :: AttrMap
+theMap =
+    attrMap
+        Vty.defAttr
+        [ (L.listSelectedFocusedAttr, Vty.defAttr `Vty.withStyle` Vty.reverseVideo)
+        , (attrName "marker", style Vty.bold)
+        ]
 
 selectConfig :: Registry -> IO (Maybe FilePath)
 selectConfig entries = do
-    let list =
-            L.list
-                SelectList
-                (V.fromList entries)
-                1
-        initial = SelectState list
+    let initial = L.list () (V.fromList entries) 1
         app =
             App
                 { appDraw = drawSelectUI
                 , appChooseCursor = neverShowCursor
                 , appHandleEvent = handleSelectEvent
                 , appStartEvent = return ()
-                , appAttrMap =
-                    const $
-                        attrMap
-                            Vty.defAttr
-                            [(L.listSelectedFocusedAttr, Vty.defAttr `Vty.withStyle` Vty.reverseVideo)]
+                , appAttrMap = const theMap
                 }
-    let buildVty = mkVty Vty.defaultConfig
-    initialVty <- buildVty
-    finalState <- customMain initialVty buildVty Nothing app initial
-    let mSelected = snd <$> L.listSelectedElement (_selectList finalState)
-    pure (path <$> mSelected)
+    finalState <- defaultMain app initial
+    let mSelected = snd <$> L.listSelectedElement finalState
+    return $ path <$> mSelected
