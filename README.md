@@ -56,6 +56,7 @@ cert-prep ./aws-sa-questions.json -w "AWS Storage:3" -w "AWS Security:2"
 | `Space` | Toggle answer selection |
 | `Enter` | Submit answer / Next question |
 | `Arrow keys` / `j` / `k` | Navigate answer choices |
+| `h` / `l` | When reviewing, travel to previous / next question |
 | `q` / `Esc` | Quit |
 
 Mouse clicks on checkboxes and buttons are also supported (not in all terminals).
