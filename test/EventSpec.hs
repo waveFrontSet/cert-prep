@@ -2,10 +2,10 @@ module EventSpec (spec) where
 
 import Data.IntSet qualified as IS
 import Data.Vector qualified as V
-import Generators (mkQuestion)
-import Lens.Micro ((^.))
 import Exam.Core
 import Exam.Transition (advanceExam, nextQuestion, submitAnswer)
+import Generators (mkQuestion)
+import Lens.Micro ((^.))
 import TUI.Event (moveFocusPure, toggleAnswerPure)
 import Test.Hspec
 
@@ -50,25 +50,30 @@ spec = do
                             , _score = 0
                             , _elapsedSeconds = 0
                             , _questionStartTime = 0
+                            , _userAnswers = V.empty
                             }
                     , _activeQuestion = qs !! idx
                     , _phaseData =
                         AnsweringData
-                            { _selectedAnswers = sel
+                            { _selectedAnswers = IS.fromList sel
                             , _focusedAnswer = 0
                             }
                     }
         it "transitions to Reviewing" $
-            case submitAnswer (mkAnswering [q1, q2] 0 (IS.fromList [0])) of
+            case submitAnswer (mkAnswering [q1, q2] 0 [0]) of
                 Reviewing _ -> True
                 _ -> False
                 `shouldBe` True
         it "increments score for correct answer" $
-            case submitAnswer (mkAnswering [q1, q2] 0 (IS.fromList [0])) of
+            case submitAnswer (mkAnswering [q1, q2] 0 [0]) of
                 Reviewing ap -> ap ^. activeCore . score `shouldBe` 1
                 _ -> expectationFailure "expected Reviewing"
+        it "keeps track of user answers" $
+            case submitAnswer (mkAnswering [q1, q2] 0 [0]) of
+                Reviewing ap -> ap ^. activeCore . userAnswers `shouldBe` V.fromList [IS.fromList [0]]
+                _ -> expectationFailure "expected Reviewing"
         it "does not increment score for wrong answer" $
-            case submitAnswer (mkAnswering [q1, q2] 0 (IS.fromList [1])) of
+            case submitAnswer (mkAnswering [q1, q2] 0 [1]) of
                 Reviewing ap -> ap ^. activeCore . score `shouldBe` 0
                 _ -> expectationFailure "expected Reviewing"
 
@@ -79,6 +84,7 @@ spec = do
                 , _score = scr
                 , _elapsedSeconds = 42
                 , _questionStartTime = 0
+                , _userAnswers = V.fromList $ replicate (idx + 1) (IS.fromList [0])
                 }
         q1 = mkQuestion "Q1" ["A", "B", "C"] [0] Nothing
         q2 = mkQuestion "Q2" ["X", "Y"] [1] Nothing

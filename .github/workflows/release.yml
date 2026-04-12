@@ -27,7 +27,7 @@ jobs:
     name: Build (${{ matrix.os }})
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: haskell-actions/setup@v2
         with:
@@ -35,7 +35,7 @@ jobs:
           cabal-version: "latest"
 
       - name: Cache cabal store
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cabal/store
           key: ${{ runner.os }}-cabal-${{ hashFiles('**/*.cabal', 'cabal.project') }}
@@ -60,7 +60,7 @@ jobs:
         run: cd out && 7z a -tzip "../${{ matrix.artifact }}.zip" "${{ matrix.exe }}"
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact }}
           path: ${{ matrix.artifact }}.*
@@ -71,7 +71,7 @@ jobs:
 
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           merge-multiple: true
 

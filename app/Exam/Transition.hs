@@ -5,6 +5,7 @@ module Exam.Transition (
     submitAnswer,
     nextQuestion,
     advanceExam,
+    travelToQuestion,
 )
 where
 
@@ -15,7 +16,7 @@ import Lens.Micro ((%~), (&), (+~), (.~), (^.))
 
 import Exam.Core
 import Trophy (EarnedTrophies, TrophyState (..))
-import Types (Question (..), evalAnswer, isCorrect)
+import Types (Answer, Question (..), evalAnswer, isCorrect)
 
 overActiveCore :: (ExamCore -> ExamCore) -> ExamPhase -> ExamPhase
 overActiveCore f (Answering ap) = Answering (ap & activeCore %~ f)
@@ -57,17 +58,19 @@ initialState (q :| qs) cfgPath earned =
             , _score = 0
             , _elapsedSeconds = 0
             , _questionStartTime = 0
+            , _userAnswers = V.empty
             }
 
 submitAnswer :: ActivePhase AnsweringData -> ExamPhase
 submitAnswer ap =
     let q = ap ^. activeQuestion
+        userAnswer :: Answer
         userAnswer = ap ^. phaseData . selectedAnswers
         core = ap ^. activeCore
         newCore =
-            if isCorrect q userAnswer
-                then core & score +~ 1
-                else core
+            core
+                & userAnswers %~ (`V.snoc` userAnswer)
+                & score +~ (if isCorrect q userAnswer then 1 else 0)
      in Reviewing
             ActivePhase
                 { _activeCore = newCore
@@ -79,12 +82,30 @@ submitAnswer ap =
                         }
                 }
 
+travelToQuestion :: Int -> ActivePhase ReviewingData -> ActivePhase ReviewingData
+travelToQuestion i ap =
+    let core = ap ^. activeCore
+        currIndex = core ^. currentIndex
+        userAnswer = (core ^. userAnswers) V.! newIndex
+        newIndex = min (V.length (core ^. userAnswers) - 1) (max 0 (currIndex + i))
+        newCore = core & currentIndex .~ newIndex
+        qs = core ^. questions
+        q = qs V.! newIndex
+        newPhaseData =
+            ap ^. phaseData
+                & (answerResult .~ evalAnswer q userAnswer)
+                & (lastSelected .~ userAnswer)
+     in ap
+            & activeCore .~ newCore
+            & activeQuestion .~ q
+            & phaseData .~ newPhaseData
+
 nextQuestion :: ActivePhase ReviewingData -> ExamPhase
 nextQuestion ap = CheckingTrophies (ap ^. activeCore)
 
 advanceExam :: ExamCore -> ExamPhase
 advanceExam core =
-    let nextIdx = core ^. currentIndex + 1
+    let nextIdx = length $ core ^. userAnswers
      in if nextIdx >= totalQuestions core
             then Finished (finishExam core)
             else
