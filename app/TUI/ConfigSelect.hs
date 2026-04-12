@@ -46,12 +46,8 @@ renderEntry selected entry =
 handleSelectEvent :: BrickEvent () e -> EventM () SelectState ()
 handleSelectEvent (VtyEvent (Vty.EvKey Vty.KEsc [])) = halt
 handleSelectEvent (VtyEvent (Vty.EvKey Vty.KEnter [])) = halt
-handleSelectEvent (VtyEvent (Vty.EvKey (Vty.KChar c) [])) = case c of
-    'j' -> handleSelectEvent (VtyEvent (Vty.EvKey Vty.KDown []))
-    'k' -> handleSelectEvent (VtyEvent (Vty.EvKey Vty.KUp []))
-    'q' -> halt
-    _ -> return ()
-handleSelectEvent (VtyEvent e) = L.handleListEvent e
+handleSelectEvent (VtyEvent (Vty.EvKey (Vty.KChar 'q') [])) = halt
+handleSelectEvent (VtyEvent e) = L.handleListEventVi L.handleListEvent e
 handleSelectEvent _ = return ()
 
 theMap :: AttrMap
