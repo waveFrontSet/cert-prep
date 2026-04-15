@@ -30,7 +30,7 @@ library
         containers,
         directory,
         filepath,
-        random,
+        random >=1.3,
         text,
         time
     hs-source-dirs:
@@ -47,6 +47,7 @@ library cert-prep-tui
         Exam.Core
         Exam.Transition
         Exam.Trophy
+        Explanations
         TUI.Attributes
         TUI.ConfigSelect
         TUI.Draw
@@ -69,7 +70,9 @@ library cert-prep-tui
         microlens,
         microlens-mtl,
         microlens-th,
+        openai,
         optparse-applicative,
+        random >=1.3,
         text,
         time,
         vector,
@@ -92,7 +95,7 @@ executable cert-prep
         cert-prep-tui,
         containers,
         directory,
-        random,
+        random >=1.3,
         text,
         vty,
         vty-crossplatform
@@ -137,7 +140,7 @@ test-suite spec
         directory,
         hspec,
         microlens,
-        random,
+        random >=1.3,
         temporary,
         text,
         time,

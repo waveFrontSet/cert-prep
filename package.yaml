@@ -13,6 +13,7 @@ dependencies:
   - base < 5
   - text
   - containers
+  - random >= 1.3
 
 library:
   source-dirs: src
@@ -24,7 +25,6 @@ library:
     - bytestring
     - directory
     - filepath
-    - random
     - time
 
 internal-libraries:
@@ -39,6 +39,7 @@ internal-libraries:
       - microlens
       - microlens-mtl
       - microlens-th
+      - openai
       - optparse-applicative
       - time
       - vector
@@ -62,7 +63,6 @@ executables:
       - brick
       - bytestring
       - directory
-      - random
       - vty
       - vty-crossplatform
 
@@ -82,7 +82,6 @@ tests:
       - directory
       - hspec
       - QuickCheck
-      - random
       - temporary
       - time
       - microlens
