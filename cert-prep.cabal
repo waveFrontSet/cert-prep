@@ -48,6 +48,7 @@ library cert-prep-tui
         Exam.Transition
         Exam.Trophy
         Explanations
+        TUI
         TUI.Attributes
         TUI.ConfigSelect
         TUI.Draw

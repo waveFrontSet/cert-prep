@@ -1,39 +1,20 @@
 module Main where
 
-import Brick
-import Brick.BChan (newBChan, writeBChan)
 import CLI (CLIOptions (..), parseCLIOpts)
-import Control.Concurrent (forkIO, threadDelay)
-import Control.Monad (forever, void)
+import Control.Monad (void)
 import Data.Aeson (eitherDecodeStrict)
 import Data.ByteString qualified as BS
 import Data.List.NonEmpty qualified as NE
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromMaybe)
-import Graphics.Vty qualified as V
-import Graphics.Vty.CrossPlatform (mkVty)
 import Registry (loadRegistry, registerConfig)
 import Sampling (SamplingStrategy (..), sampleQuestions)
-import Exam (AppState, Name, initialState)
 import System.Directory (canonicalizePath)
 import System.Exit (exitFailure)
 import System.Random (newStdGen)
-import TUI.Attributes (theMap)
-import TUI.ConfigSelect (selectConfig)
-import TUI.Draw (drawUI)
-import TUI.Event (CustomEvent (..), handleEvent)
+import TUI (runApp, selectConfig)
 import Trophy (loadEarnedTrophies)
 import Types (Config (..))
-
-app :: App AppState CustomEvent Name
-app =
-    App
-        { appDraw = drawUI
-        , appChooseCursor = neverShowCursor
-        , appHandleEvent = handleEvent
-        , appStartEvent = return ()
-        , appAttrMap = const theMap
-        }
 
 main :: IO ()
 main = do
@@ -81,17 +62,4 @@ main = do
             exitFailure
         Just ne -> pure ne
 
-    chan <- newBChan 10
-    void $ forkIO $ forever $ do
-        threadDelay 1000000
-        writeBChan chan Tick
-
-    let buildVty = mkVty V.defaultConfig
-    initialVty <- buildVty
-    void $
-        customMain
-            initialVty
-            buildVty
-            (Just chan)
-            app
-            (initialState sampledQuestionsNE canonPath earned)
+    void $ runApp sampledQuestionsNE canonPath earned
