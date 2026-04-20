@@ -57,6 +57,10 @@ explain prompt = do
             _CreateChatCompletion
                 { messages =
                     [ User
+                        { content = [Text{text = systemPrompt cfg}]
+                        , name = Just "system"
+                        }
+                    , User
                         { content = [Text{text = prompt}]
                         , name = Nothing
                         }
