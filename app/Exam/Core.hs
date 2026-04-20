@@ -40,6 +40,7 @@ module Exam.Core (
 where
 
 import Data.IntSet (IntSet)
+import Data.Text (Text)
 import Data.Vector (Vector)
 import Data.Vector qualified as V
 import Lens.Micro ((^.))
@@ -82,6 +83,15 @@ data ReviewingData = ReviewingData
 
 makeLenses ''ReviewingData
 
+data ExplainingData = ExplainingData
+    { _prompt :: Text
+    , _explanation :: Text
+    , _reviewingData :: ReviewingData
+    }
+    deriving (Show)
+
+makeLenses ''ExplainingData
+
 data ActivePhase a = ActivePhase
     { _activeCore :: ExamCore
     , _activeQuestion :: Question
@@ -114,6 +124,7 @@ data TrophyAwardedData = TrophyAwardedData
 data ExamPhase
     = Answering (ActivePhase AnsweringData)
     | Reviewing (ActivePhase ReviewingData)
+    | Explaining (ActivePhase ExplainingData)
     | CheckingTrophies ExamCore
     | TrophyAwarded TrophyAwardedData
     | Finished FinishedState
