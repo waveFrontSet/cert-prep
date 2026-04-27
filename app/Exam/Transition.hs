@@ -6,6 +6,8 @@ module Exam.Transition (
     nextQuestion,
     advanceExam,
     travelToQuestion,
+    explainAnswer,
+    backToReview,
 )
 where
 
@@ -14,7 +16,9 @@ import Data.List.NonEmpty (NonEmpty (..))
 import Data.Vector qualified as V
 import Lens.Micro ((%~), (&), (+~), (.~), (^.))
 
+import Data.Text qualified as T
 import Exam.Core
+import Explanations (explain)
 import Trophy (EarnedTrophies, TrophyState (..))
 import Types (Answer, Question (..), evalAnswer, isCorrect)
 
@@ -99,6 +103,28 @@ travelToQuestion i ap =
             & activeCore .~ newCore
             & activeQuestion .~ q
             & phaseData .~ newPhaseData
+
+explainAnswer :: ActivePhase ReviewingData -> IO ExamPhase
+explainAnswer ap = do
+    let q = ap ^. activeQuestion
+        aResult = ap ^. phaseData . answerResult
+        prompt = T.pack $ show q <> "\n" <> show aResult
+    expl <- explain prompt
+    return $
+        Explaining $
+            ActivePhase
+                (ap ^. activeCore)
+                (ap ^. activeQuestion)
+                ExplainingData
+                    { _prompt = prompt
+                    , _explanation = expl
+                    , _reviewingData = ap ^. phaseData
+                    }
+
+backToReview :: ActivePhase ExplainingData -> ExamPhase
+backToReview ap = Reviewing (ap & phaseData .~ reviewData)
+  where
+    reviewData = ap ^. phaseData . reviewingData
 
 nextQuestion :: ActivePhase ReviewingData -> ExamPhase
 nextQuestion ap = CheckingTrophies (ap ^. activeCore)

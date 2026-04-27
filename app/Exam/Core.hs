@@ -6,6 +6,7 @@ module Exam.Core (
     ExamCore (..),
     AnsweringData (..),
     ReviewingData (..),
+    ExplainingData (..),
     ActivePhase (..),
     FinishedState (..),
     TrophyAwardedData (..),
@@ -35,6 +36,8 @@ module Exam.Core (
     earnedTrophies,
     configPath,
     totalQuestions,
+    explanation,
+    reviewingData,
     userAnswers,
 )
 where

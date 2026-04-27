@@ -30,6 +30,8 @@ drawUI appState = case appState ^. examPhase of
             (drawAnswerReviewing ap)
             drawStatusReviewing
         ]
+    Explaining ap ->
+        [drawExplanation ap]
     CheckingTrophies _ -> [emptyWidget]
     TrophyAwarded tad -> [drawTrophyAwarded tad]
 
@@ -149,6 +151,52 @@ drawAnswerReviewing ap idx answerText =
         | isMissed = withAttr missedAttr wrappedText
         | isWrong = withAttr wrongAttr wrappedText
         | otherwise = wrappedText
+
+drawExplanation ::
+    ActivePhase ExplainingData -> Widget Name
+drawExplanation ap =
+    vBox
+        [ hBox
+            [ questionPanel
+            , vBorder
+            , answersPanel
+            ]
+        , hBorder
+        , statusBar
+        ]
+  where
+    core = ap ^. activeCore
+    q = ap ^. activeQuestion
+    questionPanel =
+        withBorderStyle unicode
+            $ borderWithLabel
+                ( str $
+                    " Question "
+                        ++ show (core ^. currentIndex + 1)
+                        ++ " of "
+                        ++ show (totalQuestions core)
+                        ++ " "
+                )
+            $ padAll 1
+            $ txtWrap (text q)
+
+    answersPanel =
+        withBorderStyle unicode $
+            borderWithLabel (str " Answers ") $
+                padAll 1 $
+                    vBox [txtWrap (ap ^. phaseData . explanation)]
+
+    statusBar =
+        padLeftRight 1 $
+            vLimitPercent 10 $
+                hBox
+                    [ str $ "Score: " ++ show (core ^. score) ++ "/" ++ show (totalQuestions core)
+                    , str $ "  Time: " ++ formatTime (core ^. elapsedSeconds)
+                    , fill ' '
+                    , drawStatusReviewing
+                    , fill ' '
+                    , str "[q] Quit  [Space] Toggle  [Arrow Keys] Navigate"
+                    ]
 
 drawStatusAnswering :: Widget Name
 drawStatusAnswering =

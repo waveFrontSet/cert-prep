@@ -3,7 +3,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedLists #-}
 
-module Explanations where
+module Explanations (explain) where
 
 import Data.Text (Text)
 import Data.Text qualified as T

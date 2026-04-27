@@ -12,10 +12,17 @@ import Data.IntSet (IntSet)
 import Data.IntSet qualified as IS
 import Graphics.Vty qualified as V
 import Lens.Micro ((%~), (&), (+~), (.~), (^.))
-import Lens.Micro.Mtl (use, (%=), (.=))
+import Lens.Micro.Mtl (use, (%=), (.=), (<~))
 
 import Exam.Core
-import Exam.Transition (advanceExam, overActiveCore, submitAnswer, travelToQuestion)
+import Exam.Transition (
+    advanceExam,
+    backToReview,
+    explainAnswer,
+    overActiveCore,
+    submitAnswer,
+    travelToQuestion,
+ )
 import Exam.Trophy (
     checkAllTrophies,
     persistTrophies,
@@ -39,6 +46,8 @@ handleEvent (VtyEvent (V.EvKey key [])) = case key of
         case phase of
             Answering ap -> handleSubmit ap
             Reviewing ap -> handleNextQuestion ap
+            Explaining ap -> do
+                examPhase .= backToReview ap
             CheckingTrophies core -> handleCheckTrophies core
             TrophyAwarded tad -> handleTrophyDismiss tad
             Finished _ -> halt
@@ -49,6 +58,12 @@ handleEvent (VtyEvent (V.EvKey key [])) = case key of
     V.KChar ' ' -> modifyAnswering toggleSelected
     V.KChar 'l' -> modifyReviewing (travelToQuestion 1)
     V.KChar 'h' -> modifyReviewing (travelToQuestion (-1))
+    V.KChar 'a' -> do
+        phase <- use examPhase
+        case phase of
+            Reviewing ap -> do
+                examPhase <~ liftIO (explainAnswer ap)
+            _ -> return ()
     _ -> return ()
 handleEvent (MouseDown (AnswerChoice idx) _ _ _) =
     modifyAnswering $ \ap ->
