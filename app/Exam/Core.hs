@@ -12,6 +12,7 @@ module Exam.Core (
     TrophyAwardedData (..),
     ExamPhase (..),
     AppState (..),
+    ExplanationStatus (..),
     questions,
     currentIndex,
     score,
@@ -34,9 +35,8 @@ module Exam.Core (
     examPhase,
     trophyState,
     earnedTrophies,
-    configPath,
     totalQuestions,
-    explanation,
+    explanationStatus,
     reviewingData,
     userAnswers,
 )
@@ -86,9 +86,15 @@ data ReviewingData = ReviewingData
 
 makeLenses ''ReviewingData
 
+data ExplanationStatus
+    = ExplanationPending
+    | ExplanationSuccess Text
+    | ExplanationFailure Text
+    deriving (Show, Eq)
+
 data ExplainingData = ExplainingData
     { _prompt :: Text
-    , _explanation :: Text
+    , _explanationStatus :: ExplanationStatus
     , _reviewingData :: ReviewingData
     }
     deriving (Show)
@@ -139,7 +145,6 @@ data AppState = AppState
     { _examPhase :: ExamPhase
     , _trophyState :: TrophyState
     , _earnedTrophies :: EarnedTrophies
-    , _configPath :: FilePath
     }
     deriving (Show)
 

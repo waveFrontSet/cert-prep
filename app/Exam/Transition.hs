@@ -6,8 +6,9 @@ module Exam.Transition (
     nextQuestion,
     advanceExam,
     travelToQuestion,
-    explainAnswer,
     backToReview,
+    beginExplanation,
+    applyExplanationResult,
 )
 where
 
@@ -18,7 +19,12 @@ import Lens.Micro ((%~), (&), (+~), (.~), (^.))
 
 import Data.Text qualified as T
 import Exam.Core
-import Explanations (explain)
+import Explanations (
+    ExplainError,
+    ExplainRequest (..),
+    renderExplainError,
+    renderExplainPrompt,
+ )
 import Trophy (EarnedTrophies, TrophyState (..))
 import Types (Answer, Question (..), evalAnswer, isCorrect)
 
@@ -36,8 +42,8 @@ finishExam c =
         , _finalElapsed = c ^. elapsedSeconds
         }
 
-initialState :: NonEmpty Question -> FilePath -> EarnedTrophies -> AppState
-initialState (q :| qs) cfgPath earned =
+initialState :: NonEmpty Question -> EarnedTrophies -> AppState
+initialState (q :| qs) earned =
     AppState
         { _examPhase =
             Answering
@@ -52,7 +58,6 @@ initialState (q :| qs) cfgPath earned =
                     }
         , _trophyState = TrophyState{currentStreak = 0, lastQuestionSeconds = 0}
         , _earnedTrophies = earned
-        , _configPath = cfgPath
         }
   where
     core =
@@ -104,22 +109,41 @@ travelToQuestion i ap =
             & activeQuestion .~ q
             & phaseData .~ newPhaseData
 
-explainAnswer :: ActivePhase ReviewingData -> IO ExamPhase
-explainAnswer ap = do
-    let q = ap ^. activeQuestion
-        aResult = ap ^. phaseData . answerResult
-        prompt = T.pack $ show q <> "\n" <> show aResult
-    expl <- explain prompt
-    return $
-        Explaining $
-            ActivePhase
-                (ap ^. activeCore)
-                (ap ^. activeQuestion)
-                ExplainingData
+beginExplanation :: ActivePhase ReviewingData -> (ExplainRequest, ExamPhase)
+beginExplanation ap = (ExplainRequest{reqQuestionIndex = idx, reqPrompt = prompt}, Explaining ap')
+  where
+    idx = ap ^. activeCore . currentIndex
+    prompt = renderExplainPrompt (ap ^. activeQuestion) (ap ^. phaseData . answerResult)
+    ap' =
+        ap
+            & phaseData
+                .~ ExplainingData
                     { _prompt = prompt
-                    , _explanation = expl
+                    , _explanationStatus = ExplanationPending
                     , _reviewingData = ap ^. phaseData
                     }
+
+applyExplanationResult :: Int -> Either ExplainError T.Text -> ExamPhase -> ExamPhase
+applyExplanationResult
+    idx
+    res
+    ( Explaining
+            ap@( ActivePhase
+                    { _phaseData =
+                        ExplainingData
+                            { _explanationStatus = ExplanationPending
+                            }
+                    , _activeCore = core
+                    }
+                )
+        ) =
+        Explaining $
+            if core ^. currentIndex == idx
+                then ap & phaseData . explanationStatus .~ modifiedStatus
+                else ap
+      where
+        modifiedStatus = either (ExplanationFailure . renderExplainError) ExplanationSuccess res
+applyExplanationResult _ _ p = p
 
 backToReview :: ActivePhase ExplainingData -> ExamPhase
 backToReview ap = Reviewing (ap & phaseData .~ reviewData)

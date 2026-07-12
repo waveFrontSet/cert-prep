@@ -16,6 +16,7 @@ library
     exposed-modules:
         Registry
         Sampling
+        Settings
         Trophy
         Types
         Util
@@ -53,6 +54,7 @@ library cert-prep-tui
         TUI.ConfigSelect
         TUI.Draw
         TUI.Event
+        TUI.Monad
         TUI.Trophy
     other-modules:
         Paths_cert_prep
@@ -71,6 +73,7 @@ library cert-prep-tui
         microlens,
         microlens-mtl,
         microlens-th,
+        mtl,
         openai,
         optparse-applicative,
         random >=1.3,
