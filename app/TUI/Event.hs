@@ -40,9 +40,6 @@ import TUI.Monad (
     TuiM,
     modifyPhase,
     tuiHalt,
-    whenAnswering,
-    whenChecking,
-    whenExplaining,
     whenReviewing,
  )
 import Types (Question (..), isCorrect)
@@ -56,15 +53,14 @@ handleEvent (VtyEvent (V.EvKey key [])) = case key of
     V.KChar 'q' -> tuiHalt
     V.KChar 'Q' -> tuiHalt
     V.KEnter -> do
-        whenAnswering handleSubmit
-        whenReviewing handleNextQuestion
-        whenExplaining handleExplaining
-        whenChecking handleCheckTrophies
         phase <- use examPhase
         case phase of
+            Answering ap -> handleSubmit ap
+            Reviewing ap -> handleNextQuestion ap
+            Explaining ap -> handleExplaining ap
+            CheckingTrophies core -> handleCheckTrophies core
             TrophyAwarded tad -> handleTrophyDismiss tad
             Finished _ -> tuiHalt
-            _ -> return ()
     V.KUp -> modifyAnswering (moveFocus (-1))
     V.KChar 'k' -> modifyAnswering (moveFocus (-1))
     V.KDown -> modifyAnswering (moveFocus 1)
