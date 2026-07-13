@@ -31,6 +31,7 @@ import Types (Answer, Question (..), evalAnswer, isCorrect)
 overActiveCore :: (ExamCore -> ExamCore) -> ExamPhase -> ExamPhase
 overActiveCore f (Answering ap) = Answering (ap & activeCore %~ f)
 overActiveCore f (Reviewing ap) = Reviewing (ap & activeCore %~ f)
+overActiveCore f (Explaining ap) = Explaining (ap & activeCore %~ f)
 overActiveCore f (CheckingTrophies core) = CheckingTrophies (f core)
 overActiveCore _ p = p
 
