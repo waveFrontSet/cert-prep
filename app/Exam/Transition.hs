@@ -125,25 +125,13 @@ beginExplanation ap = (ExplainRequest{reqQuestionIndex = idx, reqPrompt = prompt
                     }
 
 applyExplanationResult :: Int -> Either ExplainError T.Text -> ExamPhase -> ExamPhase
-applyExplanationResult
-    idx
-    res
-    ( Explaining
-            ap@( ActivePhase
-                    { _phaseData =
-                        ExplainingData
-                            { _explanationStatus = ExplanationPending
-                            }
-                    , _activeCore = core
-                    }
-                )
-        ) =
-        Explaining $
-            if core ^. currentIndex == idx
-                then ap & phaseData . explanationStatus .~ modifiedStatus
-                else ap
-      where
-        modifiedStatus = either (ExplanationFailure . renderExplainError) ExplanationSuccess res
+applyExplanationResult idx res (Explaining ap)
+    | ap ^. activeCore . currentIndex == idx && currentStatus == ExplanationPending =
+        Explaining $ ap & phaseData . explanationStatus .~ modifiedStatus
+    | otherwise = Explaining ap
+  where
+    currentStatus = ap ^. phaseData . explanationStatus
+    modifiedStatus = either (ExplanationFailure . renderExplainError) ExplanationSuccess res
 applyExplanationResult _ _ p = p
 
 backToReview :: ActivePhase ExplainingData -> ExamPhase
