@@ -40,6 +40,7 @@ import TUI.Monad (
     TuiM,
     modifyPhase,
     tuiHalt,
+    whenAnswering,
     whenReviewing,
  )
 import Types (Question (..), isCorrect)
@@ -167,18 +168,10 @@ handleTrophyTick tad = do
         else examPhase .= TrophyAwarded (tad & animationFrame .~ newFrame)
 
 modifyAnswering :: (ActivePhase AnsweringData -> ActivePhase AnsweringData) -> TuiM ()
-modifyAnswering f = do
-    phase <- use examPhase
-    case phase of
-        Answering ap -> examPhase .= Answering (f ap)
-        _ -> return ()
+modifyAnswering f = whenAnswering (\ap -> examPhase .= Answering (f ap))
 
 modifyReviewing :: (ActivePhase ReviewingData -> ActivePhase ReviewingData) -> TuiM ()
-modifyReviewing f = do
-    phase <- use examPhase
-    case phase of
-        Reviewing ap -> examPhase .= Reviewing (f ap)
-        _ -> return ()
+modifyReviewing f = whenReviewing (\ap -> examPhase .= Reviewing (f ap))
 
 toggleSelected :: ActivePhase AnsweringData -> ActivePhase AnsweringData
 toggleSelected ap =
