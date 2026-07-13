@@ -183,7 +183,7 @@ drawExplanation ap =
     explainText = case eStatus of
         ExplanationPending -> txtWrap "Generating explanation…"
         ExplanationSuccess t -> txtWrap t
-        ExplanationFailure t -> withAttr wrongAttr $ txtWrap (t <> "Press Enter to return.")
+        ExplanationFailure t -> withAttr wrongAttr $ txtWrap (t <> "\n\nPress Enter to return.")
     answersPanel =
         withBorderStyle unicode $
             borderWithLabel (str " Answers ") $
