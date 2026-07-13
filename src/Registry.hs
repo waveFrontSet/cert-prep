@@ -2,6 +2,7 @@ module Registry (
     RegistryEntry (..),
     Registry,
     registryFilePath,
+    loadFile,
     loadRegistry,
     saveRegistry,
     registerConfig,
@@ -13,6 +14,7 @@ import Data.Aeson (
     eitherDecodeStrict,
  )
 import Data.ByteString qualified as BS
+import Data.Either (fromRight)
 import Data.List (sortBy)
 import Data.Ord (Down (..), comparing)
 import Data.Text (Text)
@@ -49,14 +51,16 @@ registryFilePath = do
 loadRegistry :: IO Registry
 loadRegistry = do
     path <- registryFilePath
-    exists <- doesFileExist path
+    fromRight [] <$> loadFile path
+
+loadFile :: (FromJSON a) => FilePath -> IO (Either String a)
+loadFile p = do
+    exists <- doesFileExist p
     if not exists
-        then pure []
+        then return (Left $ "File does not exist: " <> show p)
         else do
-            bytes <- BS.readFile path
-            case eitherDecodeStrict bytes of
-                Left _ -> pure []
-                Right entries -> pure entries
+            bytes <- BS.readFile p
+            return $ eitherDecodeStrict bytes
 
 saveRegistry :: Registry -> IO ()
 saveRegistry entries = do

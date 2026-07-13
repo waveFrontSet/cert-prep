@@ -179,12 +179,16 @@ drawExplanation ap =
                 )
             $ padAll 1
             $ txtWrap (text q)
-
+    eStatus = ap ^. phaseData . explanationStatus
+    explainText = case eStatus of
+        ExplanationPending -> txtWrap "Generating explanation…"
+        ExplanationSuccess t -> txtWrap t
+        ExplanationFailure t -> withAttr wrongAttr $ txtWrap (t <> "Press Enter to return.")
     answersPanel =
         withBorderStyle unicode $
             borderWithLabel (str " Answers ") $
                 padAll 1 $
-                    vBox [txtWrap (ap ^. phaseData . explanation)]
+                    vBox [explainText]
 
     statusBar =
         padLeftRight 1 $

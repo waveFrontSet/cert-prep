@@ -43,6 +43,7 @@ library
 
 library cert-prep-tui
     exposed-modules:
+        App
         CLI
         Exam
         Exam.Core
