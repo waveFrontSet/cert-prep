@@ -118,6 +118,7 @@ test-suite spec
         EventSpec
         Exam.TransitionSpec
         ExamSpec
+        ExplanationsSpec
         Generators
         RegistrySpec
         SamplingSpec

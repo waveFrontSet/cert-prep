@@ -15,13 +15,26 @@ module Explanations (
 ) where
 
 import Control.Exception (SomeException, try)
+import Data.IntSet (toList)
 import Data.Text (Text)
 import Data.Text qualified as T
-import OpenAI.V1
-import OpenAI.V1.Chat.Completions
+import OpenAI.V1 (
+    Methods (Methods, createChatCompletion),
+    getClientEnv,
+    makeMethods,
+ )
+import OpenAI.V1.Chat.Completions (
+    ChatCompletionObject (ChatCompletionObject, choices),
+    Choice (message),
+    CreateChatCompletion (messages, model),
+    Message (User, content, name),
+    messageToContent,
+    _CreateChatCompletion,
+ )
+import OpenAI.V1.Chat.Completions qualified as Comp
 import OpenAI.V1.Models qualified as Models
-import Settings
-import Types (AnswerResult, Question)
+import Settings (Settings (aiBaseUrl, aiModel, aiSystemPrompt))
+import Types (AnswerResult, Question (..), userSelectedAnswers)
 
 data ExplainConfig = ExplainConfig
     {explainApiKey, explainModel, explainBaseUrl, explainSystemPrompt :: Text}
@@ -65,11 +78,11 @@ fetchExplanation cfg prompt = do
                 _CreateChatCompletion
                     { messages =
                         [ User
-                            { content = [Text{text = explainSystemPrompt cfg}]
+                            { content = [Comp.Text{text = explainSystemPrompt cfg}]
                             , name = Just "system"
                             }
                         , User
-                            { content = [Text{text = prompt}]
+                            { content = [Comp.Text{text = prompt}]
                             , name = Nothing
                             }
                         ]
@@ -82,8 +95,20 @@ fetchExplanation cfg prompt = do
             Right [] -> Left ExplainEmptyResponse
             Right cs -> Right $ foldr ((<>) . messageToContent . message) (T.pack "") cs
 
-renderExplainPrompt :: Question -> AnswerResult -> Text -- replaces show-based prompt
-renderExplainPrompt q aResult = T.pack $ show q <> show aResult
+renderExplainPrompt :: Question -> AnswerResult -> Text
+renderExplainPrompt qu ar = renderQuestion qu <> renderAnswerResult ar
+  where
+    commaSeparated = T.intercalate ", " . fmap (T.pack . show) . toList
+    renderQuestion q =
+        "Question: "
+            <> text q
+            <> "\nAnswer Choices:\n"
+            <> zippedAnswers (answerChoices q)
+            <> "Correct Answers: "
+            <> commaSeparated (correctAnswer q)
+    zippedAnswers answers =
+        T.unlines $ zipWith (\a answer -> T.pack (show @Int a) <> ". " <> answer) [0 ..] answers
+    renderAnswerResult aResult = "\nUser Selected Answers: " <> commaSeparated (userSelectedAnswers aResult)
 
 renderExplainError :: ExplainError -> Text
 renderExplainError (ExplainHttpError t) = "Explanation failed: " <> t

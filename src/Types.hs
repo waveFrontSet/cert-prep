@@ -6,6 +6,7 @@ module Types (
     AnswerResult (..),
     evalAnswer,
     Config (..),
+    userSelectedAnswers,
 ) where
 
 import Data.Aeson (FromJSON, ToJSON)
@@ -43,6 +44,9 @@ evalAnswer q ans =
 
 isCorrect :: Question -> Answer -> Bool
 isCorrect q ans = correctAnswer q == ans
+
+userSelectedAnswers :: AnswerResult -> Answer
+userSelectedAnswers ar = correct ar <> wrong ar
 
 data Config = Config
     { title :: Text
