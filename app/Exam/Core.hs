@@ -93,8 +93,7 @@ data ExplanationStatus
     deriving (Show, Eq)
 
 data ExplainingData = ExplainingData
-    { _prompt :: Text
-    , _explanationStatus :: ExplanationStatus
+    { _explanationStatus :: ExplanationStatus
     , _reviewingData :: ReviewingData
     }
     deriving (Show)

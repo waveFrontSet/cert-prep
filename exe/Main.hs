@@ -5,7 +5,7 @@ import App (
     loadConfig,
     loadSettings,
     resolveConfigPath,
-    resolveExplainConfig,
+    resolveExplainEnv,
     runApp',
     sampleNonEmpty,
  )
@@ -29,5 +29,5 @@ main = do
         earned <- liftIO $ loadEarnedTrophies canonPath
         sampledNE <- sampleNonEmpty config
         settings <- loadSettings
-        mExplainConfig <- resolveExplainConfig settings
-        liftIO $ void $ runApp canonPath mExplainConfig sampledNE earned
+        mExplainEnv <- resolveExplainEnv settings
+        liftIO $ void $ runApp canonPath mExplainEnv sampledNE earned

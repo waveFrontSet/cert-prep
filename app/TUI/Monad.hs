@@ -14,28 +14,25 @@ import Exam (
     ActivePhase,
     AnsweringData,
     AppState,
-    ExamCore,
     ExamPhase (..),
-    ExplainingData,
     Name,
     ReviewingData,
     examPhase,
  )
 import Explanations (
-    ExplainConfig,
+    ExplainEnv (explainFetch),
     ExplainError,
     ExplainRequest (..),
     MonadExplain (..),
-    fetchExplanation,
  )
-import Lens.Micro.Mtl (use, (.=))
+import Lens.Micro.Mtl (use)
 
 data CustomEvent = Tick | ExplanationReceived Int (Either ExplainError Text)
 
 data TuiEnv = TuiEnv
     { tuiConfigPath :: FilePath
     , tuiEventChan :: BChan CustomEvent
-    , tuiExplainCfg :: Maybe ExplainConfig -- Nothing = AI disabled
+    , tuiExplainEnv :: Maybe ExplainEnv -- Nothing = AI disabled
     }
 
 newtype TuiM a = TuiM {unTuiM :: ReaderT TuiEnv (EventM Name AppState) a}
@@ -59,27 +56,11 @@ whenReviewing f = do
     case phase of
         Reviewing rp -> f rp
         _ -> return ()
-whenExplaining :: (ActivePhase ExplainingData -> TuiM ()) -> TuiM ()
-whenExplaining f = do
-    phase <- use examPhase
-    case phase of
-        Explaining ep -> f ep
-        _ -> return ()
-whenChecking :: (ExamCore -> TuiM ()) -> TuiM ()
-whenChecking f = do
-    phase <- use examPhase
-    case phase of
-        CheckingTrophies core -> f core
-        _ -> return ()
-modifyPhase :: (ExamPhase -> ExamPhase) -> TuiM ()
-modifyPhase f = do
-    phase <- use examPhase
-    examPhase .= f phase
 
 instance MonadExplain TuiM where
-    explainAvailable = asks (isJust . tuiExplainCfg)
+    explainAvailable = asks (isJust . tuiExplainEnv)
     requestExplanation req = do
         env <- ask
-        for_ (tuiExplainCfg env) $ \cfg -> liftIO . void . forkIO $ do
-            result <- fetchExplanation cfg (reqPrompt req) -- total, never throws
+        for_ (tuiExplainEnv env) $ \explainEnv -> liftIO . void . forkIO $ do
+            result <- explainFetch explainEnv (reqPrompt req) -- total, never throws
             writeBChan (tuiEventChan env) (ExplanationReceived (reqQuestionIndex req) result)

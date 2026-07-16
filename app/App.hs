@@ -10,7 +10,7 @@ import Data.List.NonEmpty (NonEmpty)
 import Data.List.NonEmpty qualified as NE
 import Data.Map qualified as Map
 import Data.Maybe (fromMaybe)
-import Explanations (ExplainConfig, mkExplainConfig)
+import Explanations (ExplainEnv, mkExplainEnv)
 import Registry (loadFile, loadRegistry)
 import Sampling (SamplingStrategy (..), sampleQuestions)
 import Settings qualified
@@ -18,7 +18,7 @@ import System.Environment (lookupEnv)
 import System.Exit (exitFailure)
 import System.IO (hPutStrLn, stderr)
 import System.Random (newStdGen)
-import TUI.ConfigSelect (selectConfig)
+import TUI (selectConfig)
 import Types (Config (..), Question)
 
 newtype App a = App {unApp :: ReaderT AppEnv (ExceptT AppError IO) a}
@@ -91,7 +91,7 @@ loadSettings = do
     settings <- liftIO Settings.loadSettings
     either (throwError . SettingsParseError) return settings
 
-resolveExplainConfig :: Settings.Settings -> App (Maybe ExplainConfig)
-resolveExplainConfig settings = do
-    apiKey <- liftIO $ lookupEnv "GEMINI_API_KEY"
-    return $ mkExplainConfig settings apiKey
+resolveExplainEnv :: Settings.Settings -> App (Maybe ExplainEnv)
+resolveExplainEnv settings = liftIO $ do
+    apiKey <- lookupEnv "GEMINI_API_KEY"
+    mkExplainEnv settings apiKey

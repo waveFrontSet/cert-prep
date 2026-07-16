@@ -38,7 +38,6 @@ import TUI.Monad (
     CustomEvent (..),
     TuiEnv (..),
     TuiM,
-    modifyPhase,
     tuiHalt,
     whenAnswering,
     whenReviewing,
@@ -90,7 +89,7 @@ handleEvent (AppEvent Tick) = do
         TrophyAwarded tad -> handleTrophyTick tad
         CheckingTrophies core -> handleCheckTrophies core
         _ -> examPhase %= overActiveCore (elapsedSeconds +~ 1)
-handleEvent (AppEvent (ExplanationReceived idx res)) = modifyPhase (applyExplanationResult idx res)
+handleEvent (AppEvent (ExplanationReceived idx res)) = examPhase %= applyExplanationResult idx res
 handleEvent _ = return ()
 
 handleSubmit :: ActivePhase AnsweringData -> TuiM ()

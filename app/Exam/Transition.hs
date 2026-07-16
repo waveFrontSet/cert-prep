@@ -119,8 +119,7 @@ beginExplanation ap = (ExplainRequest{reqQuestionIndex = idx, reqPrompt = prompt
         ap
             & phaseData
                 .~ ExplainingData
-                    { _prompt = prompt
-                    , _explanationStatus = ExplanationPending
+                    { _explanationStatus = ExplanationPending
                     , _reviewingData = ap ^. phaseData
                     }
 

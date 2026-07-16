@@ -11,7 +11,7 @@ import Control.Monad (forever, void)
 import Data.List.NonEmpty (NonEmpty)
 import Exam.Core (AppState)
 import Exam.Transition (initialState)
-import Explanations (ExplainConfig)
+import Explanations (ExplainEnv)
 import Graphics.Vty qualified as V
 import Graphics.Vty.CrossPlatform (mkVty)
 import TUI.Attributes (theMap)
@@ -23,15 +23,15 @@ import Trophy (EarnedTrophies)
 import Types (Question)
 
 runApp ::
-    FilePath -> Maybe ExplainConfig -> NonEmpty Question -> EarnedTrophies -> IO AppState
-runApp p mExplainConfig qs earned = do
+    FilePath -> Maybe ExplainEnv -> NonEmpty Question -> EarnedTrophies -> IO AppState
+runApp p mExplainEnv qs earned = do
     chan <- newBChan 10
     void $ forkIO $ forever $ do
         threadDelay 1000000
         writeBChan chan Tick
 
     let buildVty = mkVty V.defaultConfig
-        env = TuiEnv{tuiConfigPath = p, tuiEventChan = chan, tuiExplainCfg = mExplainConfig}
+        env = TuiEnv{tuiConfigPath = p, tuiEventChan = chan, tuiExplainEnv = mExplainEnv}
         app =
             App
                 { appDraw = drawUI

@@ -4,12 +4,11 @@
 {-# LANGUAGE OverloadedLists #-}
 
 module Explanations (
-    ExplainConfig (..),
+    ExplainEnv (..),
     ExplainError (..),
     ExplainRequest (..),
     MonadExplain (..),
-    fetchExplanation,
-    mkExplainConfig,
+    mkExplainEnv,
     renderExplainPrompt,
     renderExplainError,
 ) where
@@ -27,7 +26,7 @@ import OpenAI.V1.Chat.Completions (
     ChatCompletionObject (ChatCompletionObject, choices),
     Choice (message),
     CreateChatCompletion (messages, model),
-    Message (User, content, name),
+    Message (System, User, content, name),
     messageToContent,
     _CreateChatCompletion,
  )
@@ -36,8 +35,9 @@ import OpenAI.V1.Models qualified as Models
 import Settings (Settings (aiBaseUrl, aiModel, aiSystemPrompt))
 import Types (AnswerResult, Question (..), userSelectedAnswers)
 
-data ExplainConfig = ExplainConfig
-    {explainApiKey, explainModel, explainBaseUrl, explainSystemPrompt :: Text}
+newtype ExplainEnv = ExplainEnv
+    { explainFetch :: Text -> IO (Either ExplainError Text)
+    }
 
 data ExplainError
     = ExplainHttpError Text
@@ -56,44 +56,42 @@ class (Monad m) => MonadExplain m where
     requestExplanation :: ExplainRequest -> m ()
     explainAvailable :: m Bool
 
-mkExplainConfig :: Settings -> Maybe String -> Maybe ExplainConfig
-mkExplainConfig _ Nothing = Nothing
-mkExplainConfig s (Just apiKey) =
-    Just
-        ExplainConfig
-            { explainApiKey = T.pack apiKey
-            , explainModel = aiModel s
-            , explainBaseUrl = aiBaseUrl s
-            , explainSystemPrompt = aiSystemPrompt s
-            }
-
-fetchExplanation :: ExplainConfig -> Text -> IO (Either ExplainError Text)
-fetchExplanation cfg prompt = do
-    choices <- try @SomeException $ do
-        clientEnv <- getClientEnv (explainBaseUrl cfg)
-        let Methods{createChatCompletion} =
-                makeMethods clientEnv (explainApiKey cfg) Nothing Nothing
-        ChatCompletionObject{choices} <-
-            createChatCompletion
-                _CreateChatCompletion
-                    { messages =
-                        [ User
-                            { content = [Comp.Text{text = explainSystemPrompt cfg}]
-                            , name = Just "system"
-                            }
-                        , User
-                            { content = [Comp.Text{text = prompt}]
-                            , name = Nothing
-                            }
-                        ]
-                    , model = Models.Model (explainModel cfg)
-                    }
-        return choices
-    return $
-        case choices of
-            Left err -> Left (ExplainHttpError (T.pack $ show err))
-            Right [] -> Left ExplainEmptyResponse
-            Right cs -> Right $ foldr ((<>) . messageToContent . message) (T.pack "") cs
+mkExplainEnv :: Settings -> Maybe String -> IO (Maybe ExplainEnv)
+mkExplainEnv _ Nothing = return Nothing
+mkExplainEnv _ (Just "") = return Nothing
+mkExplainEnv s (Just apiKey) = do
+    clientEnv <- getClientEnv (aiBaseUrl s)
+    let Methods{createChatCompletion} =
+            makeMethods clientEnv (T.pack apiKey) Nothing Nothing
+    return $ Just $ ExplainEnv{explainFetch = fetch createChatCompletion}
+  where
+    fetch ::
+        (CreateChatCompletion -> IO ChatCompletionObject) ->
+        Text ->
+        IO (Either ExplainError Text)
+    fetch createComp prompt = do
+        choices <- try @SomeException $ do
+            ChatCompletionObject{choices} <-
+                createComp
+                    _CreateChatCompletion
+                        { messages =
+                            [ System
+                                { content = [Comp.Text{text = aiSystemPrompt s}]
+                                , name = Just "system"
+                                }
+                            , User
+                                { content = [Comp.Text{text = prompt}]
+                                , name = Nothing
+                                }
+                            ]
+                        , model = Models.Model (aiModel s)
+                        }
+            return choices
+        return $
+            case choices of
+                Left err -> Left (ExplainHttpError (T.pack $ show err))
+                Right [] -> Left ExplainEmptyResponse
+                Right cs -> Right $ foldMap (messageToContent . message) cs
 
 renderExplainPrompt :: Question -> AnswerResult -> Text
 renderExplainPrompt qu ar = renderQuestion qu <> renderAnswerResult ar
