@@ -24,3 +24,6 @@ cabal.project.local~
 
 # Ignore test report
 report.html
+
+# Ignore question banks
+*.json
