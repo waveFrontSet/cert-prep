@@ -3,7 +3,8 @@ module Exam.TransitionSpec (spec) where
 import Data.IntSet qualified as IS
 import Data.Vector qualified as V
 import Exam.Core
-import Exam.Transition (travelToQuestion)
+import Exam.Transition (applyExplainEvent, stepExplanation, travelToQuestion)
+import Explanations (ExplainError (..), ExplainEvent (..), renderExplainError)
 import Generators (mkQuestion)
 import Lens.Micro
 import Test.Hspec
@@ -47,3 +48,55 @@ spec = do
         it "doesn't travel beyond the first answered question" $
             let ap = travelToQuestion (-1) (mkReviewing 0)
              in (ap ^. (activeCore . currentIndex)) `shouldBe` 0
+
+    describe "stepExplanation" $ do
+        it "starts streaming on the first chunk" $
+            stepExplanation (ExplainChunk "Hel") ExplanationPending
+                `shouldBe` ExplanationStreaming "Hel"
+        it "appends subsequent chunks" $
+            stepExplanation (ExplainChunk "lo") (ExplanationStreaming "Hel")
+                `shouldBe` ExplanationStreaming "Hello"
+        it "finalizes the streamed text on done" $
+            stepExplanation ExplainDone (ExplanationStreaming "Hello")
+                `shouldBe` ExplanationSuccess "Hello"
+        it "treats done without any chunk as an empty response" $
+            stepExplanation ExplainDone ExplanationPending
+                `shouldBe` ExplanationFailure (renderExplainError ExplainEmptyResponse)
+        it "fails mid-stream on error, discarding partial text" $
+            stepExplanation (ExplainFailed (ExplainHttpError "boom")) (ExplanationStreaming "Hel")
+                `shouldBe` ExplanationFailure (renderExplainError (ExplainHttpError "boom"))
+        it "ignores chunks after success" $
+            stepExplanation (ExplainChunk "junk") (ExplanationSuccess "Hello")
+                `shouldBe` ExplanationSuccess "Hello"
+        it "ignores done after failure" $
+            stepExplanation ExplainDone (ExplanationFailure "nope")
+                `shouldBe` ExplanationFailure "nope"
+
+    describe "applyExplainEvent" $ do
+        let mkExplaining rid status =
+                Explaining
+                    ActivePhase
+                        { _activeCore = mkCore 0 0
+                        , _activeQuestion = head qs
+                        , _phaseData =
+                            ExplainingData
+                                { _explainId = rid
+                                , _explanationStatus = status
+                                , _reviewingData =
+                                    ReviewingData
+                                        { _answerResult = undefined
+                                        , _lastSelected = IS.empty
+                                        }
+                                }
+                        }
+            statusOf (Explaining ap) = Just (ap ^. phaseData . explanationStatus)
+            statusOf _ = Nothing
+        it "applies events carrying the current request id" $
+            statusOf (applyExplainEvent 1 (ExplainChunk "Hi") (mkExplaining 1 ExplanationPending))
+                `shouldBe` Just (ExplanationStreaming "Hi")
+        it "drops events from an abandoned request" $
+            statusOf (applyExplainEvent 1 (ExplainChunk "Hi") (mkExplaining 2 ExplanationPending))
+                `shouldBe` Just ExplanationPending
+        it "leaves other phases untouched" $
+            statusOf (applyExplainEvent 1 ExplainDone (Reviewing (mkReviewing 0)))
+                `shouldBe` Nothing

@@ -12,7 +12,7 @@ import Data.IntSet (IntSet)
 import Data.IntSet qualified as IS
 import Graphics.Vty qualified as V
 import Lens.Micro ((%~), (&), (+~), (.~), (^.))
-import Lens.Micro.Mtl (use, (%=), (.=))
+import Lens.Micro.Mtl (use, (%=), (+=), (.=))
 
 import Control.Monad (when)
 import Control.Monad.Reader (asks)
@@ -20,7 +20,7 @@ import Control.Monad.State (MonadState)
 import Exam.Core
 import Exam.Transition (
     advanceExam,
-    applyExplanationResult,
+    applyExplainEvent,
     backToReview,
     beginExplanation,
     overActiveCore,
@@ -38,6 +38,7 @@ import TUI.Monad (
     CustomEvent (..),
     TuiEnv (..),
     TuiM,
+    liftEvent,
     tuiHalt,
     whenAnswering,
     whenReviewing,
@@ -61,15 +62,19 @@ handleEvent (VtyEvent (V.EvKey key [])) = case key of
             CheckingTrophies core -> handleCheckTrophies core
             TrophyAwarded tad -> handleTrophyDismiss tad
             Finished _ -> tuiHalt
-    V.KUp -> modifyAnswering (moveFocus (-1))
-    V.KChar 'k' -> modifyAnswering (moveFocus (-1))
-    V.KDown -> modifyAnswering (moveFocus 1)
-    V.KChar 'j' -> modifyAnswering (moveFocus 1)
+    V.KUp -> moveFocusOrScroll (-1)
+    V.KChar 'k' -> moveFocusOrScroll (-1)
+    V.KDown -> moveFocusOrScroll 1
+    V.KChar 'j' -> moveFocusOrScroll 1
     V.KChar ' ' -> modifyAnswering toggleSelected
     V.KChar 'l' -> modifyReviewing (travelToQuestion 1)
     V.KChar 'h' -> modifyReviewing (travelToQuestion (-1))
-    V.KChar 'a' -> whenReviewing requestExplanationFor
+    V.KChar 'a' -> whenReviewing $ \ap -> do
+        liftEvent $ vScrollToBeginning explainScroll -- don't inherit the previous explanation's offset
+        requestExplanationFor ap
     _ -> return ()
+handleEvent (VtyEvent (V.EvKey (V.KChar 'f') [V.MCtrl])) = liftEvent $ vScrollPage explainScroll Down
+handleEvent (VtyEvent (V.EvKey (V.KChar 'b') [V.MCtrl])) = liftEvent $ vScrollPage explainScroll Up
 handleEvent (MouseDown (AnswerChoice idx) _ _ _) =
     modifyAnswering $ \ap ->
         ap & phaseData . selectedAnswers %~ toggleAnswerPure idx
@@ -89,8 +94,23 @@ handleEvent (AppEvent Tick) = do
         TrophyAwarded tad -> handleTrophyTick tad
         CheckingTrophies core -> handleCheckTrophies core
         _ -> examPhase %= overActiveCore (elapsedSeconds +~ 1)
-handleEvent (AppEvent (ExplanationReceived idx res)) = examPhase %= applyExplanationResult idx res
+handleEvent (AppEvent (ExplanationEvent rid ev)) = examPhase %= applyExplainEvent rid ev
 handleEvent _ = return ()
+
+-- Brick drops scroll requests for viewports that aren't rendered, so these
+-- are safe to issue in any phase; they only take effect while explaining.
+explainScroll :: ViewportScroll Name
+explainScroll = viewportScroll ExplanationViewport
+
+-- Up/Down move the answer focus while answering and scroll the explanation
+-- while explaining.
+moveFocusOrScroll :: Int -> TuiM ()
+moveFocusOrScroll delta = do
+    phase <- use examPhase
+    case phase of
+        Answering ap -> examPhase .= Answering (moveFocus delta ap)
+        Explaining _ -> liftEvent $ vScrollBy explainScroll delta
+        _ -> return ()
 
 handleSubmit :: ActivePhase AnsweringData -> TuiM ()
 handleSubmit ap = do
@@ -117,7 +137,9 @@ requestExplanationFor ::
 requestExplanationFor ap = do
     enabled <- explainAvailable
     when enabled $ do
-        let (req, phase) = beginExplanation ap
+        rid <- use nextExplainId
+        nextExplainId += 1
+        let (req, phase) = beginExplanation rid ap
         examPhase .= phase -- Pending shown immediately, before any network I/O
         requestExplanation req
 

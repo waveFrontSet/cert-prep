@@ -158,11 +158,12 @@ drawAnswerReviewing ap idx answerText =
         | otherwise = wrappedText
 
 drawExplanation :: ActivePhase ExplainingData -> Int -> Text -> Widget Name
-drawExplanation ap 0 _ = explainText
+drawExplanation ap 0 _ = viewport ExplanationViewport Vertical explainText
   where
     eStatus = ap ^. phaseData . explanationStatus
     explainText = case eStatus of
         ExplanationPending -> txtWrap "Generating explanation…"
+        ExplanationStreaming t -> txtWrap (t <> "▌")
         ExplanationSuccess t -> txtWrap t
         ExplanationFailure t -> withAttr wrongAttr $ txtWrap (t <> "\n\nPress Enter to return.")
 drawExplanation _ _ _ = emptyWidget

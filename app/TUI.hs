@@ -25,7 +25,9 @@ import Types (Question)
 runApp ::
     FilePath -> Maybe ExplainEnv -> NonEmpty Question -> EarnedTrophies -> IO AppState
 runApp p mExplainEnv qs earned = do
-    chan <- newBChan 10
+    -- writeBChan blocks when full; token chunks arrive in bursts and share
+    -- this channel with the timer ticks, so leave generous headroom.
+    chan <- newBChan 100
     void $ forkIO $ forever $ do
         threadDelay 1000000
         writeBChan chan Tick

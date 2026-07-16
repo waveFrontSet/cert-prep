@@ -36,7 +36,9 @@ module Exam.Core (
     trophyState,
     earnedTrophies,
     totalQuestions,
+    explainId,
     explanationStatus,
+    nextExplainId,
     reviewingData,
     userAnswers,
 )
@@ -56,6 +58,7 @@ data Name
     | SubmitButton
     | NextButton
     | TrophyDismiss
+    | ExplanationViewport
     deriving (Show, Eq, Ord)
 
 data ExamCore = ExamCore
@@ -88,12 +91,14 @@ makeLenses ''ReviewingData
 
 data ExplanationStatus
     = ExplanationPending
+    | ExplanationStreaming Text -- partial text, more chunks expected
     | ExplanationSuccess Text
     | ExplanationFailure Text
     deriving (Show, Eq)
 
 data ExplainingData = ExplainingData
-    { _explanationStatus :: ExplanationStatus
+    { _explainId :: Int -- id of the request whose events we accept
+    , _explanationStatus :: ExplanationStatus
     , _reviewingData :: ReviewingData
     }
     deriving (Show)
@@ -144,6 +149,7 @@ data AppState = AppState
     { _examPhase :: ExamPhase
     , _trophyState :: TrophyState
     , _earnedTrophies :: EarnedTrophies
+    , _nextExplainId :: Int -- counter so stale explanation events can be told apart
     }
     deriving (Show)
 

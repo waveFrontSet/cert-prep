@@ -9,7 +9,6 @@ import Control.Monad.Reader.Class (asks)
 import Control.Monad.State (MonadState, MonadTrans (..))
 import Data.Foldable (for_)
 import Data.Maybe (isJust)
-import Data.Text (Text)
 import Exam (
     ActivePhase,
     AnsweringData,
@@ -20,14 +19,14 @@ import Exam (
     examPhase,
  )
 import Explanations (
-    ExplainEnv (explainFetch),
-    ExplainError,
+    ExplainEnv (explainStream),
+    ExplainEvent,
     ExplainRequest (..),
     MonadExplain (..),
  )
 import Lens.Micro.Mtl (use)
 
-data CustomEvent = Tick | ExplanationReceived Int (Either ExplainError Text)
+data CustomEvent = Tick | ExplanationEvent Int ExplainEvent
 
 data TuiEnv = TuiEnv
     { tuiConfigPath :: FilePath
@@ -41,8 +40,12 @@ newtype TuiM a = TuiM {unTuiM :: ReaderT TuiEnv (EventM Name AppState) a}
 runTuiM :: TuiEnv -> TuiM a -> EventM Name AppState a
 runTuiM env t = runReaderT (unTuiM t) env
 
+-- Lift a raw brick EventM action (halt, viewport scrolling, …) into TuiM.
+liftEvent :: EventM Name AppState a -> TuiM a
+liftEvent = TuiM . lift
+
 tuiHalt :: TuiM ()
-tuiHalt = TuiM (lift halt)
+tuiHalt = liftEvent halt
 
 whenAnswering :: (ActivePhase AnsweringData -> TuiM ()) -> TuiM ()
 whenAnswering f = do
@@ -61,6 +64,6 @@ instance MonadExplain TuiM where
     explainAvailable = asks (isJust . tuiExplainEnv)
     requestExplanation req = do
         env <- ask
-        for_ (tuiExplainEnv env) $ \explainEnv -> liftIO . void . forkIO $ do
-            result <- explainFetch explainEnv (reqPrompt req) -- total, never throws
-            writeBChan (tuiEventChan env) (ExplanationReceived (reqQuestionIndex req) result)
+        for_ (tuiExplainEnv env) $ \explainEnv -> liftIO . void . forkIO $
+            explainStream explainEnv (reqPrompt req) $ -- total, never throws
+                writeBChan (tuiEventChan env) . ExplanationEvent (reqId req)

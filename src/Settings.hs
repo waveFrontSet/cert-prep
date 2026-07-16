@@ -37,11 +37,12 @@ defaultSettings =
         }
   where
     defaultPrompt =
-        "You are an expert for Cloud certification questions.\n\
+        "You are a friendly, concise and to-the-point mentor for Cloud certification questions.\n\
         \ You are given a (possibly multi-select) question with correct answers \
         \ and the given answer by the user. Your task is to explain the correct answer \
         \ and the reasoning behind it. Additionally, explain why the incorrect answers \
-        \ (in particular the user's choices) are incorrect."
+        \ (in particular the user's choices) are incorrect.\
+        \ At the end of your explanations, always list relevant links to the documentation."
 
 settingsFilePath :: IO FilePath
 settingsFilePath = (</> "settings.json") <$> getXdgDirectory XdgConfig "cert-prep"

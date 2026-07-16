@@ -1,11 +1,13 @@
 -- (AI) Explanations for reasoning behind correct answers
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedLists #-}
 
 module Explanations (
     ExplainEnv (..),
     ExplainError (..),
+    ExplainEvent (..),
     ExplainRequest (..),
     MonadExplain (..),
     mkExplainEnv,
@@ -15,28 +17,31 @@ module Explanations (
 
 import Control.Exception (SomeException, try)
 import Data.IntSet (toList)
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
 import OpenAI.V1 (
-    Methods (Methods, createChatCompletion),
+    Methods (Methods, createChatCompletionStreamTyped),
     getClientEnv,
     makeMethods,
  )
 import OpenAI.V1.Chat.Completions (
-    ChatCompletionObject (ChatCompletionObject, choices),
-    Choice (message),
     CreateChatCompletion (messages, model),
     Message (System, User, content, name),
-    messageToContent,
     _CreateChatCompletion,
  )
 import OpenAI.V1.Chat.Completions qualified as Comp
+import OpenAI.V1.Chat.Completions.Stream (
+    ChatCompletionChunk (ChatCompletionChunk, choices),
+    ChunkChoice (delta),
+    Delta (delta_content),
+ )
 import OpenAI.V1.Models qualified as Models
 import Settings (Settings (aiBaseUrl, aiModel, aiSystemPrompt))
 import Types (AnswerResult, Question (..), userSelectedAnswers)
 
 newtype ExplainEnv = ExplainEnv
-    { explainFetch :: Text -> IO (Either ExplainError Text)
+    { explainStream :: Text -> (ExplainEvent -> IO ()) -> IO ()
     }
 
 data ExplainError
@@ -44,8 +49,15 @@ data ExplainError
     | ExplainEmptyResponse
     deriving (Show, Eq)
 
+-- One streamed token batch, the clean end of the stream, or a failure.
+data ExplainEvent
+    = ExplainChunk Text
+    | ExplainDone
+    | ExplainFailed ExplainError
+    deriving (Show, Eq)
+
 data ExplainRequest = ExplainRequest
-    { reqQuestionIndex :: Int
+    { reqId :: Int -- distinguishes this request from abandoned earlier ones
     , reqPrompt :: Text
     }
     deriving (Show, Eq)
@@ -61,37 +73,37 @@ mkExplainEnv _ Nothing = return Nothing
 mkExplainEnv _ (Just "") = return Nothing
 mkExplainEnv s (Just apiKey) = do
     clientEnv <- getClientEnv (aiBaseUrl s)
-    let Methods{createChatCompletion} =
+    let Methods{createChatCompletionStreamTyped} =
             makeMethods clientEnv (T.pack apiKey) Nothing Nothing
-    return $ Just $ ExplainEnv{explainFetch = fetch createChatCompletion}
+    return $ Just $ ExplainEnv{explainStream = stream createChatCompletionStreamTyped}
   where
-    fetch ::
-        (CreateChatCompletion -> IO ChatCompletionObject) ->
-        Text ->
-        IO (Either ExplainError Text)
-    fetch createComp prompt = do
-        choices <- try @SomeException $ do
-            ChatCompletionObject{choices} <-
-                createComp
-                    _CreateChatCompletion
-                        { messages =
-                            [ System
-                                { content = [Comp.Text{text = aiSystemPrompt s}]
-                                , name = Just "system"
-                                }
-                            , User
-                                { content = [Comp.Text{text = prompt}]
-                                , name = Nothing
-                                }
-                            ]
-                        , model = Models.Model (aiModel s)
-                        }
-            return choices
-        return $
-            case choices of
-                Left err -> Left (ExplainHttpError (T.pack $ show err))
-                Right [] -> Left ExplainEmptyResponse
-                Right cs -> Right $ foldMap (messageToContent . message) cs
+    -- Total: every outcome (including exceptions) becomes an ExplainEvent.
+    stream createStream prompt emit = do
+        result <- try @SomeException $
+            createStream (chatRequest prompt) $ \case
+                Left err -> emit (ExplainFailed (ExplainHttpError err))
+                Right chunk ->
+                    let t = chunkText chunk
+                     in if T.null t then return () else emit (ExplainChunk t)
+        emit $ case result of
+            Left err -> ExplainFailed (ExplainHttpError (T.pack $ show err))
+            Right () -> ExplainDone
+    chatRequest prompt =
+        _CreateChatCompletion
+            { messages =
+                [ System
+                    { content = [Comp.Text{text = aiSystemPrompt s}]
+                    , name = Just "system"
+                    }
+                , User
+                    { content = [Comp.Text{text = prompt}]
+                    , name = Nothing
+                    }
+                ]
+            , model = Models.Model (aiModel s)
+            }
+    chunkText ChatCompletionChunk{choices} =
+        foldMap (fromMaybe "" . delta_content . delta) choices
 
 renderExplainPrompt :: Question -> AnswerResult -> Text
 renderExplainPrompt qu ar = renderQuestion qu <> renderAnswerResult ar

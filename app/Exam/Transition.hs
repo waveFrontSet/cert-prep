@@ -8,7 +8,8 @@ module Exam.Transition (
     travelToQuestion,
     backToReview,
     beginExplanation,
-    applyExplanationResult,
+    applyExplainEvent,
+    stepExplanation,
 )
 where
 
@@ -17,10 +18,10 @@ import Data.List.NonEmpty (NonEmpty (..))
 import Data.Vector qualified as V
 import Lens.Micro ((%~), (&), (+~), (.~), (^.))
 
-import Data.Text qualified as T
 import Exam.Core
 import Explanations (
-    ExplainError,
+    ExplainError (..),
+    ExplainEvent (..),
     ExplainRequest (..),
     renderExplainError,
     renderExplainPrompt,
@@ -59,6 +60,7 @@ initialState (q :| qs) earned =
                     }
         , _trophyState = TrophyState{currentStreak = 0, lastQuestionSeconds = 0}
         , _earnedTrophies = earned
+        , _nextExplainId = 0
         }
   where
     core =
@@ -110,28 +112,34 @@ travelToQuestion i ap =
             & activeQuestion .~ q
             & phaseData .~ newPhaseData
 
-beginExplanation :: ActivePhase ReviewingData -> (ExplainRequest, ExamPhase)
-beginExplanation ap = (ExplainRequest{reqQuestionIndex = idx, reqPrompt = prompt}, Explaining ap')
+beginExplanation :: Int -> ActivePhase ReviewingData -> (ExplainRequest, ExamPhase)
+beginExplanation rid ap = (ExplainRequest{reqId = rid, reqPrompt = prompt}, Explaining ap')
   where
-    idx = ap ^. activeCore . currentIndex
     prompt = renderExplainPrompt (ap ^. activeQuestion) (ap ^. phaseData . answerResult)
     ap' =
         ap
             & phaseData
                 .~ ExplainingData
-                    { _explanationStatus = ExplanationPending
+                    { _explainId = rid
+                    , _explanationStatus = ExplanationPending
                     , _reviewingData = ap ^. phaseData
                     }
 
-applyExplanationResult :: Int -> Either ExplainError T.Text -> ExamPhase -> ExamPhase
-applyExplanationResult idx res (Explaining ap)
-    | ap ^. activeCore . currentIndex == idx && currentStatus == ExplanationPending =
-        Explaining $ ap & phaseData . explanationStatus .~ modifiedStatus
-    | otherwise = Explaining ap
-  where
-    currentStatus = ap ^. phaseData . explanationStatus
-    modifiedStatus = either (ExplanationFailure . renderExplainError) ExplanationSuccess res
-applyExplanationResult _ _ p = p
+applyExplainEvent :: Int -> ExplainEvent -> ExamPhase -> ExamPhase
+applyExplainEvent rid ev (Explaining ap)
+    | ap ^. phaseData . explainId == rid =
+        Explaining $ ap & phaseData . explanationStatus %~ stepExplanation ev
+applyExplainEvent _ _ p = p
+
+stepExplanation :: ExplainEvent -> ExplanationStatus -> ExplanationStatus
+stepExplanation (ExplainChunk t) ExplanationPending = ExplanationStreaming t
+stepExplanation (ExplainChunk t) (ExplanationStreaming acc) = ExplanationStreaming (acc <> t)
+stepExplanation ExplainDone (ExplanationStreaming acc) = ExplanationSuccess acc
+stepExplanation ExplainDone ExplanationPending = ExplanationFailure (renderExplainError ExplainEmptyResponse)
+stepExplanation (ExplainFailed e) ExplanationPending = ExplanationFailure (renderExplainError e)
+stepExplanation (ExplainFailed e) (ExplanationStreaming _) = ExplanationFailure (renderExplainError e)
+-- Success and Failure are terminal; late events from the stream are ignored.
+stepExplanation _ status = status
 
 backToReview :: ActivePhase ExplainingData -> ExamPhase
 backToReview ap = Reviewing (ap & phaseData .~ reviewData)
