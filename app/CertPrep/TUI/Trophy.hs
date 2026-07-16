@@ -1,13 +1,13 @@
-module TUI.Trophy (drawTrophyAwarded) where
+module CertPrep.TUI.Trophy (drawTrophyAwarded) where
 
 import Brick
 import Brick.Widgets.Border
 import Brick.Widgets.Border.Style
 import Brick.Widgets.Center
+import CertPrep.Exam.Core (Name, TrophyAwardedData, animationFrame, awardedTrophy)
+import CertPrep.TUI.Attributes (trophyIconAttr, trophySparkleAttr, trophyTitleAttr)
+import CertPrep.Trophy (TrophyDef (..))
 import Lens.Micro ((^.))
-import Exam.Core (Name, TrophyAwardedData, animationFrame, awardedTrophy)
-import TUI.Attributes (trophyIconAttr, trophySparkleAttr, trophyTitleAttr)
-import Trophy (TrophyDef (..))
 
 drawTrophyAwarded :: TrophyAwardedData -> Widget Name
 drawTrophyAwarded tad =

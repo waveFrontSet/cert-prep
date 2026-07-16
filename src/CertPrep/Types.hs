@@ -1,4 +1,4 @@
-module Types (
+module CertPrep.Types (
     Question (..),
     Answer,
     Category,

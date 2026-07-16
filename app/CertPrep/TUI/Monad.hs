@@ -1,15 +1,8 @@
-module TUI.Monad where
+module CertPrep.TUI.Monad where
 
 import Brick (EventM, halt)
 import Brick.BChan (BChan, writeBChan)
-import Control.Concurrent (forkIO)
-import Control.Monad (void)
-import Control.Monad.Reader (MonadIO (..), MonadReader (ask), ReaderT (..))
-import Control.Monad.Reader.Class (asks)
-import Control.Monad.State (MonadState, MonadTrans (..))
-import Data.Foldable (for_)
-import Data.Maybe (isJust)
-import Exam (
+import CertPrep.Exam (
     ActivePhase,
     AnsweringData,
     AppState,
@@ -18,12 +11,19 @@ import Exam (
     ReviewingData,
     examPhase,
  )
-import Explanations (
+import CertPrep.Explanations (
     ExplainEnv (explainStream),
     ExplainEvent,
     ExplainRequest (..),
     MonadExplain (..),
  )
+import Control.Concurrent (forkIO)
+import Control.Monad (void)
+import Control.Monad.Reader (MonadIO (..), MonadReader (ask), ReaderT (..))
+import Control.Monad.Reader.Class (asks)
+import Control.Monad.State (MonadState, MonadTrans (..))
+import Data.Foldable (for_)
+import Data.Maybe (isJust)
 import Lens.Micro.Mtl (use)
 
 data CustomEvent = Tick | ExplanationEvent Int ExplainEvent
@@ -64,6 +64,7 @@ instance MonadExplain TuiM where
     explainAvailable = asks (isJust . tuiExplainEnv)
     requestExplanation req = do
         env <- ask
-        for_ (tuiExplainEnv env) $ \explainEnv -> liftIO . void . forkIO $
-            explainStream explainEnv (reqPrompt req) $ -- total, never throws
-                writeBChan (tuiEventChan env) . ExplanationEvent (reqId req)
+        for_ (tuiExplainEnv env) $ \explainEnv ->
+            liftIO . void . forkIO $
+                explainStream explainEnv (reqPrompt req) $ -- total, never throws
+                    writeBChan (tuiEventChan env) . ExplanationEvent (reqId req)

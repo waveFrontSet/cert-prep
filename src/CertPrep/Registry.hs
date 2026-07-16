@@ -1,4 +1,4 @@
-module Registry (
+module CertPrep.Registry (
     RegistryEntry (..),
     Registry,
     registryFilePath,

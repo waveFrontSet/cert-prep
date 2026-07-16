@@ -1,7 +1,7 @@
 module UtilSpec (spec) where
 
+import CertPrep.Util (formatTime)
 import Test.Hspec
-import Util (formatTime)
 
 spec :: Spec
 spec = do

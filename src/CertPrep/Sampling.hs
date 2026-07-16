@@ -1,16 +1,16 @@
-module Sampling (
+module CertPrep.Sampling (
     SamplingStrategy (..),
     Weight,
     WeightMap,
     sampleQuestions,
 ) where
 
+import CertPrep.Types (Category, Question (..))
 import Data.List (foldl', sortBy)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Ord (Down (..), comparing)
 import System.Random (RandomGen, SplitGen, splitGen, uniformR)
-import Types (Category, Question (..))
 
 type Weight = Int
 type WeightMap = Map Category Weight

@@ -1,8 +1,14 @@
 {-# LANGUAGE LambdaCase #-}
 
-module App where
+module CertPrep.App where
 
-import CLI (CLIOptions (..), cliConfigPath)
+import CertPrep.CLI (CLIOptions (..), cliConfigPath)
+import CertPrep.Explanations (ExplainEnv, mkExplainEnv)
+import CertPrep.Registry (loadFile, loadRegistry)
+import CertPrep.Sampling (SamplingStrategy (..), sampleQuestions)
+import CertPrep.Settings qualified as Settings
+import CertPrep.TUI (selectConfig)
+import CertPrep.Types (Config (..), Question)
 import Control.Monad.Except (ExceptT, MonadError (..), runExceptT)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Reader (MonadIO (liftIO), MonadReader, ReaderT (..), asks)
@@ -10,16 +16,10 @@ import Data.List.NonEmpty (NonEmpty)
 import Data.List.NonEmpty qualified as NE
 import Data.Map qualified as Map
 import Data.Maybe (fromMaybe)
-import Explanations (ExplainEnv, mkExplainEnv)
-import Registry (loadFile, loadRegistry)
-import Sampling (SamplingStrategy (..), sampleQuestions)
-import Settings qualified
 import System.Environment (lookupEnv)
 import System.Exit (exitFailure)
 import System.IO (hPutStrLn, stderr)
 import System.Random (newStdGen)
-import TUI (selectConfig)
-import Types (Config (..), Question)
 
 newtype App a = App {unApp :: ReaderT AppEnv (ExceptT AppError IO) a}
     deriving

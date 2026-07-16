@@ -1,10 +1,10 @@
 module Exam.TransitionSpec (spec) where
 
+import CertPrep.Exam.Core
+import CertPrep.Exam.Transition (applyExplainEvent, stepExplanation, travelToQuestion)
+import CertPrep.Explanations (ExplainError (..), ExplainEvent (..), renderExplainError)
 import Data.IntSet qualified as IS
 import Data.Vector qualified as V
-import Exam.Core
-import Exam.Transition (applyExplainEvent, stepExplanation, travelToQuestion)
-import Explanations (ExplainError (..), ExplainEvent (..), renderExplainError)
 import Generators (mkQuestion)
 import Lens.Micro
 import Test.Hspec

@@ -1,4 +1,4 @@
-module TUI (
+module CertPrep.TUI (
     runApp,
     selectConfig,
 )
@@ -6,21 +6,21 @@ where
 
 import Brick
 import Brick.BChan (newBChan, writeBChan)
+import CertPrep.Exam.Core (AppState)
+import CertPrep.Exam.Transition (initialState)
+import CertPrep.Explanations (ExplainEnv)
+import CertPrep.TUI.Attributes (theMap)
+import CertPrep.TUI.ConfigSelect (selectConfig)
+import CertPrep.TUI.Draw (drawUI)
+import CertPrep.TUI.Event (CustomEvent (..), handleEvent)
+import CertPrep.TUI.Monad (TuiEnv (..), runTuiM)
+import CertPrep.Trophy (EarnedTrophies)
+import CertPrep.Types (Question)
 import Control.Concurrent (forkIO, threadDelay)
 import Control.Monad (forever, void)
 import Data.List.NonEmpty (NonEmpty)
-import Exam.Core (AppState)
-import Exam.Transition (initialState)
-import Explanations (ExplainEnv)
 import Graphics.Vty qualified as V
 import Graphics.Vty.CrossPlatform (mkVty)
-import TUI.Attributes (theMap)
-import TUI.ConfigSelect (selectConfig)
-import TUI.Draw (drawUI)
-import TUI.Event (CustomEvent (..), handleEvent)
-import TUI.Monad (TuiEnv (..), runTuiM)
-import Trophy (EarnedTrophies)
-import Types (Question)
 
 runApp ::
     FilePath -> Maybe ExplainEnv -> NonEmpty Question -> EarnedTrophies -> IO AppState

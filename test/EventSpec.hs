@@ -1,12 +1,12 @@
 module EventSpec (spec) where
 
+import CertPrep.Exam.Core
+import CertPrep.Exam.Transition (advanceExam, nextQuestion, submitAnswer)
+import CertPrep.TUI.Event (moveFocusPure, toggleAnswerPure)
 import Data.IntSet qualified as IS
 import Data.Vector qualified as V
-import Exam.Core
-import Exam.Transition (advanceExam, nextQuestion, submitAnswer)
 import Generators (mkQuestion)
 import Lens.Micro ((^.))
-import TUI.Event (moveFocusPure, toggleAnswerPure)
 import Test.Hspec
 
 spec :: Spec

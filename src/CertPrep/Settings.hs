@@ -1,4 +1,4 @@
-module Settings where
+module CertPrep.Settings where
 
 import Data.Aeson (
     FromJSON,

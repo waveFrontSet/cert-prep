@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module Trophy (
+module CertPrep.Trophy (
     TrophyId (..),
     TrophyDef (..),
     TrophyState (..),

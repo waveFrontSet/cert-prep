@@ -4,7 +4,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedLists #-}
 
-module Explanations (
+module CertPrep.Explanations (
     ExplainEnv (..),
     ExplainError (..),
     ExplainEvent (..),
@@ -15,6 +15,8 @@ module Explanations (
     renderExplainError,
 ) where
 
+import CertPrep.Settings (Settings (aiBaseUrl, aiModel, aiSystemPrompt))
+import CertPrep.Types (AnswerResult, Question (..), userSelectedAnswers)
 import Control.Exception (SomeException, try)
 import Data.IntSet (toList)
 import Data.Maybe (fromMaybe)
@@ -37,8 +39,6 @@ import OpenAI.V1.Chat.Completions.Stream (
     Delta (delta_content),
  )
 import OpenAI.V1.Models qualified as Models
-import Settings (Settings (aiBaseUrl, aiModel, aiSystemPrompt))
-import Types (AnswerResult, Question (..), userSelectedAnswers)
 
 newtype ExplainEnv = ExplainEnv
     { explainStream :: Text -> (ExplainEvent -> IO ()) -> IO ()

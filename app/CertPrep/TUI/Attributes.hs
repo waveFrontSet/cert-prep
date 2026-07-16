@@ -1,4 +1,4 @@
-module TUI.Attributes (
+module CertPrep.TUI.Attributes (
     selectedAttr,
     correctAttr,
     wrongAttr,

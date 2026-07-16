@@ -1,4 +1,4 @@
-module Exam.Transition (
+module CertPrep.Exam.Transition (
     overActiveCore,
     finishExam,
     initialState,
@@ -18,16 +18,16 @@ import Data.List.NonEmpty (NonEmpty (..))
 import Data.Vector qualified as V
 import Lens.Micro ((%~), (&), (+~), (.~), (^.))
 
-import Exam.Core
-import Explanations (
+import CertPrep.Exam.Core
+import CertPrep.Explanations (
     ExplainError (..),
     ExplainEvent (..),
     ExplainRequest (..),
     renderExplainError,
     renderExplainPrompt,
  )
-import Trophy (EarnedTrophies, TrophyState (..))
-import Types (Answer, Question (..), evalAnswer, isCorrect)
+import CertPrep.Trophy (EarnedTrophies, TrophyState (..))
+import CertPrep.Types (Answer, Question (..), evalAnswer, isCorrect)
 
 overActiveCore :: (ExamCore -> ExamCore) -> ExamPhase -> ExamPhase
 overActiveCore f (Answering ap) = Answering (ap & activeCore %~ f)

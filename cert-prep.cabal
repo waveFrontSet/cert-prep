@@ -14,12 +14,12 @@ build-type:         Simple
 
 library
     exposed-modules:
-        Registry
-        Sampling
-        Settings
-        Trophy
-        Types
-        Util
+        CertPrep.Registry
+        CertPrep.Sampling
+        CertPrep.Settings
+        CertPrep.Trophy
+        CertPrep.Types
+        CertPrep.Util
     other-modules:
         Paths_cert_prep
     autogen-modules:
@@ -43,20 +43,20 @@ library
 
 library cert-prep-tui
     exposed-modules:
-        App
-        CLI
-        Exam
-        Exam.Core
-        Exam.Transition
-        Exam.Trophy
-        Explanations
-        TUI
-        TUI.Attributes
-        TUI.ConfigSelect
-        TUI.Draw
-        TUI.Event
-        TUI.Monad
-        TUI.Trophy
+        CertPrep.App
+        CertPrep.CLI
+        CertPrep.Exam
+        CertPrep.Exam.Core
+        CertPrep.Exam.Transition
+        CertPrep.Exam.Trophy
+        CertPrep.Explanations
+        CertPrep.TUI
+        CertPrep.TUI.Attributes
+        CertPrep.TUI.ConfigSelect
+        CertPrep.TUI.Draw
+        CertPrep.TUI.Event
+        CertPrep.TUI.Monad
+        CertPrep.TUI.Trophy
     other-modules:
         Paths_cert_prep
     autogen-modules:

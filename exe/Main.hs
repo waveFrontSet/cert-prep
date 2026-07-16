@@ -1,6 +1,6 @@
 module Main where
 
-import App (
+import CertPrep.App (
     AppEnv (..),
     loadConfig,
     loadSettings,
@@ -9,14 +9,14 @@ import App (
     runApp',
     sampleNonEmpty,
  )
-import CLI (parseCLIOpts)
+import CertPrep.CLI (parseCLIOpts)
+import CertPrep.Registry (registerConfig)
+import CertPrep.TUI (runApp)
+import CertPrep.Trophy (loadEarnedTrophies)
+import CertPrep.Types (Config (..))
 import Control.Monad (void)
 import Control.Monad.IO.Class (MonadIO (..))
-import Registry (registerConfig)
 import System.Directory (canonicalizePath)
-import TUI (runApp)
-import Trophy (loadEarnedTrophies)
-import Types (Config (..))
 
 main :: IO ()
 main = do

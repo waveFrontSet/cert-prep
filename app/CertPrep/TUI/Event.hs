@@ -1,4 +1,4 @@
-module TUI.Event (
+module CertPrep.TUI.Event (
     CustomEvent (..),
     handleEvent,
     toggleAnswerPure,
@@ -14,11 +14,8 @@ import Graphics.Vty qualified as V
 import Lens.Micro ((%~), (&), (+~), (.~), (^.))
 import Lens.Micro.Mtl (use, (%=), (+=), (.=))
 
-import Control.Monad (when)
-import Control.Monad.Reader (asks)
-import Control.Monad.State (MonadState)
-import Exam.Core
-import Exam.Transition (
+import CertPrep.Exam.Core
+import CertPrep.Exam.Transition (
     advanceExam,
     applyExplainEvent,
     backToReview,
@@ -27,14 +24,14 @@ import Exam.Transition (
     submitAnswer,
     travelToQuestion,
  )
-import Exam.Trophy (
+import CertPrep.Exam.Trophy (
     checkAllTrophies,
     persistTrophies,
     updateTrophyState,
     wrapWithTrophies,
  )
-import Explanations (MonadExplain (..))
-import TUI.Monad (
+import CertPrep.Explanations (MonadExplain (..))
+import CertPrep.TUI.Monad (
     CustomEvent (..),
     TuiEnv (..),
     TuiM,
@@ -43,7 +40,10 @@ import TUI.Monad (
     whenAnswering,
     whenReviewing,
  )
-import Types (Question (..), isCorrect)
+import CertPrep.Types (Question (..), isCorrect)
+import Control.Monad (when)
+import Control.Monad.Reader (asks)
+import Control.Monad.State (MonadState)
 
 totalAnimFrames :: Int
 totalAnimFrames = 5
