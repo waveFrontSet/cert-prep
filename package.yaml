@@ -28,7 +28,6 @@ library:
     - -O2
   dependencies:
     - aeson
-    - bytestring
     - directory
     - filepath
     - time
@@ -68,7 +67,6 @@ executables:
       - cert-prep-tui
       - aeson
       - brick
-      - bytestring
       - directory
       - vty
       - vty-crossplatform
@@ -85,7 +83,6 @@ tests:
       - cert-prep
       - cert-prep-tui
       - aeson
-      - bytestring
       - directory
       - hspec
       - QuickCheck

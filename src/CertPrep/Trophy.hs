@@ -14,9 +14,7 @@ module CertPrep.Trophy (
     saveEarnedTrophies,
 ) where
 
-import Data.Aeson (FromJSON, ToJSON, eitherDecodeStrict)
-import Data.Aeson qualified as Aeson
-import Data.ByteString qualified as BS
+import Data.Aeson (FromJSON, ToJSON, eitherDecodeStrict, encode)
 import Data.Set qualified as Set
 import System.Directory (
     XdgDirectory (XdgConfig),
@@ -268,13 +266,11 @@ loadEarnedTrophies configPath = do
     if not exists
         then pure Set.empty
         else do
-            bytes <- BS.readFile path
-            case eitherDecodeStrict bytes of
-                Left _ -> pure Set.empty
-                Right trophies -> pure trophies
+            bytes <- readFileBS path
+            whenRight Set.empty (eitherDecodeStrict bytes) pure
 
 saveEarnedTrophies :: FilePath -> EarnedTrophies -> IO ()
 saveEarnedTrophies configPath trophies = do
     path <- trophyFilePath configPath
     createDirectoryIfMissing True (takeDirectory path)
-    BS.writeFile path (BS.toStrict $ Aeson.encode trophies)
+    writeFileBS path (toStrict $ encode trophies)

@@ -37,7 +37,7 @@ cliParser =
 
 parseWeight :: ReadM (Text, Int)
 parseWeight = eitherReader $ \s ->
-    case T.splitOn ":" (T.pack s) of
+    case T.splitOn ":" (toText s) of
         [cat, wText] | Right (w, "") <- decimal wText -> Right (cat, w)
         _ -> Left $ "Invalid weight format: " ++ s ++ " (expected CATEGORY:WEIGHT)"
 

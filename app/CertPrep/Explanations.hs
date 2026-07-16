@@ -72,7 +72,7 @@ mkExplainEnv _ (Just "") = return Nothing
 mkExplainEnv s (Just apiKey) = do
     clientEnv <- getClientEnv (aiBaseUrl s)
     let Methods{createChatCompletionStreamTyped} =
-            makeMethods clientEnv (T.pack apiKey) Nothing Nothing
+            makeMethods clientEnv (toText apiKey) Nothing Nothing
     return $ Just $ ExplainEnv{explainStream = stream createChatCompletionStreamTyped}
   where
     -- Total: every outcome (including exceptions) becomes an ExplainEvent.
@@ -82,9 +82,9 @@ mkExplainEnv s (Just apiKey) = do
                 Left err -> emit (ExplainFailed (ExplainHttpError err))
                 Right chunk ->
                     let t = chunkText chunk
-                     in if T.null t then return () else emit (ExplainChunk t)
+                     in if T.null t then pass else emit (ExplainChunk t)
         emit $ case result of
-            Left err -> ExplainFailed (ExplainHttpError (T.pack $ show err))
+            Left err -> ExplainFailed (ExplainHttpError (show err))
             Right () -> ExplainDone
     chatRequest prompt =
         _CreateChatCompletion
@@ -106,7 +106,7 @@ mkExplainEnv s (Just apiKey) = do
 renderExplainPrompt :: Question -> AnswerResult -> Text
 renderExplainPrompt qu ar = renderQuestion qu <> renderAnswerResult ar
   where
-    commaSeparated = T.intercalate ", " . fmap (T.pack . show) . IS.toList
+    commaSeparated = T.intercalate ", " . fmap show . IS.toList
     renderQuestion q =
         "Question: "
             <> text q
@@ -115,7 +115,7 @@ renderExplainPrompt qu ar = renderQuestion qu <> renderAnswerResult ar
             <> "Correct Answers: "
             <> commaSeparated (correctAnswer q)
     zippedAnswers answers =
-        T.unlines $
+        unlines $
             zipWith (\a answer -> show @Text (a :: Int) <> ". " <> answer) [0 ..] answers
     renderAnswerResult aResult = "\nUser Selected Answers: " <> commaSeparated (userSelectedAnswers aResult)
 

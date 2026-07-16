@@ -1,14 +1,12 @@
 module CertPrep.Settings where
 
 import Data.Aeson (
-    FromJSON,
+    FromJSON (parseJSON),
     eitherDecodeStrict,
     withObject,
     (.!=),
     (.:?),
  )
-import Data.Aeson.Types (FromJSON (parseJSON))
-import Data.ByteString qualified as BS
 import System.Directory (XdgDirectory (XdgConfig), doesFileExist, getXdgDirectory)
 import System.FilePath ((</>))
 
@@ -51,4 +49,4 @@ loadSettings = do
     exists <- doesFileExist path
     if not exists
         then return $ Right defaultSettings
-        else eitherDecodeStrict <$> BS.readFile path
+        else eitherDecodeStrict <$> readFileBS path

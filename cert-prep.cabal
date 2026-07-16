@@ -27,7 +27,6 @@ library
     build-depends:
         aeson,
         base <5,
-        bytestring,
         containers,
         directory,
         filepath,
@@ -103,7 +102,6 @@ executable cert-prep
         aeson,
         base <5,
         brick,
-        bytestring,
         cert-prep,
         cert-prep-tui,
         containers,
@@ -151,7 +149,6 @@ test-suite spec
         QuickCheck,
         aeson,
         base <5,
-        bytestring,
         cert-prep,
         cert-prep-tui,
         containers,

@@ -10,7 +10,6 @@ module Generators (
 import CertPrep.Types (Config (..), Question (..))
 import Data.IntSet qualified as IS
 import Data.Map.Strict qualified as Map
-import Data.Text qualified as T
 import Test.QuickCheck
 
 categoryPool :: [Text]
@@ -35,7 +34,7 @@ arbitraryQuestion :: Gen Question
 arbitraryQuestion = do
     text <- elements ["Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q8"]
     numChoices <- chooseInt (2, 6)
-    let choices = ["Choice " <> T.pack (show i) | i <- [1 .. numChoices]]
+    let choices = ["Choice " <> show i | i <- [1 .. numChoices]]
     numCorrect <- chooseInt (1, numChoices)
     correctIndices <-
         take numCorrect <$> shuffle [0 .. numChoices - 1]

@@ -26,7 +26,7 @@ runApp p mExplainEnv qs earned = do
     -- writeBChan blocks when full; token chunks arrive in bursts and share
     -- this channel with the timer ticks, so leave generous headroom.
     chan <- newBChan 100
-    void $ forkIO $ forever $ do
+    void $ forkIO $ void $ infinitely $ do
         threadDelay 1000000
         writeBChan chan Tick
 
@@ -37,7 +37,7 @@ runApp p mExplainEnv qs earned = do
                 { appDraw = drawUI
                 , appChooseCursor = neverShowCursor
                 , appHandleEvent = runTuiM env . handleEvent
-                , appStartEvent = return ()
+                , appStartEvent = pass
                 , appAttrMap = const theMap
                 }
     initialVty <- buildVty

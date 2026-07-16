@@ -46,13 +46,13 @@ whenAnswering f = do
     phase <- use examPhase
     case phase of
         Answering ap -> f ap
-        _ -> return ()
+        _ -> pass
 whenReviewing :: (ActivePhase ReviewingData -> TuiM ()) -> TuiM ()
 whenReviewing f = do
     phase <- use examPhase
     case phase of
         Reviewing rp -> f rp
-        _ -> return ()
+        _ -> pass
 
 instance MonadExplain TuiM where
     explainAvailable = asks (isJust . tuiExplainEnv)
@@ -60,5 +60,6 @@ instance MonadExplain TuiM where
         env <- ask
         for_ (tuiExplainEnv env) $ \explainEnv ->
             liftIO . void . forkIO $
-                explainStream explainEnv (reqPrompt req) $ -- total, never throws
+                explainStream explainEnv (reqPrompt req) $ -- total, never throws -- total, never throws -- total, never throws -- total, never throws
+                -- total, never throws
                     writeBChan (tuiEventChan env) . ExplanationEvent (reqId req)

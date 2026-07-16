@@ -9,8 +9,7 @@ import CertPrep.Sampling (SamplingStrategy (..), sampleQuestions)
 import CertPrep.Settings qualified as Settings
 import CertPrep.TUI (selectConfig)
 import CertPrep.Types (Config (..), Question)
-import Control.Monad.Except (MonadError (..))
-import Data.List.NonEmpty qualified as NE
+import Control.Monad.Error.Class (MonadError (..))
 import Data.Map qualified as Map
 import System.IO (hPutStrLn)
 import System.Random (newStdGen)
@@ -76,7 +75,7 @@ sampleNonEmpty config = do
     gen <- liftIO newStdGen
     let sampledQuestions =
             sampleQuestions gen effectiveSize strategy allQuestions
-    case NE.nonEmpty sampledQuestions of
+    case nonEmpty sampledQuestions of
         Nothing -> throwError NoQuestionsInConfig
         Just ne -> pure ne
 

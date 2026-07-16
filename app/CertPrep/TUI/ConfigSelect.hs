@@ -48,7 +48,7 @@ handleSelectEvent (VtyEvent (Vty.EvKey Vty.KEsc [])) = halt
 handleSelectEvent (VtyEvent (Vty.EvKey Vty.KEnter [])) = halt
 handleSelectEvent (VtyEvent (Vty.EvKey (Vty.KChar 'q') [])) = halt
 handleSelectEvent (VtyEvent e) = L.handleListEventVi L.handleListEvent e
-handleSelectEvent _ = return ()
+handleSelectEvent _ = pass
 
 theMap :: AttrMap
 theMap =
@@ -66,7 +66,7 @@ selectConfig entries = do
                 { appDraw = drawSelectUI
                 , appChooseCursor = neverShowCursor
                 , appHandleEvent = handleSelectEvent
-                , appStartEvent = return ()
+                , appStartEvent = pass
                 , appAttrMap = const theMap
                 }
     finalState <- defaultMain app initial
