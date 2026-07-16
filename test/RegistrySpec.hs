@@ -2,7 +2,6 @@ module RegistrySpec (spec) where
 
 import CertPrep.Registry
 import Data.Aeson (decode, encode)
-import Data.Text (Text)
 import Data.Time (UTCTime, getCurrentTime)
 import System.Environment (setEnv)
 import System.IO.Temp (withSystemTempDirectory)

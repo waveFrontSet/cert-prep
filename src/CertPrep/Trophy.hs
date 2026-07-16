@@ -17,10 +17,7 @@ module CertPrep.Trophy (
 import Data.Aeson (FromJSON, ToJSON, eitherDecodeStrict)
 import Data.Aeson qualified as Aeson
 import Data.ByteString qualified as BS
-import Data.Set (Set)
 import Data.Set qualified as Set
-import Data.Text (Text)
-import GHC.Generics (Generic)
 import System.Directory (
     XdgDirectory (XdgConfig),
     createDirectoryIfMissing,

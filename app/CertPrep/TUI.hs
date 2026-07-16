@@ -17,8 +17,6 @@ import CertPrep.TUI.Monad (TuiEnv (..), runTuiM)
 import CertPrep.Trophy (EarnedTrophies)
 import CertPrep.Types (Question)
 import Control.Concurrent (forkIO, threadDelay)
-import Control.Monad (forever, void)
-import Data.List.NonEmpty (NonEmpty)
 import Graphics.Vty qualified as V
 import Graphics.Vty.CrossPlatform (mkVty)
 

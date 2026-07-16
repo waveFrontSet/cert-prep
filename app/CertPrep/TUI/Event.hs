@@ -7,12 +7,11 @@ module CertPrep.TUI.Event (
 ) where
 
 import Brick
-import Control.Monad.IO.Class (liftIO)
-import Data.IntSet (IntSet)
 import Data.IntSet qualified as IS
 import Graphics.Vty qualified as V
-import Lens.Micro ((%~), (&), (+~), (.~), (^.))
+import Lens.Micro ((%~), (+~), (.~), (^.))
 import Lens.Micro.Mtl (use, (%=), (+=), (.=))
+import Prelude hiding (Down)
 
 import CertPrep.Exam.Core
 import CertPrep.Exam.Transition (
@@ -41,9 +40,6 @@ import CertPrep.TUI.Monad (
     whenReviewing,
  )
 import CertPrep.Types (Question (..), isCorrect)
-import Control.Monad (when)
-import Control.Monad.Reader (asks)
-import Control.Monad.State (MonadState)
 
 totalAnimFrames :: Int
 totalAnimFrames = 5

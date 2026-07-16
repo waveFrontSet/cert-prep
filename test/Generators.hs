@@ -10,7 +10,6 @@ module Generators (
 import CertPrep.Types (Config (..), Question (..))
 import Data.IntSet qualified as IS
 import Data.Map.Strict qualified as Map
-import Data.Text (Text)
 import Data.Text qualified as T
 import Test.QuickCheck
 

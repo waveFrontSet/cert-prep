@@ -10,7 +10,13 @@ default-extensions:
   - OverloadedStrings
 
 dependencies:
-  - base < 5
+  - name: base
+    version: "< 5"
+    mixin:
+      - hiding (Prelude)
+  - name: relude
+    mixin:
+      - (Relude as Prelude)
   - text
   - containers
   - random >= 1.3

@@ -14,12 +14,7 @@ import Data.Aeson (
     eitherDecodeStrict,
  )
 import Data.ByteString qualified as BS
-import Data.Either (fromRight)
-import Data.List (sortBy)
-import Data.Ord (Down (..), comparing)
-import Data.Text (Text)
 import Data.Time (UTCTime, getCurrentTime)
-import GHC.Generics (Generic)
 import System.Directory (
     XdgDirectory (XdgConfig),
     canonicalizePath,

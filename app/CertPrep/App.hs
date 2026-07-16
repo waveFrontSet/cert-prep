@@ -9,16 +9,10 @@ import CertPrep.Sampling (SamplingStrategy (..), sampleQuestions)
 import CertPrep.Settings qualified as Settings
 import CertPrep.TUI (selectConfig)
 import CertPrep.Types (Config (..), Question)
-import Control.Monad.Except (ExceptT, MonadError (..), runExceptT)
-import Control.Monad.IO.Class (MonadIO)
-import Control.Monad.Reader (MonadIO (liftIO), MonadReader, ReaderT (..), asks)
-import Data.List.NonEmpty (NonEmpty)
+import Control.Monad.Except (MonadError (..))
 import Data.List.NonEmpty qualified as NE
 import Data.Map qualified as Map
-import Data.Maybe (fromMaybe)
-import System.Environment (lookupEnv)
-import System.Exit (exitFailure)
-import System.IO (hPutStrLn, stderr)
+import System.IO (hPutStrLn)
 import System.Random (newStdGen)
 
 newtype App a = App {unApp :: ReaderT AppEnv (ExceptT AppError IO) a}

@@ -2,7 +2,6 @@ module TypesSpec (spec) where
 
 import CertPrep.Types
 import Data.Aeson (decode, encode)
-import Data.IntSet (fromList)
 import Data.IntSet qualified as IS
 import Generators (mkQuestion)
 import Test.Hspec
@@ -84,38 +83,38 @@ spec = do
                 Just c -> sampleAmount c `shouldBe` (-5)
 
     describe "Eval Answers" $ do
-        let q' = q{correctAnswer = fromList [1, 2]}
+        let q' = q{correctAnswer = IS.fromList [1, 2]}
         it "should check correct answers" $ do
-            isCorrect q (fromList [1]) `shouldBe` True
-            isCorrect q (fromList [2]) `shouldBe` False
+            isCorrect q (IS.fromList [1]) `shouldBe` True
+            isCorrect q (IS.fromList [2]) `shouldBe` False
         it "should correctly report missing and wrong answers" $ do
-            evalAnswer q' (fromList [0, 1])
+            evalAnswer q' (IS.fromList [0, 1])
                 `shouldBe` AnswerResult
-                    { correct = fromList [1]
-                    , missing = fromList [2]
-                    , wrong = fromList [0]
+                    { correct = IS.fromList [1]
+                    , missing = IS.fromList [2]
+                    , wrong = IS.fromList [0]
                     }
         it "returns all correct when answer matches exactly" $ do
-            let result = evalAnswer q' (fromList [1, 2])
-            correct result `shouldBe` fromList [1, 2]
+            let result = evalAnswer q' (IS.fromList [1, 2])
+            correct result `shouldBe` IS.fromList [1, 2]
             missing result `shouldBe` IS.empty
             wrong result `shouldBe` IS.empty
         it "returns all missing when answer is empty" $ do
             let result = evalAnswer q' IS.empty
             correct result `shouldBe` IS.empty
-            missing result `shouldBe` fromList [1, 2]
+            missing result `shouldBe` IS.fromList [1, 2]
             wrong result `shouldBe` IS.empty
         it "returns all wrong when no correct answers selected" $ do
-            let result = evalAnswer q' (fromList [0, 3])
+            let result = evalAnswer q' (IS.fromList [0, 3])
             correct result `shouldBe` IS.empty
-            missing result `shouldBe` fromList [1, 2]
-            wrong result `shouldBe` fromList [0, 3]
+            missing result `shouldBe` IS.fromList [1, 2]
+            wrong result `shouldBe` IS.fromList [0, 3]
         it "handles question with empty correct answer set" $ do
             let emptyQ = q{correctAnswer = IS.empty}
-                result = evalAnswer emptyQ (fromList [0, 1])
+                result = evalAnswer emptyQ (IS.fromList [0, 1])
             correct result `shouldBe` IS.empty
             missing result `shouldBe` IS.empty
-            wrong result `shouldBe` fromList [0, 1]
+            wrong result `shouldBe` IS.fromList [0, 1]
         it "isCorrect with both empty correct set and empty answer" $ do
             let emptyQ = q{correctAnswer = IS.empty}
             isCorrect emptyQ IS.empty `shouldBe` True

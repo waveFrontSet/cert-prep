@@ -17,10 +17,8 @@ module CertPrep.Explanations (
 
 import CertPrep.Settings (Settings (aiBaseUrl, aiModel, aiSystemPrompt))
 import CertPrep.Types (AnswerResult, Question (..), userSelectedAnswers)
-import Control.Exception (SomeException, try)
-import Data.IntSet (toList)
-import Data.Maybe (fromMaybe)
-import Data.Text (Text)
+import Control.Exception (try)
+import Data.IntSet qualified as IS
 import Data.Text qualified as T
 import OpenAI.V1 (
     Methods (Methods, createChatCompletionStreamTyped),
@@ -108,7 +106,7 @@ mkExplainEnv s (Just apiKey) = do
 renderExplainPrompt :: Question -> AnswerResult -> Text
 renderExplainPrompt qu ar = renderQuestion qu <> renderAnswerResult ar
   where
-    commaSeparated = T.intercalate ", " . fmap (T.pack . show) . toList
+    commaSeparated = T.intercalate ", " . fmap (T.pack . show) . IS.toList
     renderQuestion q =
         "Question: "
             <> text q
@@ -117,7 +115,8 @@ renderExplainPrompt qu ar = renderQuestion qu <> renderAnswerResult ar
             <> "Correct Answers: "
             <> commaSeparated (correctAnswer q)
     zippedAnswers answers =
-        T.unlines $ zipWith (\a answer -> T.pack (show @Int a) <> ". " <> answer) [0 ..] answers
+        T.unlines $
+            zipWith (\a answer -> show @Text (a :: Int) <> ". " <> answer) [0 ..] answers
     renderAnswerResult aResult = "\nUser Selected Answers: " <> commaSeparated (userSelectedAnswers aResult)
 
 renderExplainError :: ExplainError -> Text

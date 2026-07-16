@@ -1,6 +1,5 @@
 module CertPrep.CLI (CLIOptions (..), parseCLIOpts) where
 
-import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Read (decimal)
 import Options.Applicative

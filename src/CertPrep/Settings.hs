@@ -9,8 +9,6 @@ import Data.Aeson (
  )
 import Data.Aeson.Types (FromJSON (parseJSON))
 import Data.ByteString qualified as BS
-import Data.Text (Text)
-import GHC.Generics (Generic)
 import System.Directory (XdgDirectory (XdgConfig), doesFileExist, getXdgDirectory)
 import System.FilePath ((</>))
 

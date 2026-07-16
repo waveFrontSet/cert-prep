@@ -46,8 +46,6 @@ where
 
 import CertPrep.Trophy (EarnedTrophies, TrophyDef, TrophyState (..))
 import CertPrep.Types (Answer, AnswerResult, Question)
-import Data.IntSet (IntSet)
-import Data.Text (Text)
 import Data.Vector (Vector)
 import Data.Vector qualified as V
 import Lens.Micro ((^.))

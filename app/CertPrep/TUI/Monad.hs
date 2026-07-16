@@ -18,12 +18,6 @@ import CertPrep.Explanations (
     MonadExplain (..),
  )
 import Control.Concurrent (forkIO)
-import Control.Monad (void)
-import Control.Monad.Reader (MonadIO (..), MonadReader (ask), ReaderT (..))
-import Control.Monad.Reader.Class (asks)
-import Control.Monad.State (MonadState, MonadTrans (..))
-import Data.Foldable (for_)
-import Data.Maybe (isJust)
 import Lens.Micro.Mtl (use)
 
 data CustomEvent = Tick | ExplanationEvent Int ExplainEvent

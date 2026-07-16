@@ -15,6 +15,7 @@ where
 
 import Brick (AttrMap, AttrName, attrMap, attrName, fg, on)
 import Graphics.Vty qualified as V
+import Prelude hiding (on)
 
 selectedAttr
     , correctAttr

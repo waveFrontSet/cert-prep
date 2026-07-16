@@ -14,9 +14,8 @@ module CertPrep.Exam.Transition (
 where
 
 import Data.IntSet qualified as IS
-import Data.List.NonEmpty (NonEmpty (..))
 import Data.Vector qualified as V
-import Lens.Micro ((%~), (&), (+~), (.~), (^.))
+import Lens.Micro ((%~), (+~), (.~), (^.))
 
 import CertPrep.Exam.Core
 import CertPrep.Explanations (
@@ -81,8 +80,10 @@ submitAnswer ap =
         core = ap ^. activeCore
         newCore =
             core
-                & userAnswers %~ (`V.snoc` userAnswer)
-                & score +~ (if isCorrect q userAnswer then 1 else 0)
+                & userAnswers
+                %~ (`V.snoc` userAnswer)
+                    & score
+                +~ (if isCorrect q userAnswer then 1 else 0)
      in Reviewing
             ActivePhase
                 { _activeCore = newCore
@@ -104,13 +105,17 @@ travelToQuestion i ap =
         qs = core ^. questions
         q = qs V.! newIndex
         newPhaseData =
-            ap ^. phaseData
-                & (answerResult .~ evalAnswer q userAnswer)
-                & (lastSelected .~ userAnswer)
+            ap
+                ^. phaseData
+                    & (answerResult .~ evalAnswer q userAnswer)
+                    & (lastSelected .~ userAnswer)
      in ap
-            & activeCore .~ newCore
-            & activeQuestion .~ q
-            & phaseData .~ newPhaseData
+            & activeCore
+            .~ newCore
+                & activeQuestion
+            .~ q
+                & phaseData
+            .~ newPhaseData
 
 beginExplanation :: Int -> ActivePhase ReviewingData -> (ExplainRequest, ExamPhase)
 beginExplanation rid ap = (ExplainRequest{reqId = rid, reqPrompt = prompt}, Explaining ap')
@@ -119,11 +124,11 @@ beginExplanation rid ap = (ExplainRequest{reqId = rid, reqPrompt = prompt}, Expl
     ap' =
         ap
             & phaseData
-                .~ ExplainingData
-                    { _explainId = rid
-                    , _explanationStatus = ExplanationPending
-                    , _reviewingData = ap ^. phaseData
-                    }
+            .~ ExplainingData
+                { _explainId = rid
+                , _explanationStatus = ExplanationPending
+                , _reviewingData = ap ^. phaseData
+                }
 
 applyExplainEvent :: Int -> ExplainEvent -> ExamPhase -> ExamPhase
 applyExplainEvent rid ev (Explaining ap)
@@ -158,8 +163,10 @@ advanceExam core =
                 let nextQ = (core ^. questions) V.! nextIdx
                     newCore =
                         core
-                            & currentIndex .~ nextIdx
-                            & questionStartTime .~ (core ^. elapsedSeconds)
+                            & currentIndex
+                            .~ nextIdx
+                                & questionStartTime
+                            .~ (core ^. elapsedSeconds)
                  in Answering
                         ActivePhase
                             { _activeCore = newCore

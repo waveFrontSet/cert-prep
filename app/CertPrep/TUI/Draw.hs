@@ -10,7 +10,6 @@ import CertPrep.TUI.Trophy (drawTrophyAwarded)
 import CertPrep.Types (AnswerResult (..), Question (..))
 import CertPrep.Util (formatTime)
 import Data.IntSet qualified as IS
-import Data.Text (Text)
 import Lens.Micro ((^.))
 
 drawUI :: AppState -> [Widget Name]

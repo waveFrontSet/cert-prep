@@ -10,11 +10,7 @@ module CertPrep.Types (
 ) where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Data.IntSet (IntSet, difference, intersection)
-import Data.Map.Strict (Map)
-import Data.Text (Text)
-
-import GHC.Generics (Generic)
+import Data.IntSet (difference, intersection)
 
 type Answer = IntSet
 type Category = Text

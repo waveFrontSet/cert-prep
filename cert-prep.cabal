@@ -32,8 +32,12 @@ library
         directory,
         filepath,
         random >=1.3,
+        relude,
         text,
         time
+    mixins:
+        base hiding (Prelude),
+        relude (Relude as Prelude)
     hs-source-dirs:
         src
     default-extensions:
@@ -78,11 +82,15 @@ library cert-prep-tui
         openai,
         optparse-applicative,
         random >=1.3,
+        relude,
         text,
         time,
         vector,
         vty,
         vty-crossplatform
+    mixins:
+        base hiding (Prelude),
+        relude (Relude as Prelude)
     default-language: GHC2021
 
 executable cert-prep
@@ -101,9 +109,13 @@ executable cert-prep
         containers,
         directory,
         random >=1.3,
+        relude,
         text,
         vty,
         vty-crossplatform
+    mixins:
+        base hiding (Prelude),
+        relude (Relude as Prelude)
     hs-source-dirs:
         exe
     default-extensions:
@@ -147,8 +159,12 @@ test-suite spec
         hspec,
         microlens,
         random >=1.3,
+        relude,
         temporary,
         text,
         time,
         vector
+    mixins:
+        base hiding (Prelude),
+        relude (Relude as Prelude)
     default-language: GHC2021

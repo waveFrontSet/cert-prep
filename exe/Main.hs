@@ -14,8 +14,6 @@ import CertPrep.Registry (registerConfig)
 import CertPrep.TUI (runApp)
 import CertPrep.Trophy (loadEarnedTrophies)
 import CertPrep.Types (Config (..))
-import Control.Monad (void)
-import Control.Monad.IO.Class (MonadIO (..))
 import System.Directory (canonicalizePath)
 
 main :: IO ()
