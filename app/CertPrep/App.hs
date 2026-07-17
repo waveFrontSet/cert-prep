@@ -1,13 +1,26 @@
 {-# LANGUAGE LambdaCase #-}
 
-module CertPrep.App where
+module CertPrep.App (
+    AppEnv (..),
+    Config (..),
+    loadConfig,
+    loadEarnedTrophies',
+    loadSettings,
+    registerConfig',
+    resolveConfigPath,
+    resolveExplainEnv,
+    runApp',
+    sampleNonEmpty,
+)
+where
 
 import CertPrep.CLI (CLIOptions (..), cliConfigPath)
 import CertPrep.Explanations (ExplainEnv, mkExplainEnv)
-import CertPrep.Registry (loadFile, loadRegistry)
+import CertPrep.Registry (loadFile, loadRegistry, registerConfig)
 import CertPrep.Sampling (SamplingStrategy (..), sampleQuestions)
 import CertPrep.Settings qualified as Settings
 import CertPrep.TUI (selectConfig)
+import CertPrep.Trophy (EarnedTrophies, loadEarnedTrophies)
 import CertPrep.Types (Config (..), Question)
 import Control.Monad.Error.Class (MonadError (..))
 import Data.Map qualified as Map
@@ -88,3 +101,9 @@ resolveExplainEnv :: Settings.Settings -> App (Maybe ExplainEnv)
 resolveExplainEnv settings = liftIO $ do
     apiKey <- lookupEnv "GEMINI_API_KEY"
     mkExplainEnv settings apiKey
+
+registerConfig' :: FilePath -> Text -> App ()
+registerConfig' p = liftIO . registerConfig p
+
+loadEarnedTrophies' :: FilePath -> App EarnedTrophies
+loadEarnedTrophies' = liftIO . loadEarnedTrophies

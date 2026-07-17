@@ -4,164 +4,164 @@ cabal-version: 2.0
 --
 -- see: https://github.com/sol/hpack
 
-name:               cert-prep
-version:            0.1.0.0
-license:            MIT
-license-file:       LICENSE
-author:             Paul Grillenberger
-maintainer:         grillenbergerpaul@gmail.com
-build-type:         Simple
+name:          cert-prep
+version:       0.1.0.0
+license:       MIT
+license-file:  LICENSE
+author:        Paul Grillenberger
+maintainer:    grillenbergerpaul@gmail.com
+build-type:    Simple
 
 library
-    exposed-modules:
-        CertPrep.Registry
-        CertPrep.Sampling
-        CertPrep.Settings
-        CertPrep.Trophy
-        CertPrep.Types
-        CertPrep.Util
-    other-modules:
-        Paths_cert_prep
-    autogen-modules:
-        Paths_cert_prep
-    build-depends:
-        aeson,
-        base <5,
-        containers,
-        directory,
-        filepath,
-        random >=1.3,
-        relude,
-        text,
-        time
-    mixins:
-        base hiding (Prelude),
-        relude (Relude as Prelude)
-    hs-source-dirs:
-        src
-    default-extensions:
-        OverloadedStrings
-    ghc-options: -Wall -O2
-    default-language: GHC2021
+  exposed-modules:
+      CertPrep.Registry
+      CertPrep.Sampling
+      CertPrep.Settings
+      CertPrep.Trophy
+      CertPrep.Types
+      CertPrep.Util
+  other-modules:
+      Paths_cert_prep
+  autogen-modules:
+      Paths_cert_prep
+  build-depends:
+      aeson
+    , base <5
+    , containers
+    , directory
+    , filepath
+    , random >=1.3
+    , relude
+    , text
+    , time
+  mixins:
+      base hiding (Prelude)
+    , relude (Relude as Prelude)
+  hs-source-dirs:
+      src
+  default-extensions:
+      OverloadedStrings
+  ghc-options: -Wall -O2
+  default-language: GHC2021
 
 library cert-prep-tui
-    exposed-modules:
-        CertPrep.App
-        CertPrep.CLI
-        CertPrep.Exam
-        CertPrep.Exam.Core
-        CertPrep.Exam.Transition
-        CertPrep.Exam.Trophy
-        CertPrep.Explanations
-        CertPrep.TUI
-        CertPrep.TUI.Attributes
-        CertPrep.TUI.ConfigSelect
-        CertPrep.TUI.Draw
-        CertPrep.TUI.Event
-        CertPrep.TUI.Monad
-        CertPrep.TUI.Trophy
-    other-modules:
-        Paths_cert_prep
-    autogen-modules:
-        Paths_cert_prep
-    hs-source-dirs:
-        app
-    default-extensions:
-        OverloadedStrings
-    ghc-options: -Wall -O2
-    build-depends:
-        base <5,
-        brick,
-        cert-prep,
-        containers,
-        microlens,
-        microlens-mtl,
-        microlens-th,
-        mtl,
-        openai,
-        optparse-applicative,
-        random >=1.3,
-        relude,
-        text,
-        time,
-        vector,
-        vty,
-        vty-crossplatform
-    mixins:
-        base hiding (Prelude),
-        relude (Relude as Prelude)
-    default-language: GHC2021
+  exposed-modules:
+      CertPrep.App
+      CertPrep.CLI
+      CertPrep.Exam
+      CertPrep.Exam.Core
+      CertPrep.Exam.Transition
+      CertPrep.Exam.Trophy
+      CertPrep.Explanations
+      CertPrep.TUI
+      CertPrep.TUI.Attributes
+      CertPrep.TUI.ConfigSelect
+      CertPrep.TUI.Draw
+      CertPrep.TUI.Event
+      CertPrep.TUI.Monad
+      CertPrep.TUI.Trophy
+  other-modules:
+      Paths_cert_prep
+  autogen-modules:
+      Paths_cert_prep
+  hs-source-dirs:
+      app
+  default-extensions:
+      OverloadedStrings
+  ghc-options: -Wall -O2
+  build-depends:
+      base <5
+    , brick
+    , cert-prep
+    , containers
+    , microlens
+    , microlens-mtl
+    , microlens-th
+    , mtl
+    , openai
+    , optparse-applicative
+    , random >=1.3
+    , relude
+    , text
+    , time
+    , vector
+    , vty
+    , vty-crossplatform
+  mixins:
+      base hiding (Prelude)
+    , relude (Relude as Prelude)
+  default-language: GHC2021
 
 executable cert-prep
-    main-is: Main.hs
-    other-modules:
-        Paths_cert_prep
-    autogen-modules:
-        Paths_cert_prep
-    build-depends:
-        aeson,
-        base <5,
-        brick,
-        cert-prep,
-        cert-prep-tui,
-        containers,
-        directory,
-        random >=1.3,
-        relude,
-        text,
-        vty,
-        vty-crossplatform
-    mixins:
-        base hiding (Prelude),
-        relude (Relude as Prelude)
-    hs-source-dirs:
-        exe
-    default-extensions:
-        OverloadedStrings
-    ghc-options: -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
-    default-language: GHC2021
+  main-is: Main.hs
+  other-modules:
+      Paths_cert_prep
+  autogen-modules:
+      Paths_cert_prep
+  build-depends:
+      aeson
+    , base <5
+    , brick
+    , cert-prep
+    , cert-prep-tui
+    , containers
+    , directory
+    , random >=1.3
+    , relude
+    , text
+    , vty
+    , vty-crossplatform
+  mixins:
+      base hiding (Prelude)
+    , relude (Relude as Prelude)
+  hs-source-dirs:
+      exe
+  default-extensions:
+      OverloadedStrings
+  ghc-options: -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
+  default-language: GHC2021
 
 test-suite spec
-    type: exitcode-stdio-1.0
-    main-is: Spec.hs
-    other-modules:
-        EventSpec
-        Exam.TransitionSpec
-        ExamSpec
-        ExplanationsSpec
-        Generators
-        RegistrySpec
-        SamplingSpec
-        TrophySpec
-        TypesSpec
-        UtilSpec
-        Paths_cert_prep
-    autogen-modules:
-        Paths_cert_prep
-    hs-source-dirs:
-        test
-    default-extensions:
-        OverloadedStrings
-    ghc-options: -Wall
-    build-tool-depends:
-        hspec-discover:hspec-discover
-    build-depends:
-        QuickCheck,
-        aeson,
-        base <5,
-        cert-prep,
-        cert-prep-tui,
-        containers,
-        directory,
-        hspec,
-        microlens,
-        random >=1.3,
-        relude,
-        temporary,
-        text,
-        time,
-        vector
-    mixins:
-        base hiding (Prelude),
-        relude (Relude as Prelude)
-    default-language: GHC2021
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      EventSpec
+      Exam.TransitionSpec
+      ExamSpec
+      ExplanationsSpec
+      Generators
+      RegistrySpec
+      SamplingSpec
+      TrophySpec
+      TypesSpec
+      UtilSpec
+      Paths_cert_prep
+  autogen-modules:
+      Paths_cert_prep
+  hs-source-dirs:
+      test
+  default-extensions:
+      OverloadedStrings
+  ghc-options: -Wall
+  build-tool-depends:
+      hspec-discover:hspec-discover
+  build-depends:
+      QuickCheck
+    , aeson
+    , base <5
+    , cert-prep
+    , cert-prep-tui
+    , containers
+    , directory
+    , hspec
+    , microlens
+    , random >=1.3
+    , relude
+    , temporary
+    , text
+    , time
+    , vector
+  mixins:
+      base hiding (Prelude)
+    , relude (Relude as Prelude)
+  default-language: GHC2021
