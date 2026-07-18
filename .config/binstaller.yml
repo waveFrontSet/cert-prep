@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/InstallSpec.json
+schema: v1
+name: cert-prep
+repo: waveFrontSet/cert-prep
+default_bin_dir: ${HOME}/.local/bin
+asset:
+  # Release assets: cert-prep-linux-x86_64.tar.gz, cert-prep-macos-aarch64.tar.gz,
+  # cert-prep-windows-x86_64.zip (bare binary at archive root, no version in name)
+  template: cert-prep-${OS}-${ARCH}${EXT}
+  default_extension: .tar.gz
+  binaries:
+  - name: cert-prep
+    path: cert-prep
+  rules:
+  - when:
+      arch: amd64
+    arch: x86_64
+  - when:
+      os: darwin
+    os: macos
+  - when:
+      os: darwin
+      arch: arm64
+    arch: aarch64
+  - when:
+      os: windows
+    ext: .zip
+    binaries:
+    - name: cert-prep
+      path: cert-prep.exe
+supported_platforms:
+- os: linux
+  arch: amd64
+- os: darwin
+  arch: arm64
+- os: windows
+  arch: amd64
