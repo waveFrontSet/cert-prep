@@ -9,7 +9,7 @@ repos:
         pass_filenames: false
       - id: fourmolu
         name: fourmolu
-        entry: fourmolu --mode inplace
+        entry: fourmolu --quiet --mode inplace
         language: system
         files: \.hs$
       - id: hlint
