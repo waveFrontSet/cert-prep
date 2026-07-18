@@ -1,0 +1,19 @@
+repos:
+  - repo: local
+    hooks:
+      - id: hpack
+        name: hpack
+        entry: hpack
+        language: system
+        files: ^(package\.yaml|cert-prep\.cabal)$
+        pass_filenames: false
+      - id: fourmolu
+        name: fourmolu
+        entry: fourmolu --mode inplace
+        language: system
+        files: \.hs$
+      - id: hlint
+        name: hlint
+        entry: hlint
+        language: system
+        files: \.hs$

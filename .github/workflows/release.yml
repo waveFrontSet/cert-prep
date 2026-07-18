@@ -13,11 +13,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Verify tag matches package.yaml version
+      - name: Verify tag matches package.yaml and cert-prep.cabal versions
         run: |
           PKG_VERSION="$(sed -n 's/^version:[[:space:]]*//p' package.yaml)"
+          CABAL_VERSION="$(sed -n 's/^version:[[:space:]]*//p' cert-prep.cabal)"
           if [ "${GITHUB_REF_NAME}" != "v${PKG_VERSION}" ]; then
             echo "::error::Tag ${GITHUB_REF_NAME} does not match package.yaml version ${PKG_VERSION} (expected v${PKG_VERSION})"
+            exit 1
+          fi
+          if [ "${GITHUB_REF_NAME}" != "v${CABAL_VERSION}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match cert-prep.cabal version ${CABAL_VERSION} (expected v${CABAL_VERSION})"
             exit 1
           fi
 

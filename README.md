@@ -189,3 +189,14 @@ Requires GHC and Cabal. Uses hpack (`package.yaml`).
 cabal build
 cabal run cert-prep -- ./config.json
 ```
+
+### Development
+
+Pre-commit hooks (hpack, fourmolu, hlint) are configured in
+`.pre-commit-config.yaml` and run with [prek](https://github.com/j178/prek).
+They expect `hpack`, `fourmolu`, and `hlint` on your PATH (e.g. via ghcup or
+`cabal install`). Activate them once per clone:
+
+```bash
+prek install
+```
