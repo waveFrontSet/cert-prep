@@ -1,6 +1,5 @@
-module CLI (CLIOptions (..), parseCLIOpts) where
+module CertPrep.CLI (CLIOptions (..), parseCLIOpts) where
 
-import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Read (decimal)
 import Options.Applicative
@@ -38,7 +37,7 @@ cliParser =
 
 parseWeight :: ReadM (Text, Int)
 parseWeight = eitherReader $ \s ->
-    case T.splitOn ":" (T.pack s) of
+    case T.splitOn ":" (toText s) of
         [cat, wText] | Right (w, "") <- decimal wText -> Right (cat, w)
         _ -> Left $ "Invalid weight format: " ++ s ++ " (expected CATEGORY:WEIGHT)"
 

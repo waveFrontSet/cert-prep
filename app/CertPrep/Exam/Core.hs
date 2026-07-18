@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
-module Exam.Core (
+module CertPrep.Exam.Core (
     Name (..),
     ExamCore (..),
     AnsweringData (..),
@@ -44,14 +44,12 @@ module Exam.Core (
 )
 where
 
-import Data.IntSet (IntSet)
-import Data.Text (Text)
+import CertPrep.Trophy (EarnedTrophies, TrophyDef, TrophyState (..))
+import CertPrep.Types (Answer, AnswerResult, Question)
 import Data.Vector (Vector)
 import Data.Vector qualified as V
 import Lens.Micro ((^.))
 import Lens.Micro.TH (makeLenses)
-import Trophy (EarnedTrophies, TrophyDef, TrophyState (..))
-import Types (Answer, AnswerResult, Question)
 
 data Name
     = AnswerChoice Int

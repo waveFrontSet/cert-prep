@@ -1,14 +1,14 @@
-module TUI.ConfigSelect (selectConfig) where
+module CertPrep.TUI.ConfigSelect (selectConfig) where
 
 import Brick
 import Brick.Widgets.Border
 import Brick.Widgets.Border.Style
 import Brick.Widgets.Center
 import Brick.Widgets.List qualified as L
+import CertPrep.Registry (Registry, RegistryEntry (..))
 import Data.Time (defaultTimeLocale, formatTime)
 import Data.Vector qualified as V
 import Graphics.Vty qualified as Vty
-import Registry (Registry, RegistryEntry (..))
 
 type SelectState = L.List () RegistryEntry
 
@@ -48,7 +48,7 @@ handleSelectEvent (VtyEvent (Vty.EvKey Vty.KEsc [])) = halt
 handleSelectEvent (VtyEvent (Vty.EvKey Vty.KEnter [])) = halt
 handleSelectEvent (VtyEvent (Vty.EvKey (Vty.KChar 'q') [])) = halt
 handleSelectEvent (VtyEvent e) = L.handleListEventVi L.handleListEvent e
-handleSelectEvent _ = return ()
+handleSelectEvent _ = pass
 
 theMap :: AttrMap
 theMap =
@@ -66,7 +66,7 @@ selectConfig entries = do
                 { appDraw = drawSelectUI
                 , appChooseCursor = neverShowCursor
                 , appHandleEvent = handleSelectEvent
-                , appStartEvent = return ()
+                , appStartEvent = pass
                 , appAttrMap = const theMap
                 }
     finalState <- defaultMain app initial

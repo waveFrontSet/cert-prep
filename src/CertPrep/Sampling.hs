@@ -1,16 +1,13 @@
-module Sampling (
+module CertPrep.Sampling (
     SamplingStrategy (..),
     Weight,
     WeightMap,
     sampleQuestions,
 ) where
 
-import Data.List (foldl', sortBy)
-import Data.Map.Strict (Map)
+import CertPrep.Types (Category, Question (..))
 import Data.Map.Strict qualified as Map
-import Data.Ord (Down (..), comparing)
 import System.Random (RandomGen, SplitGen, splitGen, uniformR)
-import Types (Category, Question (..))
 
 type Weight = Int
 type WeightMap = Map Category Weight
@@ -83,13 +80,13 @@ allocateWithRemainder n weights avails =
 
                     sortedByRemainder =
                         map fst $
-                            sortBy (comparing (Down . snd)) $
+                            sortWith (Down . snd) $
                                 Map.toList remainders
 
                     extraCats = take remaining sortedByRemainder
 
                     withExtra =
-                        foldl' (flip (Map.adjust (+ 1))) floorAlloc extraCats
+                        flipfoldl' (Map.adjust (+ 1)) floorAlloc extraCats
                  in capAndRedistribute withExtra avails
 
 {- | Cap allocations at available question counts, redistributing surplus
@@ -132,13 +129,13 @@ distributeEvenly extra m avails =
                     leftover = extra `mod` eligibleCount
                     keys = Map.keys eligible
                     bumped =
-                        foldl'
-                            (flip (Map.adjust (+ perCat)))
+                        flipfoldl'
+                            (Map.adjust (+ perCat))
                             m
                             keys
                     withLeftover =
-                        foldl'
-                            (flip (Map.adjust (+ 1)))
+                        flipfoldl'
+                            (Map.adjust (+ 1))
                             bumped
                             (take leftover keys)
                  in withLeftover
@@ -162,7 +159,7 @@ concatSamples gen0 allocs grouped = shuffle genShuffle $ go genSample cats
 
 shuffle :: (RandomGen g) => g -> [a] -> [a]
 shuffle g xs =
-    map snd $ sortBy (comparing fst) tagged
+    map snd $ sortWith fst tagged
   where
     tagged = snd $ foldl' step (g, []) xs
     step (g', acc) x =

@@ -1,25 +1,31 @@
 {-# LANGUAGE LambdaCase #-}
 
-module App where
+module CertPrep.App (
+    AppEnv (..),
+    Config (..),
+    loadConfig,
+    loadEarnedTrophies',
+    loadSettings,
+    registerConfig',
+    resolveConfigPath,
+    resolveExplainEnv,
+    runApp',
+    sampleNonEmpty,
+)
+where
 
-import CLI (CLIOptions (..), cliConfigPath)
-import Control.Monad.Except (ExceptT, MonadError (..), runExceptT)
-import Control.Monad.IO.Class (MonadIO)
-import Control.Monad.Reader (MonadIO (liftIO), MonadReader, ReaderT (..), asks)
-import Data.List.NonEmpty (NonEmpty)
-import Data.List.NonEmpty qualified as NE
+import CertPrep.CLI (CLIOptions (..), cliConfigPath)
+import CertPrep.Explanations (ExplainEnv, mkExplainEnv)
+import CertPrep.Registry (loadFile, loadRegistry, registerConfig)
+import CertPrep.Sampling (SamplingStrategy (..), sampleQuestions)
+import CertPrep.Settings qualified as Settings
+import CertPrep.TUI (selectConfig)
+import CertPrep.Trophy (EarnedTrophies, loadEarnedTrophies)
+import CertPrep.Types (Config (..), Question)
+import Control.Monad.Error.Class (MonadError (..))
 import Data.Map qualified as Map
-import Data.Maybe (fromMaybe)
-import Explanations (ExplainEnv, mkExplainEnv)
-import Registry (loadFile, loadRegistry)
-import Sampling (SamplingStrategy (..), sampleQuestions)
-import Settings qualified
-import System.Environment (lookupEnv)
-import System.Exit (exitFailure)
-import System.IO (hPutStrLn, stderr)
+import System.IO (hPutStrLn)
 import System.Random (newStdGen)
-import TUI (selectConfig)
-import Types (Config (..), Question)
 
 newtype App a = App {unApp :: ReaderT AppEnv (ExceptT AppError IO) a}
     deriving
@@ -82,7 +88,7 @@ sampleNonEmpty config = do
     gen <- liftIO newStdGen
     let sampledQuestions =
             sampleQuestions gen effectiveSize strategy allQuestions
-    case NE.nonEmpty sampledQuestions of
+    case nonEmpty sampledQuestions of
         Nothing -> throwError NoQuestionsInConfig
         Just ne -> pure ne
 
@@ -95,3 +101,9 @@ resolveExplainEnv :: Settings.Settings -> App (Maybe ExplainEnv)
 resolveExplainEnv settings = liftIO $ do
     apiKey <- lookupEnv "GEMINI_API_KEY"
     mkExplainEnv settings apiKey
+
+registerConfig' :: FilePath -> Text -> App ()
+registerConfig' p = liftIO . registerConfig p
+
+loadEarnedTrophies' :: FilePath -> App EarnedTrophies
+loadEarnedTrophies' = liftIO . loadEarnedTrophies

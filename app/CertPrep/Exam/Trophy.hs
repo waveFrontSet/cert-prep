@@ -1,4 +1,4 @@
-module Exam.Trophy (
+module CertPrep.Exam.Trophy (
     updateTrophyState,
     wrapWithTrophies,
     checkAllTrophies,
@@ -9,8 +9,8 @@ where
 import Data.Set qualified as Set
 import Lens.Micro ((^.))
 
-import Exam.Core
-import Trophy (
+import CertPrep.Exam.Core
+import CertPrep.Trophy (
     EarnedTrophies,
     FinalStatistics (..),
     TrophyDef (..),
@@ -48,7 +48,8 @@ checkAllTrophies ts earned core =
         isLast = nextIdx >= totalQuestions core
         finishTs =
             if isLast
-                then filterEarned $ checkAtFinish $ FinalStatistics (core ^. score) (totalQuestions core)
+                then
+                    filterEarned $ checkAtFinish $ FinalStatistics (core ^. score) (totalQuestions core)
                 else []
      in submitTs ++ finishTs
 

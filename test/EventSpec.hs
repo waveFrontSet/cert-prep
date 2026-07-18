@@ -1,12 +1,13 @@
 module EventSpec (spec) where
 
+import CertPrep.Exam.Core
+import CertPrep.Exam.Transition (advanceExam, nextQuestion, submitAnswer)
+import CertPrep.TUI.Event (moveFocusPure, toggleAnswerPure)
 import Data.IntSet qualified as IS
+import Data.List ((!!))
 import Data.Vector qualified as V
-import Exam.Core
-import Exam.Transition (advanceExam, nextQuestion, submitAnswer)
 import Generators (mkQuestion)
 import Lens.Micro ((^.))
-import TUI.Event (moveFocusPure, toggleAnswerPure)
 import Test.Hspec
 
 spec :: Spec
@@ -94,7 +95,7 @@ spec = do
                 , _activeQuestion = qs !! idx
                 , _phaseData =
                     ReviewingData
-                        { _answerResult = undefined
+                        { _answerResult = error "answerResult is never forced in this test"
                         , _lastSelected = IS.empty
                         }
                 }

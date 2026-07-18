@@ -1,4 +1,4 @@
-module Util (formatTime) where
+module CertPrep.Util (formatTime) where
 
 formatTime :: Int -> String
 formatTime totalSecs =

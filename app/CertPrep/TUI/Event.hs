@@ -1,4 +1,4 @@
-module TUI.Event (
+module CertPrep.TUI.Event (
     CustomEvent (..),
     handleEvent,
     toggleAnswerPure,
@@ -7,18 +7,14 @@ module TUI.Event (
 ) where
 
 import Brick
-import Control.Monad.IO.Class (liftIO)
-import Data.IntSet (IntSet)
 import Data.IntSet qualified as IS
 import Graphics.Vty qualified as V
-import Lens.Micro ((%~), (&), (+~), (.~), (^.))
+import Lens.Micro ((%~), (+~), (.~), (^.))
 import Lens.Micro.Mtl (use, (%=), (+=), (.=))
+import Prelude hiding (Down)
 
-import Control.Monad (when)
-import Control.Monad.Reader (asks)
-import Control.Monad.State (MonadState)
-import Exam.Core
-import Exam.Transition (
+import CertPrep.Exam.Core
+import CertPrep.Exam.Transition (
     advanceExam,
     applyExplainEvent,
     backToReview,
@@ -27,14 +23,14 @@ import Exam.Transition (
     submitAnswer,
     travelToQuestion,
  )
-import Exam.Trophy (
+import CertPrep.Exam.Trophy (
     checkAllTrophies,
     persistTrophies,
     updateTrophyState,
     wrapWithTrophies,
  )
-import Explanations (MonadExplain (..))
-import TUI.Monad (
+import CertPrep.Explanations (MonadExplain (..))
+import CertPrep.TUI.Monad (
     CustomEvent (..),
     TuiEnv (..),
     TuiM,
@@ -43,7 +39,7 @@ import TUI.Monad (
     whenAnswering,
     whenReviewing,
  )
-import Types (Question (..), isCorrect)
+import CertPrep.Types (Question (..), isCorrect)
 
 totalAnimFrames :: Int
 totalAnimFrames = 5
@@ -72,7 +68,7 @@ handleEvent (VtyEvent (V.EvKey key [])) = case key of
     V.KChar 'a' -> whenReviewing $ \ap -> do
         liftEvent $ vScrollToBeginning explainScroll -- don't inherit the previous explanation's offset
         requestExplanationFor ap
-    _ -> return ()
+    _ -> pass
 handleEvent (VtyEvent (V.EvKey (V.KChar 'f') [V.MCtrl])) = liftEvent $ vScrollPage explainScroll Down
 handleEvent (VtyEvent (V.EvKey (V.KChar 'b') [V.MCtrl])) = liftEvent $ vScrollPage explainScroll Up
 handleEvent (MouseDown (AnswerChoice idx) _ _ _) =
@@ -82,12 +78,12 @@ handleEvent (MouseDown SubmitButton _ _ _) = do
     phase <- use examPhase
     case phase of
         Answering ap -> handleSubmit ap
-        _ -> return ()
+        _ -> pass
 handleEvent (MouseDown NextButton _ _ _) = do
     phase <- use examPhase
     case phase of
         Reviewing ap -> handleNextQuestion ap
-        _ -> return ()
+        _ -> pass
 handleEvent (AppEvent Tick) = do
     phase <- use examPhase
     case phase of
@@ -95,7 +91,7 @@ handleEvent (AppEvent Tick) = do
         CheckingTrophies core -> handleCheckTrophies core
         _ -> examPhase %= overActiveCore (elapsedSeconds +~ 1)
 handleEvent (AppEvent (ExplanationEvent rid ev)) = examPhase %= applyExplainEvent rid ev
-handleEvent _ = return ()
+handleEvent _ = pass
 
 -- Brick drops scroll requests for viewports that aren't rendered, so these
 -- are safe to issue in any phase; they only take effect while explaining.
@@ -110,7 +106,7 @@ moveFocusOrScroll delta = do
     case phase of
         Answering ap -> examPhase .= Answering (moveFocus delta ap)
         Explaining _ -> liftEvent $ vScrollBy explainScroll delta
-        _ -> return ()
+        _ -> pass
 
 handleSubmit :: ActivePhase AnsweringData -> TuiM ()
 handleSubmit ap = do
@@ -118,7 +114,7 @@ handleSubmit ap = do
         userAnswer = ap ^. phaseData . selectedAnswers
         wasCorrect = isCorrect q userAnswer
         core = ap ^. activeCore
-        questionTime = (core ^. elapsedSeconds) - (core ^. questionStartTime)
+        questionTime = core ^. elapsedSeconds - core ^. questionStartTime
 
     oldTS <- use trophyState
     trophyState .= updateTrophyState wasCorrect questionTime oldTS
@@ -129,8 +125,7 @@ handleNextQuestion :: ActivePhase ReviewingData -> TuiM ()
 handleNextQuestion ap = handleCheckTrophies (ap ^. activeCore)
 
 handleExplaining :: ActivePhase ExplainingData -> TuiM ()
-handleExplaining ap = do
-    examPhase .= backToReview ap
+handleExplaining ap = examPhase .= backToReview ap
 
 requestExplanationFor ::
     (MonadState AppState m, MonadExplain m) => ActivePhase ReviewingData -> m ()
@@ -151,7 +146,7 @@ handleCheckTrophies core = do
         nextPhase = advanceExam core
 
     case allTrophies of
-        [] -> pure ()
+        [] -> pass
         _ -> do
             cp <- asks tuiConfigPath
             newEarned <- liftIO $ persistTrophies allTrophies cp earned
@@ -177,9 +172,9 @@ handleTrophyDismiss tad = case tad ^. pendingTrophies of
             Answering newAp -> do
                 let core = newAp ^. activeCore
                     updatedCore =
-                        core & questionStartTime .~ (core ^. elapsedSeconds)
+                        core & questionStartTime .~ core ^. elapsedSeconds
                 examPhase .= Answering (newAp & activeCore .~ updatedCore)
-            _ -> return ()
+            _ -> pass
 
 handleTrophyTick :: TrophyAwardedData -> TuiM ()
 handleTrophyTick tad = do

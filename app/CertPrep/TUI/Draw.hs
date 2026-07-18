@@ -1,17 +1,16 @@
-module TUI.Draw (drawUI) where
+module CertPrep.TUI.Draw (drawUI) where
 
 import Brick
 import Brick.Widgets.Border
 import Brick.Widgets.Border.Style
 import Brick.Widgets.Center
+import CertPrep.Exam.Core
+import CertPrep.TUI.Attributes
+import CertPrep.TUI.Trophy (drawTrophyAwarded)
+import CertPrep.Types (AnswerResult (..), Question (..))
+import CertPrep.Util (formatTime)
 import Data.IntSet qualified as IS
-import Data.Text (Text)
-import Exam.Core
 import Lens.Micro ((^.))
-import TUI.Attributes
-import TUI.Trophy (drawTrophyAwarded)
-import Types (AnswerResult (..), Question (..))
-import Util (formatTime)
 
 drawUI :: AppState -> [Widget Name]
 drawUI appState = case appState ^. examPhase of

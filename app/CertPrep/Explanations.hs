@@ -4,7 +4,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedLists #-}
 
-module Explanations (
+module CertPrep.Explanations (
     ExplainEnv (..),
     ExplainError (..),
     ExplainEvent (..),
@@ -15,10 +15,10 @@ module Explanations (
     renderExplainError,
 ) where
 
-import Control.Exception (SomeException, try)
-import Data.IntSet (toList)
-import Data.Maybe (fromMaybe)
-import Data.Text (Text)
+import CertPrep.Settings (Settings (aiBaseUrl, aiModel, aiSystemPrompt))
+import CertPrep.Types (AnswerResult, Question (..), userSelectedAnswers)
+import Control.Exception (try)
+import Data.IntSet qualified as IS
 import Data.Text qualified as T
 import OpenAI.V1 (
     Methods (Methods, createChatCompletionStreamTyped),
@@ -37,8 +37,6 @@ import OpenAI.V1.Chat.Completions.Stream (
     Delta (delta_content),
  )
 import OpenAI.V1.Models qualified as Models
-import Settings (Settings (aiBaseUrl, aiModel, aiSystemPrompt))
-import Types (AnswerResult, Question (..), userSelectedAnswers)
 
 newtype ExplainEnv = ExplainEnv
     { explainStream :: Text -> (ExplainEvent -> IO ()) -> IO ()
@@ -74,7 +72,7 @@ mkExplainEnv _ (Just "") = return Nothing
 mkExplainEnv s (Just apiKey) = do
     clientEnv <- getClientEnv (aiBaseUrl s)
     let Methods{createChatCompletionStreamTyped} =
-            makeMethods clientEnv (T.pack apiKey) Nothing Nothing
+            makeMethods clientEnv (toText apiKey) Nothing Nothing
     return $ Just $ ExplainEnv{explainStream = stream createChatCompletionStreamTyped}
   where
     -- Total: every outcome (including exceptions) becomes an ExplainEvent.
@@ -84,9 +82,9 @@ mkExplainEnv s (Just apiKey) = do
                 Left err -> emit (ExplainFailed (ExplainHttpError err))
                 Right chunk ->
                     let t = chunkText chunk
-                     in if T.null t then return () else emit (ExplainChunk t)
+                     in if T.null t then pass else emit (ExplainChunk t)
         emit $ case result of
-            Left err -> ExplainFailed (ExplainHttpError (T.pack $ show err))
+            Left err -> ExplainFailed (ExplainHttpError (show err))
             Right () -> ExplainDone
     chatRequest prompt =
         _CreateChatCompletion
@@ -108,7 +106,7 @@ mkExplainEnv s (Just apiKey) = do
 renderExplainPrompt :: Question -> AnswerResult -> Text
 renderExplainPrompt qu ar = renderQuestion qu <> renderAnswerResult ar
   where
-    commaSeparated = T.intercalate ", " . fmap (T.pack . show) . toList
+    commaSeparated = T.intercalate ", " . fmap show . IS.toList
     renderQuestion q =
         "Question: "
             <> text q
@@ -117,7 +115,8 @@ renderExplainPrompt qu ar = renderQuestion qu <> renderAnswerResult ar
             <> "Correct Answers: "
             <> commaSeparated (correctAnswer q)
     zippedAnswers answers =
-        T.unlines $ zipWith (\a answer -> T.pack (show @Int a) <> ". " <> answer) [0 ..] answers
+        unlines $
+            zipWith (\a answer -> show @Text (a :: Int) <> ". " <> answer) [0 ..] answers
     renderAnswerResult aResult = "\nUser Selected Answers: " <> commaSeparated (userSelectedAnswers aResult)
 
 renderExplainError :: ExplainError -> Text

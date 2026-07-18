@@ -1,22 +1,9 @@
 module Main where
 
-import App (
-    AppEnv (..),
-    loadConfig,
-    loadSettings,
-    resolveConfigPath,
-    resolveExplainEnv,
-    runApp',
-    sampleNonEmpty,
- )
-import CLI (parseCLIOpts)
-import Control.Monad (void)
-import Control.Monad.IO.Class (MonadIO (..))
-import Registry (registerConfig)
+import CertPrep.App
+import CertPrep.CLI (parseCLIOpts)
+import CertPrep.TUI (runApp)
 import System.Directory (canonicalizePath)
-import TUI (runApp)
-import Trophy (loadEarnedTrophies)
-import Types (Config (..))
 
 main :: IO ()
 main = do
@@ -24,9 +11,9 @@ main = do
     runApp' (AppEnv opts) $ do
         configPath <- resolveConfigPath
         config <- loadConfig configPath
-        liftIO $ registerConfig configPath (title config)
+        registerConfig' configPath (title config)
         canonPath <- liftIO $ canonicalizePath configPath
-        earned <- liftIO $ loadEarnedTrophies canonPath
+        earned <- loadEarnedTrophies' canonPath
         sampledNE <- sampleNonEmpty config
         settings <- loadSettings
         mExplainEnv <- resolveExplainEnv settings

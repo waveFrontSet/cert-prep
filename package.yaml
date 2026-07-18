@@ -10,7 +10,13 @@ default-extensions:
   - OverloadedStrings
 
 dependencies:
-  - base < 5
+  - name: base
+    version: "< 5"
+    mixin:
+      - hiding (Prelude)
+  - name: relude
+    mixin:
+      - (Relude as Prelude)
   - text
   - containers
   - random >= 1.3
@@ -22,7 +28,6 @@ library:
     - -O2
   dependencies:
     - aeson
-    - bytestring
     - directory
     - filepath
     - time
@@ -62,7 +67,6 @@ executables:
       - cert-prep-tui
       - aeson
       - brick
-      - bytestring
       - directory
       - vty
       - vty-crossplatform
@@ -79,7 +83,6 @@ tests:
       - cert-prep
       - cert-prep-tui
       - aeson
-      - bytestring
       - directory
       - hspec
       - QuickCheck

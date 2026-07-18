@@ -1,4 +1,4 @@
-module Registry (
+module CertPrep.Registry (
     RegistryEntry (..),
     Registry,
     registryFilePath,
@@ -12,14 +12,9 @@ import Data.Aeson (
     FromJSON,
     ToJSON,
     eitherDecodeStrict,
+    encode,
  )
-import Data.ByteString qualified as BS
-import Data.Either (fromRight)
-import Data.List (sortBy)
-import Data.Ord (Down (..), comparing)
-import Data.Text (Text)
 import Data.Time (UTCTime, getCurrentTime)
-import GHC.Generics (Generic)
 import System.Directory (
     XdgDirectory (XdgConfig),
     canonicalizePath,
@@ -28,8 +23,6 @@ import System.Directory (
     getXdgDirectory,
  )
 import System.FilePath (takeDirectory, (</>))
-
-import Data.Aeson qualified as Aeson
 
 data RegistryEntry = RegistryEntry
     { title :: Text
@@ -59,14 +52,14 @@ loadFile p = do
     if not exists
         then return (Left $ "File does not exist: " <> show p)
         else do
-            bytes <- BS.readFile p
+            bytes <- readFileBS p
             return $ eitherDecodeStrict bytes
 
 saveRegistry :: Registry -> IO ()
 saveRegistry entries = do
     p <- registryFilePath
     createDirectoryIfMissing True (takeDirectory p)
-    BS.writeFile p (BS.toStrict $ Aeson.encode entries)
+    writeFileBS p (toStrict $ encode entries)
 
 registerConfig :: FilePath -> Text -> IO ()
 registerConfig p title = do
@@ -80,6 +73,6 @@ registerConfig p title = do
                 , lastUsed = now
                 }
         updated =
-            sortBy (comparing (Down . lastUsed)) $
+            sortWith (Down . lastUsed) $
                 entry : filter (\e -> path e /= canonPath) existing
     saveRegistry updated

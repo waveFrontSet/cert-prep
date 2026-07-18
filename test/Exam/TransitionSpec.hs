@@ -1,10 +1,11 @@
 module Exam.TransitionSpec (spec) where
 
+import CertPrep.Exam.Core
+import CertPrep.Exam.Transition (applyExplainEvent, stepExplanation, travelToQuestion)
+import CertPrep.Explanations (ExplainError (..), ExplainEvent (..), renderExplainError)
 import Data.IntSet qualified as IS
+import Data.List ((!!))
 import Data.Vector qualified as V
-import Exam.Core
-import Exam.Transition (applyExplainEvent, stepExplanation, travelToQuestion)
-import Explanations (ExplainError (..), ExplainEvent (..), renderExplainError)
 import Generators (mkQuestion)
 import Lens.Micro
 import Test.Hspec
@@ -31,7 +32,7 @@ spec = do
                 , _activeQuestion = qs !! idx
                 , _phaseData =
                     ReviewingData
-                        { _answerResult = undefined
+                        { _answerResult = error "answerResult is never forced in this test"
                         , _lastSelected = IS.empty
                         }
                 }
@@ -77,14 +78,14 @@ spec = do
                 Explaining
                     ActivePhase
                         { _activeCore = mkCore 0 0
-                        , _activeQuestion = head qs
+                        , _activeQuestion = qs !! 0
                         , _phaseData =
                             ExplainingData
                                 { _explainId = rid
                                 , _explanationStatus = status
                                 , _reviewingData =
                                     ReviewingData
-                                        { _answerResult = undefined
+                                        { _answerResult = error "answerResult is never forced in this test"
                                         , _lastSelected = IS.empty
                                         }
                                 }
