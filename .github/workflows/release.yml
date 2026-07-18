@@ -9,7 +9,20 @@ permissions:
   contents: write
 
 jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Verify tag matches package.yaml version
+        run: |
+          PKG_VERSION="$(sed -n 's/^version:[[:space:]]*//p' package.yaml)"
+          if [ "${GITHUB_REF_NAME}" != "v${PKG_VERSION}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match package.yaml version ${PKG_VERSION} (expected v${PKG_VERSION})"
+            exit 1
+          fi
+
   build:
+    needs: check-version
     strategy:
       matrix:
         include:

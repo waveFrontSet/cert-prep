@@ -5,7 +5,7 @@ cabal-version: 2.0
 -- see: https://github.com/sol/hpack
 
 name:          cert-prep
-version:       0.1.0.0
+version:       0.5.0
 license:       MIT
 license-file:  LICENSE
 author:        Paul Grillenberger
