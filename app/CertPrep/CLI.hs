@@ -2,7 +2,9 @@ module CertPrep.CLI (CLIOptions (..), parseCLIOpts) where
 
 import Data.Text qualified as T
 import Data.Text.Read (decimal)
+import Data.Version (showVersion)
 import Options.Applicative
+import Paths_cert_prep (version)
 
 data CLIOptions = CLIOptions
     { cliSampleAmount :: Maybe Int
@@ -44,7 +46,7 @@ parseWeight = eitherReader $ \s ->
 cliInfo :: ParserInfo CLIOptions
 cliInfo =
     info
-        (cliParser <**> helper)
+        (cliParser <**> helper <**> simpleVersioner (showVersion version))
         ( fullDesc
             <> progDesc "Certification exam prep TUI"
             <> header "cert-prep - practice certification questions"
