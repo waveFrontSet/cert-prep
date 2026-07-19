@@ -1,37 +1,65 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/binary-install/binstaller/main/schema/InstallSpec.json
 schema: v1
-name: cert-prep
-repo: waveFrontSet/cert-prep
-default_bin_dir: ${HOME}/.local/bin
+repo: wavefrontset/cert-prep
 asset:
-  # Release assets: cert-prep-linux-x86_64.tar.gz, cert-prep-macos-aarch64.tar.gz,
-  # cert-prep-windows-x86_64.zip (bare binary at archive root, no version in name)
   template: cert-prep-${OS}-${ARCH}${EXT}
   default_extension: .tar.gz
-  binaries:
-  - name: cert-prep
-    path: cert-prep
   rules:
-  - when:
+    - when:
+        arch: amd64
+      arch: x86_64
+    - when:
+        os: darwin
+      os: macos
+    - when:
+        os: darwin
+        arch: amd64
       arch: amd64
-    arch: x86_64
-  - when:
-      os: darwin
-    os: macos
-  - when:
-      os: darwin
-      arch: arm64
-    arch: aarch64
-  - when:
-      os: windows
-    ext: .zip
-    binaries:
-    - name: cert-prep
-      path: cert-prep.exe
+    - when:
+        os: darwin
+        arch: arm64
+      arch: aarch64
+    - when:
+        os: windows
+      ext: .zip
+      binaries:
+        - name: cert-prep
+          path: cert-prep.exe
+checksums:
+  algorithm: sha256
+  embedded_checksums:
+    v0.4.0:
+      - filename: cert-prep-linux-x86_64.tar.gz
+        hash: 4e745c4f70dd1a814ba6f08ef5ba86893d9d15f27fbd496a14f893b3ed517faa
+      - filename: cert-prep-macos-aarch64.tar.gz
+        hash: 060b801eebb6478e906836ae5e85a17c6d3b2a70355705efdeaf9fff0f451506
+      - filename: cert-prep-windows-x86_64.zip
+        hash: 27d180bb2c8834ae5f72d530f75460b504e52fc8344cc39776fc46f0260c845a
+    v0.5.0:
+      - filename: cert-prep-linux-x86_64.tar.gz
+        hash: f315f8a0e70bfa4d285c01b155f0324ae2bfc7219368595dbd8a8be20dd3eb59
+      - filename: cert-prep-macos-aarch64.tar.gz
+        hash: 85c44cc8d6d19def0853600d1640569b495d33fff977dbe0fd7e5a8779f2db82
+      - filename: cert-prep-windows-x86_64.zip
+        hash: 3a73c1a7b58f25af50731dc80f1ae1e87d631426d7a07b97f0ae56f103bebd27
+    v0.6.0:
+      - filename: cert-prep-linux-x86_64.tar.gz
+        hash: 26abcee7397f5920d2e9c58730f9d2b0b91c725d42b4a3e6da809b5368b3385d
+      - filename: cert-prep-macos-aarch64.tar.gz
+        hash: 3866d30b387e927e3dfa0f1069f39e0544028bd1a0f02aa0fed91c6e202f38c4
+      - filename: cert-prep-windows-x86_64.zip
+        hash: 3ed81af2c1254f7ff613427d80a85bccf58b076902ed0966964c4e46bfd1497a
+    v0.6.1:
+      - filename: cert-prep-linux-x86_64.tar.gz
+        hash: bfb03bba301137f069001ace01d289cdb363df99932df37f1214393b3bd56854
+      - filename: cert-prep-macos-aarch64.tar.gz
+        hash: 0b492ebcccf63b6a502c742de16977fc7fd697420f35f56dd1d538f25bd150b2
+      - filename: cert-prep-windows-x86_64.zip
+        hash: 39aa1d899010c0ea69bea36a6b508de11490db98119019cb230a572087418db9
 supported_platforms:
-- os: linux
-  arch: amd64
-- os: darwin
-  arch: arm64
-- os: windows
-  arch: amd64
+  - os: linux
+    arch: amd64
+  - os: darwin
+    arch: arm64
+  - os: windows
+    arch: amd64
