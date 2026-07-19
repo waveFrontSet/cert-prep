@@ -8,12 +8,12 @@ usage() {
 $this: download ${NAME} from ${REPO}
 
 Usage: $this [-b bindir] [-d] [-q] [-n] [tag]
-  -b sets bindir or installation directory, Defaults to ${HOME}/.local/bin
+  -b sets bindir or installation directory, Defaults to ${BINSTALLER_BIN:-${HOME}/.local/bin}
   -d turns on debug logging
   -q turns on quiet mode (errors only)
   -n turns on dry run mode
    [tag] is a tag from
-   https://github.com/waveFrontSet/cert-prep/releases
+   https://github.com/wavefrontset/cert-prep/releases
    If tag is missing, then latest will be used.
 
 Environment variables:
@@ -409,7 +409,19 @@ github_release() {
 }
 
 # --- Embedded Checksums (Format: VERSION:FILENAME:HASH) ---
-EMBEDDED_CHECKSUMS=""
+EMBEDDED_CHECKSUMS="
+0.4.0:cert-prep-linux-x86_64.tar.gz:4e745c4f70dd1a814ba6f08ef5ba86893d9d15f27fbd496a14f893b3ed517faa
+0.4.0:cert-prep-macos-aarch64.tar.gz:060b801eebb6478e906836ae5e85a17c6d3b2a70355705efdeaf9fff0f451506
+0.4.0:cert-prep-windows-x86_64.zip:27d180bb2c8834ae5f72d530f75460b504e52fc8344cc39776fc46f0260c845a
+0.5.0:cert-prep-linux-x86_64.tar.gz:f315f8a0e70bfa4d285c01b155f0324ae2bfc7219368595dbd8a8be20dd3eb59
+0.5.0:cert-prep-macos-aarch64.tar.gz:85c44cc8d6d19def0853600d1640569b495d33fff977dbe0fd7e5a8779f2db82
+0.5.0:cert-prep-windows-x86_64.zip:3a73c1a7b58f25af50731dc80f1ae1e87d631426d7a07b97f0ae56f103bebd27
+0.6.0:cert-prep-linux-x86_64.tar.gz:26abcee7397f5920d2e9c58730f9d2b0b91c725d42b4a3e6da809b5368b3385d
+0.6.0:cert-prep-macos-aarch64.tar.gz:3866d30b387e927e3dfa0f1069f39e0544028bd1a0f02aa0fed91c6e202f38c4
+0.6.0:cert-prep-windows-x86_64.zip:3ed81af2c1254f7ff613427d80a85bccf58b076902ed0966964c4e46bfd1497a
+0.6.1:cert-prep-linux-x86_64.tar.gz:bfb03bba301137f069001ace01d289cdb363df99932df37f1214393b3bd56854
+0.6.1:cert-prep-macos-aarch64.tar.gz:0b492ebcccf63b6a502c742de16977fc7fd697420f35f56dd1d538f25bd150b2
+0.6.1:cert-prep-windows-x86_64.zip:39aa1d899010c0ea69bea36a6b508de11490db98119019cb230a572087418db9"
 
 # Find embedded checksum for a given version and filename
 find_embedded_checksum() {
@@ -418,7 +430,7 @@ find_embedded_checksum() {
   echo "$EMBEDDED_CHECKSUMS" | grep -E "^${version}:${filename}:" | cut -d':' -f3
 }
 parse_args() {
-  BINDIR="${HOME}/.local/bin"
+  BINDIR="${BINSTALLER_BIN:-${HOME}/.local/bin}"
   DRY_RUN=0
   while getopts "b:dqh?xn" arg; do
     case "$arg" in
@@ -467,6 +479,10 @@ resolve_asset_filename() {
   if [ "${UNAME_OS}" = 'darwin' ] && true
   then
     OS='macos'
+  fi
+  if [ "${UNAME_OS}" = 'darwin' ] && [ "${UNAME_ARCH}" = 'amd64' ] && true
+  then
+    ARCH='amd64'
   fi
   if [ "${UNAME_OS}" = 'darwin' ] && [ "${UNAME_ARCH}" = 'arm64' ] && true
   then
@@ -589,7 +605,7 @@ execute() {
 
 # --- Configuration  ---
 NAME='cert-prep'
-REPO='waveFrontSet/cert-prep'
+REPO='wavefrontset/cert-prep'
 EXT='.tar.gz'
 
 # use in logging routines
