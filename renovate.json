@@ -1,6 +1,14 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
-  "pre-commit": { "enabled": true },
-  "haskell-cabal": { "enabled": false }
+  "extends": [
+    "config:recommended",
+    ":label(dependencies)",
+    ":assignAndReview(@waveFrontSet)"
+  ],
+  "pre-commit": {
+    "enabled": true
+  },
+  "haskell-cabal": {
+    "enabled": false
+  }
 }
