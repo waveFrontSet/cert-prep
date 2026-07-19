@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=none
 name: cert-prep
 version: 0.6.1
 license: MIT

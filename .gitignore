@@ -27,3 +27,4 @@ report.html
 
 # Ignore question banks
 *.json
+!renovate.json
