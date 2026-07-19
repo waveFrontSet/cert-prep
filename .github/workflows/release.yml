@@ -12,7 +12,7 @@ jobs:
   check-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Verify tag matches package.yaml and cert-prep.cabal versions
         run: |
           PKG_VERSION="$(sed -n 's/^version:[[:space:]]*//p' package.yaml)"
@@ -45,7 +45,7 @@ jobs:
     name: Build (${{ matrix.os }})
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: haskell-actions/setup@v2
         with:
