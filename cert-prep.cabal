@@ -37,6 +37,7 @@ library
   mixins:
       base hiding (Prelude)
     , relude (Relude as Prelude)
+    , relude 
   hs-source-dirs:
       src
   default-extensions:
@@ -90,6 +91,7 @@ library cert-prep-tui
   mixins:
       base hiding (Prelude)
     , relude (Relude as Prelude)
+    , relude 
   default-language: GHC2021
 
 executable cert-prep
@@ -114,6 +116,7 @@ executable cert-prep
   mixins:
       base hiding (Prelude)
     , relude (Relude as Prelude)
+    , relude 
   hs-source-dirs:
       exe
   default-extensions:
@@ -164,4 +167,5 @@ test-suite spec
   mixins:
       base hiding (Prelude)
     , relude (Relude as Prelude)
+    , relude 
   default-language: GHC2021

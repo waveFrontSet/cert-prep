@@ -6,6 +6,7 @@ module CertPrep.Registry (
     loadRegistry,
     saveRegistry,
     registerConfig,
+    toSortedList,
 ) where
 
 import Data.Aeson (
@@ -14,6 +15,7 @@ import Data.Aeson (
     eitherDecodeStrict,
     encode,
  )
+import Data.Map qualified as M
 import Data.Time (UTCTime, getCurrentTime)
 import System.Directory (
     XdgDirectory (XdgConfig),
@@ -31,7 +33,7 @@ data RegistryEntry = RegistryEntry
     }
     deriving (Show, Eq, Generic)
 
-type Registry = [RegistryEntry]
+type Registry = Map FilePath RegistryEntry
 
 instance FromJSON RegistryEntry
 instance ToJSON RegistryEntry
@@ -44,7 +46,7 @@ registryFilePath = do
 loadRegistry :: IO Registry
 loadRegistry = do
     path <- registryFilePath
-    fromRight [] <$> loadFile path
+    fromRight M.empty <$> loadFile path
 
 loadFile :: (FromJSON a) => FilePath -> IO (Either String a)
 loadFile p = do
@@ -72,7 +74,8 @@ registerConfig p title = do
                 , path = canonPath
                 , lastUsed = now
                 }
-        updated =
-            sortWith (Down . lastUsed) $
-                entry : filter (\e -> path e /= canonPath) existing
+        updated = M.insert canonPath entry existing
     saveRegistry updated
+
+toSortedList :: Registry -> [RegistryEntry]
+toSortedList = sortOn (Down . lastUsed) . toList
