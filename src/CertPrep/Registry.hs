@@ -2,28 +2,25 @@ module CertPrep.Registry (
     RegistryEntry (..),
     Registry,
     registryFilePath,
-    loadFile,
     loadRegistry,
     saveRegistry,
     registerConfig,
     toSortedList,
 ) where
 
+import CertPrep.Common (
+    canonicalizePath,
+    configDir,
+    createDirectoryIfMissing,
+    loadFileAsMonoid,
+ )
 import Data.Aeson (
     FromJSON,
     ToJSON,
-    eitherDecodeStrict,
     encode,
  )
 import Data.Map qualified as M
 import Data.Time (UTCTime, getCurrentTime)
-import System.Directory (
-    XdgDirectory (XdgConfig),
-    canonicalizePath,
-    createDirectoryIfMissing,
-    doesFileExist,
-    getXdgDirectory,
- )
 import System.FilePath (takeDirectory, (</>))
 
 data RegistryEntry = RegistryEntry
@@ -38,35 +35,22 @@ type Registry = Map FilePath RegistryEntry
 instance FromJSON RegistryEntry
 instance ToJSON RegistryEntry
 
-registryFilePath :: IO FilePath
-registryFilePath = do
-    dir <- getXdgDirectory XdgConfig "cert-prep"
-    pure $ dir </> "registry.json"
+registryFilePath :: (MonadIO m) => m FilePath
+registryFilePath = (</> "registry.json") <$> configDir
 
-loadRegistry :: IO Registry
-loadRegistry = do
-    path <- registryFilePath
-    fromRight M.empty <$> loadFile path
+loadRegistry :: (MonadIO m) => m Registry
+loadRegistry = loadFileAsMonoid =<< registryFilePath
 
-loadFile :: (FromJSON a) => FilePath -> IO (Either String a)
-loadFile p = do
-    exists <- doesFileExist p
-    if not exists
-        then return (Left $ "File does not exist: " <> show p)
-        else do
-            bytes <- readFileBS p
-            return $ eitherDecodeStrict bytes
-
-saveRegistry :: Registry -> IO ()
+saveRegistry :: (MonadIO m) => Registry -> m ()
 saveRegistry entries = do
     p <- registryFilePath
     createDirectoryIfMissing True (takeDirectory p)
     writeFileBS p (toStrict $ encode entries)
 
-registerConfig :: FilePath -> Text -> IO ()
+registerConfig :: (MonadIO m) => FilePath -> Text -> m ()
 registerConfig p title = do
     canonPath <- canonicalizePath p
-    now <- getCurrentTime
+    now <- liftIO getCurrentTime
     existing <- loadRegistry
     let entry =
             RegistryEntry

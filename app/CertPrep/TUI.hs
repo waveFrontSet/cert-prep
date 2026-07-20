@@ -21,8 +21,9 @@ import Graphics.Vty qualified as V
 import Graphics.Vty.CrossPlatform (mkVty)
 
 runApp ::
-    FilePath -> Maybe ExplainEnv -> NonEmpty Question -> EarnedTrophies -> IO AppState
-runApp p mExplainEnv qs earned = do
+    (MonadIO m) =>
+    FilePath -> Maybe ExplainEnv -> NonEmpty Question -> EarnedTrophies -> m AppState
+runApp p mExplainEnv qs earned = liftIO $ do
     -- writeBChan blocks when full; token chunks arrive in bursts and share
     -- this channel with the timer ticks, so leave generous headroom.
     chan <- newBChan 100

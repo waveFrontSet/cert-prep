@@ -58,7 +58,7 @@ theMap =
         , (attrName "marker", style Vty.bold)
         ]
 
-selectConfig :: Registry -> IO (Maybe FilePath)
+selectConfig :: (MonadIO m) => Registry -> m (Maybe FilePath)
 selectConfig entries = do
     let initial = L.list () (V.fromList $ toSortedList entries) 1
         app =
@@ -69,6 +69,6 @@ selectConfig entries = do
                 , appStartEvent = pass
                 , appAttrMap = const theMap
                 }
-    finalState <- defaultMain app initial
+    finalState <- liftIO $ defaultMain app initial
     let mSelected = snd <$> L.listSelectedElement finalState
     return $ path <$> mSelected

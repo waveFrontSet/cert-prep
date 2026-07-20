@@ -14,14 +14,8 @@ module CertPrep.Trophy (
     saveEarnedTrophies,
 ) where
 
-import Data.Aeson (FromJSON, ToJSON, eitherDecodeStrict, encode)
-import Data.Set qualified as Set
-import System.Directory (
-    XdgDirectory (XdgConfig),
-    createDirectoryIfMissing,
-    doesFileExist,
-    getXdgDirectory,
- )
+import CertPrep.Common (configDir, createDirectoryIfMissing, loadFileAsMonoid)
+import Data.Aeson (FromJSON, ToJSON, encode)
 import System.FilePath (takeDirectory, (</>))
 
 data TrophyId
@@ -254,22 +248,15 @@ sanitizePath = map sanitizeChar
     sanitizeChar ':' = '_'
     sanitizeChar c = c
 
-trophyFilePath :: FilePath -> IO FilePath
+trophyFilePath :: (MonadIO m) => FilePath -> m FilePath
 trophyFilePath configPath = do
-    dir <- getXdgDirectory XdgConfig "cert-prep"
+    dir <- configDir
     pure $ dir </> "trophies" </> sanitizePath configPath ++ ".json"
 
-loadEarnedTrophies :: FilePath -> IO EarnedTrophies
-loadEarnedTrophies configPath = do
-    path <- trophyFilePath configPath
-    exists <- doesFileExist path
-    if not exists
-        then pure Set.empty
-        else do
-            bytes <- readFileBS path
-            whenRight Set.empty (eitherDecodeStrict bytes) pure
+loadEarnedTrophies :: (MonadIO m) => FilePath -> m EarnedTrophies
+loadEarnedTrophies configPath = loadFileAsMonoid =<< trophyFilePath configPath
 
-saveEarnedTrophies :: FilePath -> EarnedTrophies -> IO ()
+saveEarnedTrophies :: (MonadIO m) => FilePath -> EarnedTrophies -> m ()
 saveEarnedTrophies configPath trophies = do
     path <- trophyFilePath configPath
     createDirectoryIfMissing True (takeDirectory path)

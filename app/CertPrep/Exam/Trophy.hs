@@ -53,7 +53,8 @@ checkAllTrophies ts earned core =
                 else []
      in submitTs ++ finishTs
 
-persistTrophies :: [TrophyDef] -> FilePath -> EarnedTrophies -> IO EarnedTrophies
+persistTrophies ::
+    (MonadIO m) => [TrophyDef] -> FilePath -> EarnedTrophies -> m EarnedTrophies
 persistTrophies newTrophies cp earned = do
     let trophyIds = Set.fromList (map trophyDefId newTrophies)
         newEarned = Set.union trophyIds earned

@@ -1,13 +1,12 @@
 module CertPrep.Settings where
 
+import CertPrep.Common (configDir, loadFileWithDefault)
 import Data.Aeson (
     FromJSON (parseJSON),
-    eitherDecodeStrict,
     withObject,
     (.!=),
     (.:?),
  )
-import System.Directory (XdgDirectory (XdgConfig), doesFileExist, getXdgDirectory)
 import System.FilePath ((</>))
 
 data Settings = Settings
@@ -40,13 +39,8 @@ defaultSettings =
         \ (in particular the user's choices) are incorrect.\
         \ At the end of your explanations, always list relevant links to the documentation."
 
-settingsFilePath :: IO FilePath
-settingsFilePath = (</> "settings.json") <$> getXdgDirectory XdgConfig "cert-prep"
+settingsFilePath :: (MonadIO m) => m FilePath
+settingsFilePath = (</> "settings.json") <$> configDir
 
-loadSettings :: IO (Either String Settings)
-loadSettings = do
-    path <- settingsFilePath
-    exists <- doesFileExist path
-    if not exists
-        then return $ Right defaultSettings
-        else eitherDecodeStrict <$> readFileBS path
+loadSettings :: (MonadIO m) => m (Either String Settings)
+loadSettings = loadFileWithDefault (Just defaultSettings) =<< settingsFilePath

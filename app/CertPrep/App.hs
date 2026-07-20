@@ -4,9 +4,9 @@ module CertPrep.App (
     AppEnv (..),
     Config (..),
     loadConfig,
-    loadEarnedTrophies',
+    loadEarnedTrophies,
     loadSettings,
-    registerConfig',
+    registerConfig,
     resolveConfigPath,
     resolveExplainEnv,
     runApp',
@@ -15,12 +15,13 @@ module CertPrep.App (
 where
 
 import CertPrep.CLI (CLIOptions (..), cliConfigPath)
+import CertPrep.Common (loadFile)
 import CertPrep.Explanations (ExplainEnv, mkExplainEnv)
-import CertPrep.Registry (loadFile, loadRegistry, registerConfig)
+import CertPrep.Registry (loadRegistry, registerConfig)
 import CertPrep.Sampling (SamplingStrategy (..), sampleQuestions)
 import CertPrep.Settings qualified as Settings
 import CertPrep.TUI (selectConfig)
-import CertPrep.Trophy (EarnedTrophies, loadEarnedTrophies)
+import CertPrep.Trophy (loadEarnedTrophies)
 import CertPrep.Types (Config (..), Question)
 import Control.Monad.Error.Class (MonadError (..))
 import Data.Map qualified as Map
@@ -64,16 +65,16 @@ resolveConfigPath = do
     case cliConfigPath opts of
         Just p -> pure p
         Nothing -> do
-            registry <- liftIO loadRegistry
+            registry <- loadRegistry
             if null registry
                 then throwError NoConfigSelected
                 else do
-                    mPath <- liftIO $ selectConfig registry
+                    mPath <- selectConfig registry
                     maybe (throwError NoConfigSelected) pure mPath
 
 loadConfig :: FilePath -> App Config
 loadConfig p = do
-    result <- liftIO $ loadFile p
+    result <- loadFile p
     either (throwError . ConfigParseError) return result
 
 sampleNonEmpty :: Config -> App (NonEmpty Question)
@@ -94,16 +95,10 @@ sampleNonEmpty config = do
 
 loadSettings :: App Settings.Settings
 loadSettings = do
-    settings <- liftIO Settings.loadSettings
+    settings <- Settings.loadSettings
     either (throwError . SettingsParseError) return settings
 
 resolveExplainEnv :: Settings.Settings -> App (Maybe ExplainEnv)
-resolveExplainEnv settings = liftIO $ do
-    apiKey <- lookupEnv "GEMINI_API_KEY"
+resolveExplainEnv settings = do
+    apiKey <- liftIO $ lookupEnv "GEMINI_API_KEY"
     mkExplainEnv settings apiKey
-
-registerConfig' :: FilePath -> Text -> App ()
-registerConfig' p = liftIO . registerConfig p
-
-loadEarnedTrophies' :: FilePath -> App EarnedTrophies
-loadEarnedTrophies' = liftIO . loadEarnedTrophies

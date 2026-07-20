@@ -149,7 +149,7 @@ handleCheckTrophies core = do
         [] -> pass
         _ -> do
             cp <- asks tuiConfigPath
-            newEarned <- liftIO $ persistTrophies allTrophies cp earned
+            newEarned <- persistTrophies allTrophies cp earned
             earnedTrophies .= newEarned
 
     examPhase .= wrapWithTrophies allTrophies nextPhase
