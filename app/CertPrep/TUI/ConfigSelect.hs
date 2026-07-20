@@ -1,11 +1,11 @@
 module CertPrep.TUI.ConfigSelect (selectConfig) where
 
-import Brick
+import Brick hiding (Down)
 import Brick.Widgets.Border
 import Brick.Widgets.Border.Style
 import Brick.Widgets.Center
 import Brick.Widgets.List qualified as L
-import CertPrep.Registry (Registry, RegistryEntry (..))
+import CertPrep.Registry (Registry, RegistryEntry (..), toSortedList)
 import Data.Time (defaultTimeLocale, formatTime)
 import Data.Vector qualified as V
 import Graphics.Vty qualified as Vty
@@ -60,7 +60,7 @@ theMap =
 
 selectConfig :: Registry -> IO (Maybe FilePath)
 selectConfig entries = do
-    let initial = L.list () (V.fromList entries) 1
+    let initial = L.list () (V.fromList $ toSortedList entries) 1
         app =
             App
                 { appDraw = drawSelectUI

@@ -18,6 +18,7 @@ dependencies:
   - name: relude
     mixin:
       - (Relude as Prelude)
+      - ""
   - text
   - containers
   - random >= 1.3

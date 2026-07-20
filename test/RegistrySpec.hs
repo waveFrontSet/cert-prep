@@ -2,7 +2,9 @@ module RegistrySpec (spec) where
 
 import CertPrep.Registry
 import Data.Aeson (decode, encode)
+import Data.Map qualified as M
 import Data.Time (UTCTime, getCurrentTime)
+import Relude.Extra (StaticMap (lookup), fmapToFst)
 import System.Environment (setEnv)
 import System.IO.Temp (withSystemTempDirectory)
 import Test.Hspec
@@ -15,6 +17,9 @@ mkEntry title path lastUsed =
         , lastUsed = lastUsed
         }
 
+registryFromList :: [RegistryEntry] -> Registry
+registryFromList = fromList . fmapToFst path
+
 spec :: Spec
 spec = do
     describe "RegistryEntry JSON" $ do
@@ -26,26 +31,28 @@ spec = do
         it "roundtrips a list through JSON" $ do
             now <- getCurrentTime
             let entries =
-                    [ mkEntry "Config A" "/a.json" now
-                    , mkEntry "Config B" "/b.json" now
-                    ]
+                    registryFromList
+                        [ mkEntry "Config A" "/a.json" now
+                        , mkEntry "Config B" "/b.json" now
+                        ]
             decode (encode entries) `shouldBe` Just entries
 
     describe "loadRegistry / saveRegistry" $ do
-        it "returns [] when no registry file exists" $ do
+        it "returns empty map when no registry file exists" $ do
             withSystemTempDirectory "cert-prep-test" $ \tmpDir -> do
                 setEnv "XDG_CONFIG_HOME" tmpDir
                 registry <- loadRegistry
-                registry `shouldBe` []
+                registry `shouldBe` M.empty
 
         it "roundtrips entries through save/load" $ do
             withSystemTempDirectory "cert-prep-test" $ \tmpDir -> do
                 setEnv "XDG_CONFIG_HOME" tmpDir
                 now <- getCurrentTime
                 let entries =
-                        [ mkEntry "Config A" "/a.json" now
-                        , mkEntry "Config B" "/b.json" now
-                        ]
+                        registryFromList
+                            [ mkEntry "Config A" "/a.json" now
+                            , mkEntry "Config B" "/b.json" now
+                            ]
                 saveRegistry entries
                 loaded <- loadRegistry
                 loaded `shouldBe` entries
@@ -59,8 +66,8 @@ spec = do
                 writeFile configPath "{}"
                 registerConfig configPath "My Config"
                 registry <- loadRegistry
-                case registry of
-                    [e] -> title e `shouldBe` "My Config"
+                case configPath `lookup` registry of
+                    Just e -> title e `shouldBe` "My Config"
                     _ -> expectationFailure $ "Expected 1 entry, got " ++ show (length registry)
 
         it "upserts existing entry by path" $ do
@@ -71,8 +78,8 @@ spec = do
                 registerConfig configPath "Title v1"
                 registerConfig configPath "Title v2"
                 registry <- loadRegistry
-                case registry of
-                    [e] -> title e `shouldBe` "Title v2"
+                case configPath `lookup` registry of
+                    Just e -> title e `shouldBe` "Title v2"
                     _ -> expectationFailure $ "Expected 1 entry, got " ++ show (length registry)
 
         it "keeps entries sorted by lastUsed descending" $ do
@@ -85,6 +92,6 @@ spec = do
                 registerConfig pathA "Config A"
                 registerConfig pathB "Config B"
                 registry <- loadRegistry
-                case registry of
+                case toSortedList registry of
                     (e : _) -> title e `shouldBe` "Config B"
                     [] -> expectationFailure "Expected non-empty registry"
