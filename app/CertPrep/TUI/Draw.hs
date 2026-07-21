@@ -4,11 +4,11 @@ import Brick
 import Brick.Widgets.Border
 import Brick.Widgets.Border.Style
 import Brick.Widgets.Center
+import CertPrep.Common (formatTime)
 import CertPrep.Exam.Core
 import CertPrep.TUI.Attributes
 import CertPrep.TUI.Trophy (drawTrophyAwarded)
 import CertPrep.Types (AnswerResult (..), Question (..))
-import CertPrep.Util (formatTime)
 import Data.IntSet qualified as IS
 import Data.Text qualified as T
 import Lens.Micro ((^.))

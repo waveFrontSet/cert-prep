@@ -53,7 +53,7 @@ allocateWithRemainder n weights avails =
     let activeWeights = Map.intersectionWith const weights avails
         totalWeight = sum activeWeights
      in if totalWeight == 0
-            then Map.empty
+            then mempty
             else
                 let idealPerCat :: Map Category Double
                     idealPerCat =

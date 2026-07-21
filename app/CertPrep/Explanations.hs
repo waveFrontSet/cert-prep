@@ -66,11 +66,11 @@ class (Monad m) => MonadExplain m where
     requestExplanation :: ExplainRequest -> m ()
     explainAvailable :: m Bool
 
-mkExplainEnv :: Settings -> Maybe String -> IO (Maybe ExplainEnv)
+mkExplainEnv :: (MonadIO m) => Settings -> Maybe String -> m (Maybe ExplainEnv)
 mkExplainEnv _ Nothing = return Nothing
 mkExplainEnv _ (Just "") = return Nothing
 mkExplainEnv s (Just apiKey) = do
-    clientEnv <- getClientEnv (aiBaseUrl s)
+    clientEnv <- liftIO $ getClientEnv (aiBaseUrl s)
     let Methods{createChatCompletionStreamTyped} =
             makeMethods clientEnv (toText apiKey) Nothing Nothing
     return $ Just $ ExplainEnv{explainStream = stream createChatCompletionStreamTyped}

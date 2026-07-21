@@ -1,6 +1,6 @@
-module UtilSpec (spec) where
+module CommonSpec (spec) where
 
-import CertPrep.Util (formatTime)
+import CertPrep.Common (formatTime)
 import Test.Hspec
 
 spec :: Spec
