@@ -15,6 +15,7 @@ build-type:    Simple
 library
   exposed-modules:
       CertPrep.Common
+      CertPrep.Export
       CertPrep.Registry
       CertPrep.Sampling
       CertPrep.Settings
