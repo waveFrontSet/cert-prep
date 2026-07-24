@@ -9,9 +9,12 @@ import CertPrep.Exam (
     ActivePhase,
     AnsweringData,
     AppState,
+    ExamCore,
     ExamPhase (..),
+    ExplainingData,
     Name,
     ReviewingData,
+    TrophyAwardedData,
     examPhase,
  )
 import CertPrep.Explanations (
@@ -53,6 +56,24 @@ whenReviewing f = do
     phase <- use examPhase
     case phase of
         Reviewing rp -> f rp
+        _ -> pass
+whenExplaining :: (ActivePhase ExplainingData -> TuiM ()) -> TuiM ()
+whenExplaining f = do
+    phase <- use examPhase
+    case phase of
+        Explaining ep -> f ep
+        _ -> pass
+whenCheckingTrophies :: (ExamCore -> TuiM ()) -> TuiM ()
+whenCheckingTrophies f = do
+    phase <- use examPhase
+    case phase of
+        CheckingTrophies core -> f core
+        _ -> pass
+whenTrophyAwarded :: (TrophyAwardedData -> TuiM ()) -> TuiM ()
+whenTrophyAwarded f = do
+    phase <- use examPhase
+    case phase of
+        TrophyAwarded tad -> f tad
         _ -> pass
 
 instance MonadExplain TuiM where

@@ -7,6 +7,13 @@ module CertPrep.TUI.Event (
 ) where
 
 import Brick
+import Brick.Keybindings (
+    KeyDispatcher,
+    KeyEventHandler,
+    handleKey,
+    keyDispatcher,
+    onEvent,
+ )
 import Data.IntSet qualified as IS
 import Graphics.Vty qualified as V
 import Lens.Micro ((%~), (+~), (.~), (^.))
@@ -15,6 +22,10 @@ import Prelude hiding (Down)
 
 import CertPrep.Exam
 import CertPrep.Explanations (MonadExplain (..))
+import CertPrep.TUI.Keybindings (
+    KeyEvent (..),
+    defaultKeyConfig,
+ )
 import CertPrep.TUI.Monad (
     CustomEvent (..),
     TuiEnv (..),
@@ -22,40 +33,99 @@ import CertPrep.TUI.Monad (
     liftEvent,
     tuiHalt,
     whenAnswering,
+    whenCheckingTrophies,
+    whenExplaining,
     whenReviewing,
+    whenTrophyAwarded,
  )
 import CertPrep.Types (Question (..), isCorrect)
 
 totalAnimFrames :: Int
 totalAnimFrames = 5
 
+-- Each phase gets its own dispatcher so the same key can mean different things
+-- per phase (e.g. Enter submits while answering, advances while reviewing).
+-- Brick only checks for binding collisions within a single dispatcher, so the
+-- shared KeyConfig may map Enter to several events without conflict.
+mkDispatcher :: [KeyEventHandler KeyEvent TuiM] -> KeyDispatcher KeyEvent TuiM
+mkDispatcher hs = case keyDispatcher defaultKeyConfig (globalHandlers ++ hs) of
+    Right d -> d
+    -- FIXME: This probably should be handled better.
+    Left _ -> error "Invalid keybindings."
+
+dispatcherFor :: ExamPhase -> KeyDispatcher KeyEvent TuiM
+dispatcherFor phase = case phase of
+    Answering _ -> answeringDispatcher
+    Reviewing _ -> reviewingDispatcher
+    Explaining _ -> explainingDispatcher
+    CheckingTrophies _ -> checkingTrophiesDispatcher
+    TrophyAwarded _ -> trophyDispatcher
+    Finished _ -> finishedDispatcher
+
+-- Available in every phase.
+globalHandlers :: [KeyEventHandler KeyEvent TuiM]
+globalHandlers = [onEvent QuitEvent "Quit the application" tuiHalt]
+
+answeringDispatcher :: KeyDispatcher KeyEvent TuiM
+answeringDispatcher =
+    mkDispatcher
+        [ onEvent NextAnswerEvent "Select Next Answer" (modifyAnswering (moveFocus 1))
+        , onEvent PreviousAnswerEvent "Select Previous Answer" (modifyAnswering (moveFocus (-1)))
+        , onEvent
+            ToggleSelectedAnswerEvent
+            "Toggle Selected Answer"
+            (modifyAnswering toggleSelected)
+        , onEvent SubmitAnswersEvent "Submit Answers" (whenAnswering handleSubmit)
+        ]
+
+reviewingDispatcher :: KeyDispatcher KeyEvent TuiM
+reviewingDispatcher =
+    mkDispatcher
+        [ onEvent
+            ReviewNextQuestionEvent
+            "Select Next Question"
+            (modifyReviewing (travelToQuestion 1))
+        , onEvent
+            ReviewPreviousQuestionEvent
+            "Select Previous Question"
+            (modifyReviewing (travelToQuestion (-1)))
+        , onEvent FinishReviewEvent "Finish Review" (whenReviewing handleNextQuestion)
+        , onEvent
+            RequestAiExplanationEvent
+            "Request AI Explanation"
+            ( whenReviewing $ \ap -> do
+                liftEvent $ vScrollToBeginning explainScroll
+                requestExplanationFor ap
+            )
+        ]
+
+explainingDispatcher :: KeyDispatcher KeyEvent TuiM
+explainingDispatcher =
+    mkDispatcher
+        [ onEvent NextAnswerEvent "Scroll Down" (liftEvent $ vScrollBy explainScroll 1)
+        , onEvent PreviousAnswerEvent "Scroll Up" (liftEvent $ vScrollBy explainScroll (-1))
+        , onEvent ScrollUpEvent "Scroll Up" (liftEvent $ vScrollPage explainScroll Up)
+        , onEvent ScrollDownEvent "Scroll Down" (liftEvent $ vScrollPage explainScroll Down)
+        , onEvent DismissExplanationEvent "Back to Review" (whenExplaining handleExplaining)
+        ]
+
+checkingTrophiesDispatcher :: KeyDispatcher KeyEvent TuiM
+checkingTrophiesDispatcher =
+    mkDispatcher
+        [onEvent ContinueEvent "Continue" (whenCheckingTrophies handleCheckTrophies)]
+
+trophyDispatcher :: KeyDispatcher KeyEvent TuiM
+trophyDispatcher =
+    mkDispatcher
+        [onEvent AcceptTrophyEvent "Dismiss Trophy" (whenTrophyAwarded handleTrophyDismiss)]
+
+finishedDispatcher :: KeyDispatcher KeyEvent TuiM
+finishedDispatcher = mkDispatcher [onEvent ContinueEvent "Quit" tuiHalt]
+
 handleEvent :: BrickEvent Name CustomEvent -> TuiM ()
-handleEvent (VtyEvent (V.EvKey key [])) = case key of
-    V.KEsc -> tuiHalt
-    V.KChar 'q' -> tuiHalt
-    V.KChar 'Q' -> tuiHalt
-    V.KEnter -> do
-        phase <- use examPhase
-        case phase of
-            Answering ap -> handleSubmit ap
-            Reviewing ap -> handleNextQuestion ap
-            Explaining ap -> handleExplaining ap
-            CheckingTrophies core -> handleCheckTrophies core
-            TrophyAwarded tad -> handleTrophyDismiss tad
-            Finished _ -> tuiHalt
-    V.KUp -> moveFocusOrScroll (-1)
-    V.KChar 'k' -> moveFocusOrScroll (-1)
-    V.KDown -> moveFocusOrScroll 1
-    V.KChar 'j' -> moveFocusOrScroll 1
-    V.KChar ' ' -> modifyAnswering toggleSelected
-    V.KChar 'l' -> modifyReviewing (travelToQuestion 1)
-    V.KChar 'h' -> modifyReviewing (travelToQuestion (-1))
-    V.KChar 'a' -> whenReviewing $ \ap -> do
-        liftEvent $ vScrollToBeginning explainScroll -- don't inherit the previous explanation's offset
-        requestExplanationFor ap
-    _ -> pass
-handleEvent (VtyEvent (V.EvKey (V.KChar 'f') [V.MCtrl])) = liftEvent $ vScrollPage explainScroll Down
-handleEvent (VtyEvent (V.EvKey (V.KChar 'b') [V.MCtrl])) = liftEvent $ vScrollPage explainScroll Up
+handleEvent (VtyEvent (V.EvKey key modifier)) = do
+    phase <- use examPhase
+    void $ handleKey (dispatcherFor phase) key modifier
 handleEvent (MouseDown (AnswerChoice idx) _ _ _) =
     modifyAnswering $ \ap ->
         ap & phaseData . selectedAnswers %~ toggleAnswerPure idx
@@ -82,16 +152,6 @@ handleEvent _ = pass
 -- are safe to issue in any phase; they only take effect while explaining.
 explainScroll :: ViewportScroll Name
 explainScroll = viewportScroll ExplanationViewport
-
--- Up/Down move the answer focus while answering and scroll the explanation
--- while explaining.
-moveFocusOrScroll :: Int -> TuiM ()
-moveFocusOrScroll delta = do
-    phase <- use examPhase
-    case phase of
-        Answering ap -> examPhase .= Answering (moveFocus delta ap)
-        Explaining _ -> liftEvent $ vScrollBy explainScroll delta
-        _ -> pass
 
 handleSubmit :: ActivePhase AnsweringData -> TuiM ()
 handleSubmit ap = do

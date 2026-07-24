@@ -1,6 +1,14 @@
 module CertPrep.TUI.Keybindings where
 
-import Brick.Keybindings (Binding, KeyEvents, bind, ctrl, keyEvents)
+import Brick.Keybindings (
+    Binding,
+    KeyConfig,
+    KeyEvents,
+    bind,
+    ctrl,
+    keyEvents,
+    newKeyConfig,
+ )
 import Graphics.Vty qualified as Vty
 
 data KeyEvent
@@ -12,9 +20,12 @@ data KeyEvent
     | PreviousAnswerEvent
     | SubmitAnswersEvent
     | AcceptTrophyEvent
-    | NextQuestionEvent
-    | PreviousQuestionEvent
+    | ReviewNextQuestionEvent
+    | ReviewPreviousQuestionEvent
+    | FinishReviewEvent
     | RequestAiExplanationEvent
+    | DismissExplanationEvent
+    | ContinueEvent
     | ScrollUpEvent
     | ScrollDownEvent
     | QuitEvent
@@ -32,9 +43,12 @@ allEvents =
         , ("previous-answer", PreviousAnswerEvent)
         , ("submit-answers", SubmitAnswersEvent)
         , ("accept-trophy", AcceptTrophyEvent)
-        , ("next-question", NextQuestionEvent)
-        , ("previous-question", PreviousQuestionEvent)
+        , ("review-next-question", ReviewNextQuestionEvent)
+        , ("review-previous-question", ReviewPreviousQuestionEvent)
+        , ("finish-review", FinishReviewEvent)
         , ("request-ai-explanation", RequestAiExplanationEvent)
+        , ("dismiss-explanation", DismissExplanationEvent)
+        , ("continue", ContinueEvent)
         , ("scroll-up", ScrollUpEvent)
         , ("scroll-down", ScrollDownEvent)
         ]
@@ -50,9 +64,15 @@ defaultKeybindings =
     , (PreviousAnswerEvent, [bind 'k', bind Vty.KUp])
     , (SubmitAnswersEvent, [bind Vty.KEnter])
     , (AcceptTrophyEvent, [bind Vty.KEnter])
-    , (NextQuestionEvent, [bind 'l', bind Vty.KEnter])
-    , (PreviousQuestionEvent, [bind 'h'])
+    , (ReviewNextQuestionEvent, [bind 'l'])
+    , (ReviewPreviousQuestionEvent, [bind 'h'])
+    , (FinishReviewEvent, [bind Vty.KEnter])
     , (RequestAiExplanationEvent, [bind 'a'])
+    , (DismissExplanationEvent, [bind Vty.KEnter])
+    , (ContinueEvent, [bind Vty.KEnter])
     , (ScrollUpEvent, [ctrl 'b'])
     , (ScrollDownEvent, [ctrl 'f'])
     ]
+
+defaultKeyConfig :: KeyConfig KeyEvent
+defaultKeyConfig = newKeyConfig allEvents defaultKeybindings []
