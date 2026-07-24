@@ -6,8 +6,7 @@ where
 
 import Brick
 import Brick.BChan (newBChan, writeBChan)
-import CertPrep.Exam.Core (AppState)
-import CertPrep.Exam.Transition (initialState)
+import CertPrep.Exam (AppState, initialState)
 import CertPrep.Explanations (ExplainEnv)
 import CertPrep.TUI.Attributes (theMap)
 import CertPrep.TUI.ConfigSelect (selectConfig)

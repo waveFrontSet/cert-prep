@@ -13,22 +13,7 @@ import Lens.Micro ((%~), (+~), (.~), (^.))
 import Lens.Micro.Mtl (use, (%=), (+=), (.=))
 import Prelude hiding (Down)
 
-import CertPrep.Exam.Core
-import CertPrep.Exam.Transition (
-    advanceExam,
-    applyExplainEvent,
-    backToReview,
-    beginExplanation,
-    overActiveCore,
-    submitAnswer,
-    travelToQuestion,
- )
-import CertPrep.Exam.Trophy (
-    checkAllTrophies,
-    persistTrophies,
-    updateTrophyState,
-    wrapWithTrophies,
- )
+import CertPrep.Exam
 import CertPrep.Explanations (MonadExplain (..))
 import CertPrep.TUI.Monad (
     CustomEvent (..),
