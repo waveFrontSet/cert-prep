@@ -2,6 +2,9 @@ module CertPrep.TUI.Monad where
 
 import Brick (EventM, halt)
 import Brick.BChan (BChan, writeBChan)
+import Control.Concurrent (forkIO)
+import Lens.Micro.Mtl (use)
+
 import CertPrep.Exam (
     ActivePhase,
     AnsweringData,
@@ -17,8 +20,6 @@ import CertPrep.Explanations (
     ExplainRequest (..),
     MonadExplain (..),
  )
-import Control.Concurrent (forkIO)
-import Lens.Micro.Mtl (use)
 
 data CustomEvent = Tick | ExplanationEvent Int ExplainEvent
 

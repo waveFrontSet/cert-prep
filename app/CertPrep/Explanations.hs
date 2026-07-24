@@ -15,8 +15,6 @@ module CertPrep.Explanations (
     renderExplainError,
 ) where
 
-import CertPrep.Settings (Settings (aiBaseUrl, aiModel, aiSystemPrompt))
-import CertPrep.Types (AnswerResult, Question (..), userSelectedAnswers)
 import Control.Exception (try)
 import Data.IntSet qualified as IS
 import Data.Text qualified as T
@@ -37,6 +35,9 @@ import OpenAI.V1.Chat.Completions.Stream (
     Delta (delta_content),
  )
 import OpenAI.V1.Models qualified as Models
+
+import CertPrep.Settings (Settings (aiBaseUrl, aiModel, aiSystemPrompt))
+import CertPrep.Types (AnswerResult, Question (..), userSelectedAnswers)
 
 newtype ExplainEnv = ExplainEnv
     { explainStream :: Text -> (ExplainEvent -> IO ()) -> IO ()

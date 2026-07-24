@@ -1,6 +1,5 @@
 module RegistrySpec (spec) where
 
-import CertPrep.Registry
 import Data.Aeson (decode, encode)
 import Data.Map qualified as M
 import Data.Time (UTCTime, getCurrentTime)
@@ -8,6 +7,8 @@ import Relude.Extra (StaticMap (lookup), fmapToFst)
 import System.Environment (setEnv)
 import System.IO.Temp (withSystemTempDirectory)
 import Test.Hspec
+
+import CertPrep.Registry
 
 mkEntry :: Text -> FilePath -> UTCTime -> RegistryEntry
 mkEntry title path lastUsed =

@@ -7,10 +7,11 @@ module Generators (
     largeQuestionsWithCategories,
 ) where
 
-import CertPrep.Types (Config (..), Question (..))
 import Data.IntSet qualified as IS
 import Data.Map.Strict qualified as Map
 import Test.QuickCheck
+
+import CertPrep.Types (Config (..), Question (..))
 
 categoryPool :: [Text]
 categoryPool =

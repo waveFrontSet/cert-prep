@@ -8,12 +8,6 @@ module CertPrep.Registry (
     toSortedList,
 ) where
 
-import CertPrep.Common (
-    canonicalizePath,
-    configDir,
-    createDirectoryIfMissing,
-    loadFileAsMonoid,
- )
 import Data.Aeson (
     FromJSON,
     ToJSON,
@@ -22,6 +16,13 @@ import Data.Aeson (
 import Data.Map qualified as M
 import Data.Time (UTCTime, getCurrentTime)
 import System.FilePath (takeDirectory, (</>))
+
+import CertPrep.Common (
+    canonicalizePath,
+    configDir,
+    createDirectoryIfMissing,
+    loadFileAsMonoid,
+ )
 
 data RegistryEntry = RegistryEntry
     { title :: Text

@@ -44,12 +44,13 @@ module CertPrep.Exam.Core (
 )
 where
 
-import CertPrep.Trophy (EarnedTrophies, TrophyDef, TrophyState (..))
-import CertPrep.Types (Answer, AnswerResult, Question)
 import Data.Vector (Vector)
 import Data.Vector qualified as V
 import Lens.Micro ((^.))
 import Lens.Micro.TH (makeLenses)
+
+import CertPrep.Trophy (EarnedTrophies, TrophyDef, TrophyState (..))
+import CertPrep.Types (Answer, AnswerResult, Question)
 
 data Name
     = AnswerChoice Int

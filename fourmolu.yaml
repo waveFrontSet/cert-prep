@@ -5,7 +5,7 @@ function-arrows: trailing
 comma-style: leading
 record-style: aligned
 import-export-style: diff-friendly
-import-grouping: legacy
+import-grouping: by-scope
 indent-wheres: false
 record-brace-space: false
 newlines-between-decls: 1
