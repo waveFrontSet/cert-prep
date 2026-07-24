@@ -14,6 +14,11 @@ module CertPrep.App (
 )
 where
 
+import Control.Monad.Error.Class (MonadError (..))
+import Data.Map qualified as Map
+import System.IO (hPutStrLn)
+import System.Random (newStdGen)
+
 import CertPrep.CLI (CLIOptions (..), cliConfigPath)
 import CertPrep.Common (loadFile)
 import CertPrep.Explanations (ExplainEnv, mkExplainEnv)
@@ -23,10 +28,6 @@ import CertPrep.Settings qualified as Settings
 import CertPrep.TUI (selectConfig)
 import CertPrep.Trophy (loadEarnedTrophies)
 import CertPrep.Types (Config (..), Question)
-import Control.Monad.Error.Class (MonadError (..))
-import Data.Map qualified as Map
-import System.IO (hPutStrLn)
-import System.Random (newStdGen)
 
 newtype App a = App {unApp :: ReaderT AppEnv (ExceptT AppError IO) a}
     deriving

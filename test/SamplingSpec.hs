@@ -1,13 +1,14 @@
 module SamplingSpec (spec) where
 
-import CertPrep.Sampling (SamplingStrategy (..), sampleQuestions)
-import CertPrep.Types (Question (..))
 import Data.Foldable (minimum)
 import Data.Map.Strict qualified as Map
-import Generators (largeQuestionsWithCategories, mkQuestion, questionsWithCategories)
 import System.Random (mkStdGen)
 import Test.Hspec
 import Test.QuickCheck
+
+import CertPrep.Sampling (SamplingStrategy (..), sampleQuestions)
+import CertPrep.Types (Question (..))
+import Generators (largeQuestionsWithCategories, mkQuestion, questionsWithCategories)
 
 spec :: Spec
 spec = do

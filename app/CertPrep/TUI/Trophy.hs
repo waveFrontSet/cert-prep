@@ -4,10 +4,11 @@ import Brick
 import Brick.Widgets.Border
 import Brick.Widgets.Border.Style
 import Brick.Widgets.Center
+import Lens.Micro ((^.))
+
 import CertPrep.Exam.Core (Name, TrophyAwardedData, animationFrame, awardedTrophy)
 import CertPrep.TUI.Attributes (trophyIconAttr, trophySparkleAttr, trophyTitleAttr)
 import CertPrep.Trophy (TrophyDef (..))
-import Lens.Micro ((^.))
 
 drawTrophyAwarded :: TrophyAwardedData -> Widget Name
 drawTrophyAwarded tad =

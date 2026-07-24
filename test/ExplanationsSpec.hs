@@ -1,10 +1,11 @@
 module ExplanationsSpec (spec) where
 
+import Data.IntSet qualified as IS
+import Test.Hspec
+
 import CertPrep.Explanations (renderExplainPrompt)
 import CertPrep.Types
-import Data.IntSet qualified as IS
 import Generators (mkQuestion)
-import Test.Hspec
 
 spec :: Spec
 spec = do

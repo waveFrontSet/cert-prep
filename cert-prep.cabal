@@ -59,6 +59,7 @@ library cert-prep-tui
       CertPrep.TUI.ConfigSelect
       CertPrep.TUI.Draw
       CertPrep.TUI.Event
+      CertPrep.TUI.Keybindings
       CertPrep.TUI.Monad
       CertPrep.TUI.Trophy
   other-modules:

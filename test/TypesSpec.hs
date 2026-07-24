@@ -1,11 +1,12 @@
 module TypesSpec (spec) where
 
-import CertPrep.Types
 import Data.Aeson (decode, encode)
 import Data.IntSet qualified as IS
-import Generators (mkQuestion)
 import Test.Hspec
 import Test.QuickCheck
+
+import CertPrep.Types
+import Generators (mkQuestion)
 
 spec :: Spec
 spec = do

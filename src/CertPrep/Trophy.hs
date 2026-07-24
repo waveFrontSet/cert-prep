@@ -14,9 +14,10 @@ module CertPrep.Trophy (
     saveEarnedTrophies,
 ) where
 
-import CertPrep.Common (configDir, createDirectoryIfMissing, loadFileAsMonoid)
 import Data.Aeson (FromJSON, ToJSON, encode)
 import System.FilePath (takeDirectory, (</>))
+
+import CertPrep.Common (configDir, createDirectoryIfMissing, loadFileAsMonoid)
 
 data TrophyId
     = FirstBlood

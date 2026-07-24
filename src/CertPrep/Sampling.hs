@@ -5,9 +5,10 @@ module CertPrep.Sampling (
     sampleQuestions,
 ) where
 
-import CertPrep.Types (Category, Question (..))
 import Data.Map.Strict qualified as Map
 import System.Random (RandomGen, SplitGen, splitGen, uniformR)
+
+import CertPrep.Types (Category, Question (..))
 
 type Weight = Int
 type WeightMap = Map Category Weight

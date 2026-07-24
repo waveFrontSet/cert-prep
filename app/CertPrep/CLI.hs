@@ -4,6 +4,7 @@ import Data.Text qualified as T
 import Data.Text.Read (decimal)
 import Data.Version (showVersion)
 import Options.Applicative
+
 import Paths_cert_prep (version)
 
 data CLIOptions = CLIOptions

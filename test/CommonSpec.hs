@@ -1,7 +1,8 @@
 module CommonSpec (spec) where
 
-import CertPrep.Common (formatTime)
 import Test.Hspec
+
+import CertPrep.Common (formatTime)
 
 spec :: Spec
 spec = do

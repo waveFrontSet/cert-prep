@@ -1,10 +1,11 @@
 module TrophySpec (spec) where
 
-import CertPrep.Trophy
 import Data.Set qualified as Set
 import System.Environment (setEnv)
 import System.IO.Temp (withSystemTempDirectory)
 import Test.Hspec
+
+import CertPrep.Trophy
 
 spec :: Spec
 spec = do

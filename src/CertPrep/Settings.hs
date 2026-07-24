@@ -1,6 +1,5 @@
 module CertPrep.Settings where
 
-import CertPrep.Common (configDir, loadFileWithDefault)
 import Data.Aeson (
     FromJSON (parseJSON),
     withObject,
@@ -8,6 +7,8 @@ import Data.Aeson (
     (.:?),
  )
 import System.FilePath ((</>))
+
+import CertPrep.Common (configDir, loadFileWithDefault)
 
 data Settings = Settings
     { aiModel :: Text

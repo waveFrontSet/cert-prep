@@ -1,15 +1,16 @@
 module ExamSpec (spec) where
 
-import CertPrep.Exam.Core
-import CertPrep.Exam.Transition (initialState)
-import CertPrep.Trophy (TrophyState (..))
 import Data.IntSet qualified as IS
 import Data.List.NonEmpty qualified as NE
 import Data.Set qualified as Set
 import Data.Vector qualified as V
-import Generators (mkQuestion)
 import Lens.Micro ((^.))
 import Test.Hspec
+
+import CertPrep.Exam.Core
+import CertPrep.Exam.Transition (initialState)
+import CertPrep.Trophy (TrophyState (..))
+import Generators (mkQuestion)
 
 spec :: Spec
 spec = do

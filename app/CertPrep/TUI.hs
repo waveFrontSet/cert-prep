@@ -6,8 +6,11 @@ where
 
 import Brick
 import Brick.BChan (newBChan, writeBChan)
-import CertPrep.Exam.Core (AppState)
-import CertPrep.Exam.Transition (initialState)
+import Control.Concurrent (forkIO, threadDelay)
+import Graphics.Vty qualified as V
+import Graphics.Vty.CrossPlatform (mkVty)
+
+import CertPrep.Exam (AppState, initialState)
 import CertPrep.Explanations (ExplainEnv)
 import CertPrep.TUI.Attributes (theMap)
 import CertPrep.TUI.ConfigSelect (selectConfig)
@@ -16,9 +19,6 @@ import CertPrep.TUI.Event (CustomEvent (..), handleEvent)
 import CertPrep.TUI.Monad (TuiEnv (..), runTuiM)
 import CertPrep.Trophy (EarnedTrophies)
 import CertPrep.Types (Question)
-import Control.Concurrent (forkIO, threadDelay)
-import Graphics.Vty qualified as V
-import Graphics.Vty.CrossPlatform (mkVty)
 
 runApp ::
     (MonadIO m) =>
