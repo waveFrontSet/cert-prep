@@ -1,9 +1,9 @@
 # Generated from web app, for more information, see: https://fourmolu.github.io/config/
-indentation: 4
+indentation: 2
 column-limit: 88
 function-arrows: trailing
 comma-style: leading
-record-style: aligned
+record-style: knr
 import-export-style: diff-friendly
 import-grouping: by-scope
 indent-wheres: false
@@ -14,7 +14,7 @@ haddock-style-module: null
 haddock-location-signature: auto
 let-style: auto
 in-style: right-align
-if-style: indented
+if-style: hanging
 single-constraint-parens: always
 single-deriving-parens: always
 sort-constraints: false
