@@ -2,45 +2,45 @@
 {-# LANGUAGE NoFieldSelectors #-}
 
 module CertPrep.Exam.Core (
-    Name (..),
-    ExamCore (..),
-    AnsweringData (..),
-    ReviewingData (..),
-    ExplainingData (..),
-    ActivePhase (..),
-    FinishedState (..),
-    TrophyAwardedData (..),
-    ExamPhase (..),
-    AppState (..),
-    ExplanationStatus (..),
-    questions,
-    currentIndex,
-    score,
-    elapsedSeconds,
-    questionStartTime,
-    selectedAnswers,
-    focusedAnswer,
-    activeCore,
-    activeQuestion,
-    phaseData,
-    answerResult,
-    lastSelected,
-    finalScore,
-    finalTotal,
-    finalElapsed,
-    awardedTrophy,
-    animationFrame,
-    pendingTrophies,
-    returnPhase,
-    examPhase,
-    trophyState,
-    earnedTrophies,
-    totalQuestions,
-    explainId,
-    explanationStatus,
-    nextExplainId,
-    reviewingData,
-    userAnswers,
+  Name (..),
+  ExamCore (..),
+  AnsweringData (..),
+  ReviewingData (..),
+  ExplainingData (..),
+  ActivePhase (..),
+  FinishedState (..),
+  TrophyAwardedData (..),
+  ExamPhase (..),
+  AppState (..),
+  ExplanationStatus (..),
+  questions,
+  currentIndex,
+  score,
+  elapsedSeconds,
+  questionStartTime,
+  selectedAnswers,
+  focusedAnswer,
+  activeCore,
+  activeQuestion,
+  phaseData,
+  answerResult,
+  lastSelected,
+  finalScore,
+  finalTotal,
+  finalElapsed,
+  awardedTrophy,
+  animationFrame,
+  pendingTrophies,
+  returnPhase,
+  examPhase,
+  trophyState,
+  earnedTrophies,
+  totalQuestions,
+  explainId,
+  explanationStatus,
+  nextExplainId,
+  reviewingData,
+  userAnswers,
 )
 where
 
@@ -53,104 +53,104 @@ import CertPrep.Trophy (EarnedTrophies, TrophyDef, TrophyState (..))
 import CertPrep.Types (Answer, AnswerResult, Question)
 
 data Name
-    = AnswerChoice Int
-    | SubmitButton
-    | NextButton
-    | TrophyDismiss
-    | ExplanationViewport
-    deriving (Show, Eq, Ord)
+  = AnswerChoice Int
+  | SubmitButton
+  | NextButton
+  | TrophyDismiss
+  | ExplanationViewport
+  deriving (Show, Eq, Ord)
 
-data ExamCore = ExamCore
-    { _questions :: Vector Question
-    , _currentIndex :: Int
-    , _score :: Int
-    , _elapsedSeconds :: Int
-    , _questionStartTime :: Int
-    , _userAnswers :: Vector Answer
-    }
-    deriving (Show)
+data ExamCore = ExamCore {
+  _questions :: Vector Question,
+  _currentIndex :: Int,
+  _score :: Int,
+  _elapsedSeconds :: Int,
+  _questionStartTime :: Int,
+  _userAnswers :: Vector Answer
+}
+  deriving (Show)
 
 makeLenses ''ExamCore
 
-data AnsweringData = AnsweringData
-    { _selectedAnswers :: IntSet
-    , _focusedAnswer :: Int
-    }
-    deriving (Show)
+data AnsweringData = AnsweringData {
+  _selectedAnswers :: IntSet,
+  _focusedAnswer :: Int
+}
+  deriving (Show)
 
 makeLenses ''AnsweringData
 
-data ReviewingData = ReviewingData
-    { _answerResult :: AnswerResult
-    , _lastSelected :: IntSet
-    }
-    deriving (Show)
+data ReviewingData = ReviewingData {
+  _answerResult :: AnswerResult,
+  _lastSelected :: IntSet
+}
+  deriving (Show)
 
 makeLenses ''ReviewingData
 
 data ExplanationStatus
-    = ExplanationPending
-    | ExplanationStreaming Text -- partial text, more chunks expected
-    | ExplanationSuccess Text
-    | ExplanationFailure Text
-    deriving (Show, Eq)
+  = ExplanationPending
+  | ExplanationStreaming Text -- partial text, more chunks expected
+  | ExplanationSuccess Text
+  | ExplanationFailure Text
+  deriving (Show, Eq)
 
-data ExplainingData = ExplainingData
-    { _explainId :: Int -- id of the request whose events we accept
-    , _explanationStatus :: ExplanationStatus
-    , _reviewingData :: ReviewingData
-    }
-    deriving (Show)
+data ExplainingData = ExplainingData {
+  _explainId :: Int, -- id of the request whose events we accept
+  _explanationStatus :: ExplanationStatus,
+  _reviewingData :: ReviewingData
+}
+  deriving (Show)
 
 makeLenses ''ExplainingData
 
-data ActivePhase a = ActivePhase
-    { _activeCore :: ExamCore
-    , _activeQuestion :: Question
-    , _phaseData :: a
-    }
-    deriving (Show)
+data ActivePhase a = ActivePhase {
+  _activeCore :: ExamCore,
+  _activeQuestion :: Question,
+  _phaseData :: a
+}
+  deriving (Show)
 
 makeLenses ''ActivePhase
 
-data FinishedState = FinishedState
-    { _finalScore :: Int
-    , _finalTotal :: Int
-    , _finalElapsed :: Int
-    }
-    deriving (Show)
+data FinishedState = FinishedState {
+  _finalScore :: Int,
+  _finalTotal :: Int,
+  _finalElapsed :: Int
+}
+  deriving (Show)
 
 makeLenses ''FinishedState
 
 -- TrophyAwardedData and ExamPhase are mutually recursive,
 -- so they must be in the same TH splice group.
 
-data TrophyAwardedData = TrophyAwardedData
-    { _awardedTrophy :: TrophyDef
-    , _animationFrame :: Int
-    , _pendingTrophies :: [TrophyDef]
-    , _returnPhase :: ExamPhase
-    }
-    deriving (Show)
+data TrophyAwardedData = TrophyAwardedData {
+  _awardedTrophy :: TrophyDef,
+  _animationFrame :: Int,
+  _pendingTrophies :: [TrophyDef],
+  _returnPhase :: ExamPhase
+}
+  deriving (Show)
 
 data ExamPhase
-    = Answering (ActivePhase AnsweringData)
-    | Reviewing (ActivePhase ReviewingData)
-    | Explaining (ActivePhase ExplainingData)
-    | CheckingTrophies ExamCore
-    | TrophyAwarded TrophyAwardedData
-    | Finished FinishedState
-    deriving (Show)
+  = Answering (ActivePhase AnsweringData)
+  | Reviewing (ActivePhase ReviewingData)
+  | Explaining (ActivePhase ExplainingData)
+  | CheckingTrophies ExamCore
+  | TrophyAwarded TrophyAwardedData
+  | Finished FinishedState
+  deriving (Show)
 
 makeLenses ''TrophyAwardedData
 
-data AppState = AppState
-    { _examPhase :: ExamPhase
-    , _trophyState :: TrophyState
-    , _earnedTrophies :: EarnedTrophies
-    , _nextExplainId :: Int -- counter so stale explanation events can be told apart
-    }
-    deriving (Show)
+data AppState = AppState {
+  _examPhase :: ExamPhase,
+  _trophyState :: TrophyState,
+  _earnedTrophies :: EarnedTrophies,
+  _nextExplainId :: Int -- counter so stale explanation events can be told apart
+}
+  deriving (Show)
 
 makeLenses ''AppState
 

@@ -1,6 +1,6 @@
 module CertPrep.TUI (
-    runApp,
-    selectConfig,
+  runApp,
+  selectConfig,
 )
 where
 
@@ -21,30 +21,30 @@ import CertPrep.Trophy (EarnedTrophies)
 import CertPrep.Types (Question)
 
 runApp ::
-    (MonadIO m) =>
-    FilePath -> Maybe ExplainEnv -> NonEmpty Question -> EarnedTrophies -> m AppState
+  (MonadIO m) =>
+  FilePath -> Maybe ExplainEnv -> NonEmpty Question -> EarnedTrophies -> m AppState
 runApp p mExplainEnv qs earned = liftIO $ do
-    -- writeBChan blocks when full; token chunks arrive in bursts and share
-    -- this channel with the timer ticks, so leave generous headroom.
-    chan <- newBChan 100
-    void $ forkIO $ void $ infinitely $ do
-        threadDelay 1000000
-        writeBChan chan Tick
+  -- writeBChan blocks when full; token chunks arrive in bursts and share
+  -- this channel with the timer ticks, so leave generous headroom.
+  chan <- newBChan 100
+  void $ forkIO $ void $ infinitely $ do
+    threadDelay 1000000
+    writeBChan chan Tick
 
-    let buildVty = mkVty V.defaultConfig
-        env = TuiEnv{tuiConfigPath = p, tuiEventChan = chan, tuiExplainEnv = mExplainEnv}
-        app =
-            App
-                { appDraw = drawUI
-                , appChooseCursor = neverShowCursor
-                , appHandleEvent = runTuiM env . handleEvent
-                , appStartEvent = pass
-                , appAttrMap = const theMap
-                }
-    initialVty <- buildVty
-    customMain
-        initialVty
-        buildVty
-        (Just chan)
-        app
-        (initialState qs earned)
+  let buildVty = mkVty V.defaultConfig
+      env = TuiEnv {tuiConfigPath = p, tuiEventChan = chan, tuiExplainEnv = mExplainEnv}
+      app =
+        App {
+          appDraw = drawUI,
+          appChooseCursor = neverShowCursor,
+          appHandleEvent = runTuiM env . handleEvent,
+          appStartEvent = pass,
+          appAttrMap = const theMap
+        }
+  initialVty <- buildVty
+  customMain
+    initialVty
+    buildVty
+    (Just chan)
+    app
+    (initialState qs earned)

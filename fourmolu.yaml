@@ -2,7 +2,7 @@
 indentation: 2
 column-limit: 88
 function-arrows: trailing
-comma-style: leading
+comma-style: trailing
 record-style: knr
 import-export-style: diff-friendly
 import-grouping: by-scope

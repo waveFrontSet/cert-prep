@@ -2,16 +2,16 @@
 {-# LANGUAGE TypeFamilies #-}
 
 module CertPrep.Trophy (
-    TrophyId (..),
-    TrophyDef (..),
-    TrophyState (..),
-    EarnedTrophies,
-    FinalStatistics (..),
-    checkAfterSubmit,
-    checkAtFinish,
-    trophyFilePath,
-    loadEarnedTrophies,
-    saveEarnedTrophies,
+  TrophyId (..),
+  TrophyDef (..),
+  TrophyState (..),
+  EarnedTrophies,
+  FinalStatistics (..),
+  checkAfterSubmit,
+  checkAtFinish,
+  trophyFilePath,
+  loadEarnedTrophies,
+  saveEarnedTrophies,
 ) where
 
 import Data.Aeson (FromJSON, ToJSON, encode)
@@ -20,49 +20,49 @@ import System.FilePath (takeDirectory, (</>))
 import CertPrep.Common (configDir, createDirectoryIfMissing, loadFileAsMonoid)
 
 data TrophyId
-    = FirstBlood
-    | HatTrick
-    | OnFire
-    | SpeedDemon
-    | FlawlessVictory
-    | ScholarSupreme
-    | Marathoner
-    deriving (Show, Eq, Ord, Enum, Bounded, Generic)
+  = FirstBlood
+  | HatTrick
+  | OnFire
+  | SpeedDemon
+  | FlawlessVictory
+  | ScholarSupreme
+  | Marathoner
+  deriving (Show, Eq, Ord, Enum, Bounded, Generic)
 
 instance FromJSON TrophyId
 instance ToJSON TrophyId
 
 type EarnedTrophies = Set TrophyId
 
-data TrophyDef = TrophyDef
-    { trophyDefId :: TrophyId
-    , trophyName :: Text
-    , trophyDesc :: Text
-    , trophyIcon :: [Text]
-    }
-    deriving (Show, Eq)
+data TrophyDef = TrophyDef {
+  trophyDefId :: TrophyId,
+  trophyName :: Text,
+  trophyDesc :: Text,
+  trophyIcon :: [Text]
+}
+  deriving (Show, Eq)
 
-data TrophyState = TrophyState
-    { currentStreak :: Int
-    , lastQuestionSeconds :: Int
-    }
-    deriving (Show, Eq)
+data TrophyState = TrophyState {
+  currentStreak :: Int,
+  lastQuestionSeconds :: Int
+}
+  deriving (Show, Eq)
 
-data FinalStatistics = FinalStatistics
-    { nCorrectQuestions :: Int
-    , nQuestions :: Int
-    }
+data FinalStatistics = FinalStatistics {
+  nCorrectQuestions :: Int,
+  nQuestions :: Int
+}
 
 data TrophyCheckTime = WhenReviewing | WhenFinishing
 
 type family CondInput (t :: TrophyCheckTime) where
-    CondInput 'WhenReviewing = TrophyState
-    CondInput 'WhenFinishing = FinalStatistics
+  CondInput 'WhenReviewing = TrophyState
+  CondInput 'WhenFinishing = FinalStatistics
 
-data TrophyData (t :: TrophyCheckTime) = TrophyData
-    { trophyDef :: TrophyDef
-    , trophyCond :: CondInput t -> Bool
-    }
+data TrophyData (t :: TrophyCheckTime) = TrophyData {
+  trophyDef :: TrophyDef,
+  trophyCond :: CondInput t -> Bool
+}
 
 -- Trophy definitions
 currentStreakGte :: Int -> TrophyState -> Bool
@@ -70,195 +70,195 @@ currentStreakGte n ts = currentStreak ts >= n
 
 firstBloodDef :: TrophyDef
 firstBloodDef =
-    TrophyDef
-        { trophyDefId = FirstBlood
-        , trophyName = "First Blood"
-        , trophyDesc = "Answer your first question correctly"
-        , trophyIcon =
-            [ "    \9608\9608    "
-            , "   \9608\9604\9604\9608   "
-            , "  \9608\9608\9617\9617\9608\9608  "
-            , " \9608\9608\9617\9608\9608\9617\9608\9608 "
-            , "  \9608\9608\9617\9617\9608\9608  "
-            , "   \9608\9604\9604\9608   "
-            , "    \9608\9608    "
-            ]
-        }
+  TrophyDef {
+    trophyDefId = FirstBlood,
+    trophyName = "First Blood",
+    trophyDesc = "Answer your first question correctly",
+    trophyIcon =
+      [ "    \9608\9608    ",
+        "   \9608\9604\9604\9608   ",
+        "  \9608\9608\9617\9617\9608\9608  ",
+        " \9608\9608\9617\9608\9608\9617\9608\9608 ",
+        "  \9608\9608\9617\9617\9608\9608  ",
+        "   \9608\9604\9604\9608   ",
+        "    \9608\9608    "
+      ]
+  }
 
 firstBlood :: TrophyData 'WhenReviewing
-firstBlood = TrophyData{trophyDef = firstBloodDef, trophyCond = currentStreakGte 1}
+firstBlood = TrophyData {trophyDef = firstBloodDef, trophyCond = currentStreakGte 1}
 
 hatTrickDef :: TrophyDef
 hatTrickDef =
-    TrophyDef
-        { trophyDefId = HatTrick
-        , trophyName = "Hat Trick"
-        , trophyDesc = "Get 3 correct answers in a row"
-        , trophyIcon =
-            [ "  \9608\9608\9608\9608\9608\9608\9608\9608  "
-            , " \9608\9608\9618\9618\9618\9618\9618\9618\9608\9608 "
-            , "\9608\9608\9608\9608\9608\9608\9608\9608\9608\9608\9608\9608"
-            , "\9608\9608\9617\9617\9617\9617\9617\9617\9617\9617\9608\9608"
-            , " \9608\9608\9608\9608\9608\9608\9608\9608\9608\9608 "
-            , "   \9608\9608\9608\9608\9608\9608   "
-            , "   \9608\9608\9608\9608\9608\9608   "
-            ]
-        }
+  TrophyDef {
+    trophyDefId = HatTrick,
+    trophyName = "Hat Trick",
+    trophyDesc = "Get 3 correct answers in a row",
+    trophyIcon =
+      [ "  \9608\9608\9608\9608\9608\9608\9608\9608  ",
+        " \9608\9608\9618\9618\9618\9618\9618\9618\9608\9608 ",
+        "\9608\9608\9608\9608\9608\9608\9608\9608\9608\9608\9608\9608",
+        "\9608\9608\9617\9617\9617\9617\9617\9617\9617\9617\9608\9608",
+        " \9608\9608\9608\9608\9608\9608\9608\9608\9608\9608 ",
+        "   \9608\9608\9608\9608\9608\9608   ",
+        "   \9608\9608\9608\9608\9608\9608   "
+      ]
+  }
 
 hatTrick :: TrophyData 'WhenReviewing
-hatTrick = TrophyData{trophyDef = hatTrickDef, trophyCond = currentStreakGte 3}
+hatTrick = TrophyData {trophyDef = hatTrickDef, trophyCond = currentStreakGte 3}
 
 onFireDef :: TrophyDef
 onFireDef =
-    TrophyDef
-        { trophyDefId = OnFire
-        , trophyName = "On Fire!"
-        , trophyDesc = "Get 5 correct answers in a row"
-        , trophyIcon =
-            [ "    \9617\9608\9608\9617    "
-            , "   \9617\9608\9608\9608\9608\9617   "
-            , "  \9618\9608\9608\9608\9608\9608\9608\9618  "
-            , " \9618\9608\9608\9608\9608\9608\9608\9608\9608\9618 "
-            , " \9619\9608\9608\9608\9608\9608\9608\9608\9608\9619 "
-            , "  \9619\9608\9608\9608\9608\9608\9608\9619  "
-            , "   \9608\9608\9608\9608\9608\9608   "
-            ]
-        }
+  TrophyDef {
+    trophyDefId = OnFire,
+    trophyName = "On Fire!",
+    trophyDesc = "Get 5 correct answers in a row",
+    trophyIcon =
+      [ "    \9617\9608\9608\9617    ",
+        "   \9617\9608\9608\9608\9608\9617   ",
+        "  \9618\9608\9608\9608\9608\9608\9608\9618  ",
+        " \9618\9608\9608\9608\9608\9608\9608\9608\9608\9618 ",
+        " \9619\9608\9608\9608\9608\9608\9608\9608\9608\9619 ",
+        "  \9619\9608\9608\9608\9608\9608\9608\9619  ",
+        "   \9608\9608\9608\9608\9608\9608   "
+      ]
+  }
 
 onFire :: TrophyData 'WhenReviewing
-onFire = TrophyData{trophyDef = onFireDef, trophyCond = currentStreakGte 5}
+onFire = TrophyData {trophyDef = onFireDef, trophyCond = currentStreakGte 5}
 
 speedDemonDef :: TrophyDef
 speedDemonDef =
-    TrophyDef
-        { trophyDefId = SpeedDemon
-        , trophyName = "Speed Demon"
-        , trophyDesc = "Answer correctly in under 5 seconds"
-        , trophyIcon =
-            [ "   \9604\9608\9608\9608\9608\9604   "
-            , "  \9608\9608\9600\9600\9600\9600\9608\9608  "
-            , " \9608\9608  \9608\9608  \9608\9608 "
-            , " \9608\9608  \9600\9608  \9608\9608 "
-            , " \9608\9608      \9608\9608 "
-            , "  \9608\9608\9604\9604\9604\9604\9608\9608  "
-            , "   \9600\9608\9608\9608\9608\9600   "
-            ]
-        }
+  TrophyDef {
+    trophyDefId = SpeedDemon,
+    trophyName = "Speed Demon",
+    trophyDesc = "Answer correctly in under 5 seconds",
+    trophyIcon =
+      [ "   \9604\9608\9608\9608\9608\9604   ",
+        "  \9608\9608\9600\9600\9600\9600\9608\9608  ",
+        " \9608\9608  \9608\9608  \9608\9608 ",
+        " \9608\9608  \9600\9608  \9608\9608 ",
+        " \9608\9608      \9608\9608 ",
+        "  \9608\9608\9604\9604\9604\9604\9608\9608  ",
+        "   \9600\9608\9608\9608\9608\9600   "
+      ]
+  }
 
 questionSecondsLt :: Int -> TrophyState -> Bool
 questionSecondsLt n ts = lastQuestionSeconds ts < n
 
 speedDemon :: TrophyData 'WhenReviewing
-speedDemon = TrophyData{trophyDef = speedDemonDef, trophyCond = questionSecondsLt 5}
+speedDemon = TrophyData {trophyDef = speedDemonDef, trophyCond = questionSecondsLt 5}
 
 flawlessVictoryDef :: TrophyDef
 flawlessVictoryDef =
-    TrophyDef
-        { trophyDefId = FlawlessVictory
-        , trophyName = "Flawless Victory"
-        , trophyDesc = "Achieve a perfect score"
-        , trophyIcon =
-            [ "  \9604\9608\9608\9608\9608\9608\9608\9604  "
-            , " \9608\9608 \9600\9608\9608\9600 \9608\9608 "
-            , " \9600\9608\9604\9608\9608\9608\9608\9604\9608\9600 "
-            , "  \9608\9608\9608\9608\9608\9608\9608\9608  "
-            , "   \9608\9608\9608\9608\9608\9608   "
-            , "    \9608\9608\9608\9608    "
-            , "   \9608\9608\9608\9608\9608\9608   "
-            ]
-        }
+  TrophyDef {
+    trophyDefId = FlawlessVictory,
+    trophyName = "Flawless Victory",
+    trophyDesc = "Achieve a perfect score",
+    trophyIcon =
+      [ "  \9604\9608\9608\9608\9608\9608\9608\9604  ",
+        " \9608\9608 \9600\9608\9608\9600 \9608\9608 ",
+        " \9600\9608\9604\9608\9608\9608\9608\9604\9608\9600 ",
+        "  \9608\9608\9608\9608\9608\9608\9608\9608  ",
+        "   \9608\9608\9608\9608\9608\9608   ",
+        "    \9608\9608\9608\9608    ",
+        "   \9608\9608\9608\9608\9608\9608   "
+      ]
+  }
 
 flawlessVictory :: TrophyData 'WhenFinishing
 flawlessVictory =
-    TrophyData
-        { trophyDef = flawlessVictoryDef
-        , trophyCond = \fs -> nQuestions fs > 0 && nCorrectQuestions fs == nQuestions fs
-        }
+  TrophyData {
+    trophyDef = flawlessVictoryDef,
+    trophyCond = \fs -> nQuestions fs > 0 && nCorrectQuestions fs == nQuestions fs
+  }
 
 scholarSupremeDef :: TrophyDef
 scholarSupremeDef =
-    TrophyDef
-        { trophyDefId = ScholarSupreme
-        , trophyName = "Scholar Supreme"
-        , trophyDesc = "Score 90%+ with 10 or more questions"
-        , trophyIcon =
-            [ "   \9608\9608\9608\9608\9608\9608   "
-            , "  \9608\9608\9617\9617\9617\9617\9608\9608  "
-            , " \9608\9608\9617\9608\9608\9608\9608\9617\9608\9608 "
-            , " \9608\9608\9617\9608\9608\9608\9608\9617\9608\9608 "
-            , " \9608\9608\9617\9617\9617\9617\9617\9617\9608\9608 "
-            , "  \9608\9608\9608\9608\9608\9608\9608\9608\9608\9608"
-            , "   \9608\9608\9608\9608\9608\9608\9608\9608 "
-            ]
-        }
+  TrophyDef {
+    trophyDefId = ScholarSupreme,
+    trophyName = "Scholar Supreme",
+    trophyDesc = "Score 90%+ with 10 or more questions",
+    trophyIcon =
+      [ "   \9608\9608\9608\9608\9608\9608   ",
+        "  \9608\9608\9617\9617\9617\9617\9608\9608  ",
+        " \9608\9608\9617\9608\9608\9608\9608\9617\9608\9608 ",
+        " \9608\9608\9617\9608\9608\9608\9608\9617\9608\9608 ",
+        " \9608\9608\9617\9617\9617\9617\9617\9617\9608\9608 ",
+        "  \9608\9608\9608\9608\9608\9608\9608\9608\9608\9608",
+        "   \9608\9608\9608\9608\9608\9608\9608\9608 "
+      ]
+  }
 
 scholarSupreme :: TrophyData 'WhenFinishing
 scholarSupreme =
-    TrophyData
-        { trophyDef = scholarSupremeDef
-        , trophyCond = \fs -> nQuestions fs >= 10 && (nCorrectQuestions fs * 100 `div` nQuestions fs) >= 90
-        }
+  TrophyData {
+    trophyDef = scholarSupremeDef,
+    trophyCond = \fs -> nQuestions fs >= 10 && (nCorrectQuestions fs * 100 `div` nQuestions fs) >= 90
+  }
 
 marathonerDef :: TrophyDef
 marathonerDef =
-    TrophyDef
-        { trophyDefId = Marathoner
-        , trophyName = "Marathoner"
-        , trophyDesc = "Complete a session with 20+ questions"
-        , trophyIcon =
-            [ "     \9604\9608\9604     "
-            , "    \9608\9608\9608\9608\9608    "
-            , "   \9608\9608\9608\9608\9608\9608\9608   "
-            , "  \9608\9608\9608\9608\9608\9608\9608\9608\9608  "
-            , " \9608\9608\9617\9617\9608\9608\9608\9608\9608\9617\9617 "
-            , "    \9608\9608\9608\9608\9608    "
-            , "   \9608\9608\9608\9608\9608\9608\9608   "
-            ]
-        }
+  TrophyDef {
+    trophyDefId = Marathoner,
+    trophyName = "Marathoner",
+    trophyDesc = "Complete a session with 20+ questions",
+    trophyIcon =
+      [ "     \9604\9608\9604     ",
+        "    \9608\9608\9608\9608\9608    ",
+        "   \9608\9608\9608\9608\9608\9608\9608   ",
+        "  \9608\9608\9608\9608\9608\9608\9608\9608\9608  ",
+        " \9608\9608\9617\9617\9608\9608\9608\9608\9608\9617\9617 ",
+        "    \9608\9608\9608\9608\9608    ",
+        "   \9608\9608\9608\9608\9608\9608\9608   "
+      ]
+  }
 
 marathoner :: TrophyData 'WhenFinishing
-marathoner = TrophyData{trophyDef = marathonerDef, trophyCond = (>= 20) . nQuestions}
+marathoner = TrophyData {trophyDef = marathonerDef, trophyCond = (>= 20) . nQuestions}
 
 -- | Check for trophies earned after submitting an answer.
 checkAfterSubmit :: Bool -> TrophyState -> [TrophyDef]
 checkAfterSubmit wasCorrect ts =
-    map trophyDef $
-        filter
-            ((&&) wasCorrect . flip trophyCond ts)
-            [ firstBlood
-            , hatTrick
-            , onFire
-            , speedDemon
-            ]
+  map trophyDef $
+    filter
+      ((&&) wasCorrect . flip trophyCond ts)
+      [ firstBlood,
+        hatTrick,
+        onFire,
+        speedDemon
+      ]
 
 -- | Check for trophies earned at the end of an exam.
 checkAtFinish :: FinalStatistics -> [TrophyDef]
 checkAtFinish fs =
-    map trophyDef $
-        filter
-            (`trophyCond` fs)
-            [flawlessVictory, scholarSupreme, marathoner]
+  map trophyDef $
+    filter
+      (`trophyCond` fs)
+      [flawlessVictory, scholarSupreme, marathoner]
 
 -- Persistence
 
 sanitizePath :: FilePath -> FilePath
 sanitizePath = map sanitizeChar
-  where
-    sanitizeChar '/' = '_'
-    sanitizeChar '\\' = '_'
-    sanitizeChar ':' = '_'
-    sanitizeChar c = c
+ where
+  sanitizeChar '/' = '_'
+  sanitizeChar '\\' = '_'
+  sanitizeChar ':' = '_'
+  sanitizeChar c = c
 
 trophyFilePath :: (MonadIO m) => FilePath -> m FilePath
 trophyFilePath configPath = do
-    dir <- configDir
-    pure $ dir </> "trophies" </> sanitizePath configPath ++ ".json"
+  dir <- configDir
+  pure $ dir </> "trophies" </> sanitizePath configPath ++ ".json"
 
 loadEarnedTrophies :: (MonadIO m) => FilePath -> m EarnedTrophies
 loadEarnedTrophies configPath = loadFileAsMonoid =<< trophyFilePath configPath
 
 saveEarnedTrophies :: (MonadIO m) => FilePath -> EarnedTrophies -> m ()
 saveEarnedTrophies configPath trophies = do
-    path <- trophyFilePath configPath
-    createDirectoryIfMissing True (takeDirectory path)
-    writeFileBS path (toStrict $ encode trophies)
+  path <- trophyFilePath configPath
+  createDirectoryIfMissing True (takeDirectory path)
+  writeFileBS path (toStrict $ encode trophies)
