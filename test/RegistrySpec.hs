@@ -12,87 +12,87 @@ import CertPrep.Registry
 
 mkEntry :: Text -> FilePath -> UTCTime -> RegistryEntry
 mkEntry title path lastUsed =
-    RegistryEntry
-        { title = title
-        , path = path
-        , lastUsed = lastUsed
-        }
+  RegistryEntry {
+    title = title,
+    path = path,
+    lastUsed = lastUsed
+  }
 
 registryFromList :: [RegistryEntry] -> Registry
 registryFromList = fromList . fmapToFst path
 
 spec :: Spec
 spec = do
-    describe "RegistryEntry JSON" $ do
-        it "roundtrips through JSON" $ do
-            now <- getCurrentTime
-            let entry = mkEntry "Test Config" "/tmp/test.json" now
-            decode (encode entry) `shouldBe` Just entry
+  describe "RegistryEntry JSON" $ do
+    it "roundtrips through JSON" $ do
+      now <- getCurrentTime
+      let entry = mkEntry "Test Config" "/tmp/test.json" now
+      decode (encode entry) `shouldBe` Just entry
 
-        it "roundtrips a list through JSON" $ do
-            now <- getCurrentTime
-            let entries =
-                    registryFromList
-                        [ mkEntry "Config A" "/a.json" now
-                        , mkEntry "Config B" "/b.json" now
-                        ]
-            decode (encode entries) `shouldBe` Just entries
+    it "roundtrips a list through JSON" $ do
+      now <- getCurrentTime
+      let entries =
+            registryFromList
+              [ mkEntry "Config A" "/a.json" now,
+                mkEntry "Config B" "/b.json" now
+              ]
+      decode (encode entries) `shouldBe` Just entries
 
-    describe "loadRegistry / saveRegistry" $ do
-        it "returns empty map when no registry file exists" $ do
-            withSystemTempDirectory "cert-prep-test" $ \tmpDir -> do
-                setEnv "XDG_CONFIG_HOME" tmpDir
-                registry <- loadRegistry
-                registry `shouldBe` M.empty
+  describe "loadRegistry / saveRegistry" $ do
+    it "returns empty map when no registry file exists" $ do
+      withSystemTempDirectory "cert-prep-test" $ \tmpDir -> do
+        setEnv "XDG_CONFIG_HOME" tmpDir
+        registry <- loadRegistry
+        registry `shouldBe` M.empty
 
-        it "roundtrips entries through save/load" $ do
-            withSystemTempDirectory "cert-prep-test" $ \tmpDir -> do
-                setEnv "XDG_CONFIG_HOME" tmpDir
-                now <- getCurrentTime
-                let entries =
-                        registryFromList
-                            [ mkEntry "Config A" "/a.json" now
-                            , mkEntry "Config B" "/b.json" now
-                            ]
-                saveRegistry entries
-                loaded <- loadRegistry
-                loaded `shouldBe` entries
+    it "roundtrips entries through save/load" $ do
+      withSystemTempDirectory "cert-prep-test" $ \tmpDir -> do
+        setEnv "XDG_CONFIG_HOME" tmpDir
+        now <- getCurrentTime
+        let entries =
+              registryFromList
+                [ mkEntry "Config A" "/a.json" now,
+                  mkEntry "Config B" "/b.json" now
+                ]
+        saveRegistry entries
+        loaded <- loadRegistry
+        loaded `shouldBe` entries
 
-    describe "registerConfig" $ do
-        it "adds a new entry" $ do
-            withSystemTempDirectory "cert-prep-test" $ \tmpDir -> do
-                setEnv "XDG_CONFIG_HOME" tmpDir
-                -- Create a dummy file to canonicalize
-                let configPath = tmpDir <> "/test.json"
-                writeFile configPath "{}"
-                registerConfig configPath "My Config"
-                registry <- loadRegistry
-                case configPath `lookup` registry of
-                    Just e -> title e `shouldBe` "My Config"
-                    _ -> expectationFailure $ "Expected 1 entry, got " ++ show (length registry)
+  describe "registerConfig" $ do
+    it "adds a new entry" $ do
+      withSystemTempDirectory "cert-prep-test" $ \tmpDir -> do
+        setEnv "XDG_CONFIG_HOME" tmpDir
+        -- Create a dummy file to canonicalize
+        let configPath = tmpDir <> "/test.json"
+        writeFile configPath "{}"
+        registerConfig configPath "My Config"
+        registry <- loadRegistry
+        case configPath `lookup` registry of
+          Just e -> title e `shouldBe` "My Config"
+          _ -> expectationFailure $ "Expected 1 entry, got " ++ show (length registry)
 
-        it "upserts existing entry by path" $ do
-            withSystemTempDirectory "cert-prep-test" $ \tmpDir -> do
-                setEnv "XDG_CONFIG_HOME" tmpDir
-                let configPath = tmpDir <> "/test.json"
-                writeFile configPath "{}"
-                registerConfig configPath "Title v1"
-                registerConfig configPath "Title v2"
-                registry <- loadRegistry
-                case configPath `lookup` registry of
-                    Just e -> title e `shouldBe` "Title v2"
-                    _ -> expectationFailure $ "Expected 1 entry, got " ++ show (length registry)
+    it "upserts existing entry by path" $ do
+      withSystemTempDirectory "cert-prep-test" $ \tmpDir -> do
+        setEnv "XDG_CONFIG_HOME" tmpDir
+        let configPath = tmpDir <> "/test.json"
+        writeFile configPath "{}"
+        registerConfig configPath "Title v1"
+        registerConfig configPath "Title v2"
+        registry <- loadRegistry
+        case configPath `lookup` registry of
+          Just e -> title e `shouldBe` "Title v2"
+          _ -> expectationFailure $ "Expected 1 entry, got " ++ show (length registry)
 
-        it "keeps entries sorted by lastUsed descending" $ do
-            withSystemTempDirectory "cert-prep-test" $ \tmpDir -> do
-                setEnv "XDG_CONFIG_HOME" tmpDir
-                let pathA = tmpDir <> "/a.json"
-                    pathB = tmpDir <> "/b.json"
-                writeFile pathA "{}"
-                writeFile pathB "{}"
-                registerConfig pathA "Config A"
-                registerConfig pathB "Config B"
-                registry <- loadRegistry
-                case toSortedList registry of
-                    (e : _) -> title e `shouldBe` "Config B"
-                    [] -> expectationFailure "Expected non-empty registry"
+    it "keeps entries sorted by lastUsed descending" $ do
+      withSystemTempDirectory "cert-prep-test" $ \tmpDir -> do
+        setEnv "XDG_CONFIG_HOME" tmpDir
+        let pathA = tmpDir <> "/a.json"
+            pathB = tmpDir <> "/b.json"
+        writeFile pathA "{}"
+        writeFile pathB "{}"
+        registerConfig pathA "Config A"
+        registerConfig pathB "Config B"
+        registry <- loadRegistry
+        case toSortedList registry of
+          (e : _) -> title e `shouldBe` "Config B"
+          [] -> expectationFailure "Expected non-empty registry"

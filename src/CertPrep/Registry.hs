@@ -1,35 +1,35 @@
 module CertPrep.Registry (
-    RegistryEntry (..),
-    Registry,
-    registryFilePath,
-    loadRegistry,
-    saveRegistry,
-    registerConfig,
-    toSortedList,
+  RegistryEntry (..),
+  Registry,
+  registryFilePath,
+  loadRegistry,
+  saveRegistry,
+  registerConfig,
+  toSortedList,
 ) where
 
 import Data.Aeson (
-    FromJSON,
-    ToJSON,
-    encode,
+  FromJSON,
+  ToJSON,
+  encode,
  )
 import Data.Map qualified as M
 import Data.Time (UTCTime, getCurrentTime)
 import System.FilePath (takeDirectory, (</>))
 
 import CertPrep.Common (
-    canonicalizePath,
-    configDir,
-    createDirectoryIfMissing,
-    loadFileAsMonoid,
+  canonicalizePath,
+  configDir,
+  createDirectoryIfMissing,
+  loadFileAsMonoid,
  )
 
-data RegistryEntry = RegistryEntry
-    { title :: Text
-    , path :: FilePath
-    , lastUsed :: UTCTime
-    }
-    deriving (Show, Eq, Generic)
+data RegistryEntry = RegistryEntry {
+  title :: Text,
+  path :: FilePath,
+  lastUsed :: UTCTime
+}
+  deriving (Show, Eq, Generic)
 
 type Registry = Map FilePath RegistryEntry
 
@@ -44,23 +44,23 @@ loadRegistry = loadFileAsMonoid =<< registryFilePath
 
 saveRegistry :: (MonadIO m) => Registry -> m ()
 saveRegistry entries = do
-    p <- registryFilePath
-    createDirectoryIfMissing True (takeDirectory p)
-    writeFileBS p (toStrict $ encode entries)
+  p <- registryFilePath
+  createDirectoryIfMissing True (takeDirectory p)
+  writeFileBS p (toStrict $ encode entries)
 
 registerConfig :: (MonadIO m) => FilePath -> Text -> m ()
 registerConfig p title = do
-    canonPath <- canonicalizePath p
-    now <- liftIO getCurrentTime
-    existing <- loadRegistry
-    let entry =
-            RegistryEntry
-                { title = title
-                , path = canonPath
-                , lastUsed = now
-                }
-        updated = M.insert canonPath entry existing
-    saveRegistry updated
+  canonPath <- canonicalizePath p
+  now <- liftIO getCurrentTime
+  existing <- loadRegistry
+  let entry =
+        RegistryEntry {
+          title = title,
+          path = canonPath,
+          lastUsed = now
+        }
+      updated = M.insert canonPath entry existing
+  saveRegistry updated
 
 toSortedList :: Registry -> [RegistryEntry]
 toSortedList = sortOn (Down . lastUsed) . toList

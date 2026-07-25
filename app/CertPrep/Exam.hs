@@ -1,7 +1,7 @@
 module CertPrep.Exam (
-    module CertPrep.Exam.Core,
-    module CertPrep.Exam.Transition,
-    module CertPrep.Exam.Trophy,
+  module CertPrep.Exam.Core,
+  module CertPrep.Exam.Transition,
+  module CertPrep.Exam.Trophy,
 )
 where
 

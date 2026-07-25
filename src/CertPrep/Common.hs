@@ -1,17 +1,17 @@
 module CertPrep.Common where
 
 import Data.Aeson (
-    FromJSON,
-    eitherDecodeStrict,
+  FromJSON,
+  eitherDecodeStrict,
  )
 import System.Directory (
-    XdgDirectory (..),
-    getXdgDirectory,
+  XdgDirectory (..),
+  getXdgDirectory,
  )
 import System.Directory qualified as D (
-    canonicalizePath,
-    createDirectoryIfMissing,
-    doesFileExist,
+  canonicalizePath,
+  createDirectoryIfMissing,
+  doesFileExist,
  )
 
 -- | The config directory for this application
@@ -34,12 +34,13 @@ doesFileExist = liftIO . D.doesFileExist
 if it doesn't exist.
 -}
 loadFileWithDefault ::
-    (FromJSON a, MonadIO m) => Maybe a -> FilePath -> m (Either String a)
+  (FromJSON a, MonadIO m) => Maybe a -> FilePath -> m (Either String a)
 loadFileWithDefault def p = do
-    exists <- doesFileExist p
-    if not exists
-        then return $ maybeToRight ("File does not exist: " <> show p) def
-        else eitherDecodeStrict <$> readFileBS p
+  exists <- doesFileExist p
+  if not exists then
+    return $ maybeToRight ("File does not exist: " <> show p) def
+  else
+    eitherDecodeStrict <$> readFileBS p
 
 -- | Load and deserialize a JSON file
 loadFile :: (FromJSON a, MonadIO m) => FilePath -> m (Either String a)
@@ -54,8 +55,8 @@ loadFileAsMonoid p = fromRight mempty <$> loadFile p
 -- | Format a number of seconds as a time string
 formatTime :: Int -> Text
 formatTime totalSecs =
-    pad mins <> ":" <> pad secs
-  where
-    mins = totalSecs `div` 60
-    secs = totalSecs `mod` 60
-    pad n = if n < 10 then "0" <> show n else show n
+  pad mins <> ":" <> pad secs
+ where
+  mins = totalSecs `div` 60
+  secs = totalSecs `mod` 60
+  pad n = if n < 10 then "0" <> show n else show n
