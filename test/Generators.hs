@@ -3,6 +3,9 @@
 module Generators (
   arbitraryQuestion,
   mkQuestion,
+  answerFor,
+  arbitraryQAPair,
+  correctlyAnsweredQAPair,
   questionsWithCategories,
   largeQuestionsWithCategories,
 ) where
@@ -11,7 +14,7 @@ import Data.IntSet qualified as IS
 import Data.Map.Strict qualified as Map
 import Test.QuickCheck
 
-import CertPrep.Types (Config (..), Question (..))
+import CertPrep.Types
 
 categoryPool :: [Text]
 categoryPool =
@@ -52,6 +55,26 @@ arbitraryQuestion = do
       correctAnswer = IS.fromList correctIndices,
       category = cat
     }
+
+{- | Any selection a user could actually make for this question: a
+(possibly empty) subset of the offered choice indices.
+-}
+answerFor :: Question -> Gen Answer
+answerFor q = IS.fromList <$> sublistOf [0 .. length (answerChoices q) - 1]
+
+{- | Skewed towards the correct answer, which a plain 'answerFor' would
+only hit once in 2^numChoices draws.
+-}
+arbitraryQAPair :: Gen (Question, Answer)
+arbitraryQAPair = do
+  q <- arbitraryQuestion
+  a <- frequency [(1, pure (correctAnswer q)), (3, answerFor q)]
+  pure (q, a)
+
+correctlyAnsweredQAPair :: Gen (Question, Answer)
+correctlyAnsweredQAPair = do
+  q <- arbitraryQuestion
+  pure (q, correctAnswer q)
 
 questionsWithCategories :: [Text] -> Gen [Question]
 questionsWithCategories cats = do

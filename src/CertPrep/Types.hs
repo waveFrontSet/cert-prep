@@ -28,7 +28,7 @@ data AnswerResult = AnswerResult {
   missing :: IntSet,
   wrong :: IntSet
 }
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
 
 evalAnswer :: Question -> Answer -> AnswerResult
 evalAnswer q ans =

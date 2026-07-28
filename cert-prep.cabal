@@ -135,6 +135,7 @@ test-suite spec
       Exam.TransitionSpec
       ExamSpec
       ExplanationsSpec
+      ExportSpec
       Generators
       RegistrySpec
       SamplingSpec
