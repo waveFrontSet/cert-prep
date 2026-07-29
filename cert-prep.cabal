@@ -158,10 +158,12 @@ test-suite spec
       QuickCheck
     , aeson
     , base <5
+    , brick
     , cert-prep
     , cert-prep-tui
     , containers
     , directory
+    , filepath
     , hspec
     , microlens
     , random >=1.3

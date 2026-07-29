@@ -1,15 +1,20 @@
 module CertPrep.TUI.Draw (drawUI) where
 
 import Brick
+import Brick.Focus qualified as F
 import Brick.Widgets.Border
 import Brick.Widgets.Border.Style
 import Brick.Widgets.Center
+import Brick.Widgets.Edit qualified as E
+import Brick.Widgets.List qualified as L
 import Data.IntSet qualified as IS
 import Data.Text qualified as T
 import Lens.Micro ((^.))
 
 import CertPrep.Common (formatTime)
 import CertPrep.Exam.Core
+import CertPrep.Exam.Transition (selectedExportFormat)
+import CertPrep.Export (ExportFormat (..), fileExtension)
 import CertPrep.TUI.Attributes
 import CertPrep.TUI.Trophy (drawTrophyAwarded)
 import CertPrep.Types (AnswerResult (..), Question (..))
@@ -40,6 +45,10 @@ drawUI appState = case appState ^. examPhase of
     ]
   CheckingTrophies _ -> [emptyWidget]
   TrophyAwarded tad -> [drawTrophyAwarded tad]
+  Exporting ed ->
+    [ drawExportDialog (ed ^. exportDialog),
+      drawFinished (ed ^. exportFinished)
+    ]
 
 drawFinished :: FinishedState -> Widget Name
 drawFinished fs =
@@ -56,10 +65,14 @@ drawFinished fs =
             hCenter $ txt $ "Total time: " <> formatTime (fs ^. finalElapsed),
             hCenter $ txt $ "Avg per question: " <> formatTime avgTime,
             txt "",
-            hCenter $ txt "Press 'q' or Esc to exit",
+            exportStatusLine,
+            hCenter $ txt "[e] Export report  [q] Quit",
             txt ""
           ]
  where
+  exportStatusLine = case fs ^. exportStatus of
+    Nothing -> emptyWidget
+    Just msg -> hCenter (txt msg) <=> txt ""
   percentage :: Int
   percentage =
     if fs ^. finalTotal == 0 then
@@ -72,6 +85,31 @@ drawFinished fs =
       0
     else
       (fs ^. finalElapsed + fs ^. finalTotal - 1) `div` (fs ^. finalTotal)
+
+drawExportDialog :: ExportDialogState -> Widget Name
+drawExportDialog dlg =
+  centerLayer $
+    withBorderStyle unicode $
+      borderWithLabel (txt " Export Report ") $
+        padAll 1 $
+          hLimit 46 $
+            vBox
+              [ txt "Format:",
+                vLimit 2 $ withFocus (L.renderList renderFormat) exportFormats,
+                txt "",
+                hBox
+                  [ txt "Filename: ",
+                    vLimit 1 $ withFocus (E.renderEditor (txt . mconcat)) exportEditor,
+                    txt $ " ." <> fileExtension (selectedExportFormat dlg)
+                  ],
+                txt "",
+                txt "[Enter] Save  [Tab] Switch  [Esc] Cancel"
+              ]
+ where
+  withFocus render l = F.withFocusRing (dlg ^. exportFocus) render (dlg ^. l)
+  renderFormat _ fmt = txt (formatLabel fmt)
+  formatLabel Markdown = "Markdown"
+  formatLabel Json = "JSON"
 
 drawExam ::
   ExamCore -> Question -> (Int -> Text -> Widget Name) -> Widget Name -> Widget Name

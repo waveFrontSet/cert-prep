@@ -7,6 +7,7 @@ module CertPrep.TUI.Event (
 ) where
 
 import Brick
+import Brick.Focus qualified as F
 import Brick.Keybindings (
   KeyDispatcher,
   KeyEventHandler,
@@ -14,7 +15,11 @@ import Brick.Keybindings (
   keyDispatcher,
   onEvent,
  )
+import Brick.Widgets.Edit qualified as E
+import Brick.Widgets.List qualified as L
+import Control.Exception (IOException, try)
 import Data.IntSet qualified as IS
+import Data.Time (defaultTimeLocale, formatTime, getZonedTime)
 import Graphics.Vty qualified as V
 import Lens.Micro ((%~), (+~), (.~), (^.))
 import Lens.Micro.Mtl (use, (%=), (+=), (.=))
@@ -22,6 +27,7 @@ import Prelude hiding (Down)
 
 import CertPrep.Exam
 import CertPrep.Explanations (MonadExplain (..))
+import CertPrep.Export (writeExport)
 import CertPrep.TUI.Keybindings (
   KeyEvent (..),
   defaultKeyConfig,
@@ -35,6 +41,8 @@ import CertPrep.TUI.Monad (
   whenAnswering,
   whenCheckingTrophies,
   whenExplaining,
+  whenExporting,
+  whenFinished,
   whenReviewing,
   whenTrophyAwarded,
  )
@@ -48,7 +56,12 @@ totalAnimFrames = 5
 -- Brick only checks for binding collisions within a single dispatcher, so the
 -- shared KeyConfig may map Enter to several events without conflict.
 mkDispatcher :: [KeyEventHandler KeyEvent TuiM] -> KeyDispatcher KeyEvent TuiM
-mkDispatcher hs = case keyDispatcher defaultKeyConfig (globalHandlers ++ hs) of
+mkDispatcher = mkBareDispatcher . (globalHandlers ++)
+
+-- A dispatcher without the global handlers, for phases where plain
+-- characters must reach a text input instead of e.g. 'q' → quit.
+mkBareDispatcher :: [KeyEventHandler KeyEvent TuiM] -> KeyDispatcher KeyEvent TuiM
+mkBareDispatcher hs = case keyDispatcher defaultKeyConfig hs of
   Right d -> d
   -- FIXME: This probably should be handled better.
   Left _ -> error "Invalid keybindings."
@@ -61,6 +74,7 @@ dispatcherFor phase = case phase of
   CheckingTrophies _ -> checkingTrophiesDispatcher
   TrophyAwarded _ -> trophyDispatcher
   Finished _ -> finishedDispatcher
+  Exporting _ -> exportingDispatcher
 
 -- Available in every phase.
 globalHandlers :: [KeyEventHandler KeyEvent TuiM]
@@ -120,12 +134,38 @@ trophyDispatcher =
     [onEvent AcceptTrophyEvent "Dismiss Trophy" (whenTrophyAwarded handleTrophyDismiss)]
 
 finishedDispatcher :: KeyDispatcher KeyEvent TuiM
-finishedDispatcher = mkDispatcher [onEvent ContinueEvent "Quit" tuiHalt]
+finishedDispatcher =
+  mkDispatcher
+    [ onEvent ContinueEvent "Quit" tuiHalt,
+      onEvent OpenExportDialogEvent "Export Report" (whenFinished handleOpenExport)
+    ]
+
+-- The export dialog dispatches its own (configurable) bindings only;
+-- global handlers are omitted so plain characters fall through to the
+-- focused widget (e.g. 'q' must be typable in the filename editor).
+exportingDispatcher :: KeyDispatcher KeyEvent TuiM
+exportingDispatcher =
+  mkBareDispatcher
+    [ onEvent ExportConfirmEvent "Save Report" (whenExporting handleExportConfirm),
+      onEvent
+        ExportCancelEvent
+        "Cancel Export"
+        (whenExporting (\ed -> examPhase .= cancelExport ed)),
+      onEvent
+        ExportSwitchFieldEvent
+        "Switch Field"
+        ( whenExporting
+            (\ed -> examPhase .= Exporting (ed & exportDialog . exportFocus %~ F.focusNext))
+        )
+    ]
 
 handleEvent :: BrickEvent Name CustomEvent -> TuiM ()
-handleEvent (VtyEvent (V.EvKey key modifier)) = do
+handleEvent (VtyEvent ev@(V.EvKey key modifier)) = do
   phase <- use examPhase
-  void $ handleKey (dispatcherFor phase) key modifier
+  handled <- handleKey (dispatcherFor phase) key modifier
+  -- Keys the dialog's dispatcher doesn't claim are editing input for
+  -- the focused widget (brick editor / format list).
+  unless handled $ whenExporting (handleExportInput ev)
 handleEvent (MouseDown (AnswerChoice idx) _ _ _) =
   modifyAnswering $ \ap ->
     ap & phaseData . selectedAnswers %~ toggleAnswerPure idx
@@ -171,6 +211,44 @@ handleNextQuestion ap = handleCheckTrophies (ap ^. activeCore)
 
 handleExplaining :: ActivePhase ExplainingData -> TuiM ()
 handleExplaining ap = examPhase .= backToReview ap
+
+handleOpenExport :: FinishedState -> TuiM ()
+handleOpenExport fs = do
+  now <- liftIO getZonedTime
+  let name = "export-" <> toText (formatTime defaultTimeLocale "%Y%m%d-%H%M%S" now)
+  examPhase .= openExportDialog name fs
+
+handleExportInput :: V.Event -> ExportingData -> TuiM ()
+handleExportInput ev ed = case F.focusGetCurrent (ed ^. exportDialog . exportFocus) of
+  Just ExportFilenameEditor -> do
+    editor' <-
+      liftEvent $
+        nestEventM' (ed ^. exportDialog . exportEditor) (E.handleEditorEvent (VtyEvent ev))
+    examPhase .= Exporting (ed & exportDialog . exportEditor .~ editor')
+  Just ExportFormatChooser -> do
+    formats' <-
+      liftEvent $
+        nestEventM'
+          (ed ^. exportDialog . exportFormats)
+          (L.handleListEventVi L.handleListEvent ev)
+    examPhase .= Exporting (ed & exportDialog . exportFormats .~ formats')
+  _ -> pass
+
+handleExportConfirm :: ExportingData -> TuiM ()
+handleExportConfirm ed = do
+  let dlg = ed ^. exportDialog
+      name = exportBaseName dlg
+  when (name /= "") $ do
+    res <-
+      liftIO . try $
+        writeExport
+          (toString name)
+          (selectedExportFormat dlg)
+          (toExportInput (ed ^. exportFinished))
+    let msg = case res of
+          Right path -> "Exported to " <> toText path
+          Left (e :: IOException) -> "Export failed: " <> show e
+    examPhase .= finishExport msg ed
 
 requestExplanationFor ::
   (MonadState AppState m, MonadExplain m) => ActivePhase ReviewingData -> m ()

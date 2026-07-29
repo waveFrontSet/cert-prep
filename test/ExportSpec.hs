@@ -6,6 +6,8 @@ module ExportSpec (spec) where
 import Data.Aeson (Value, decode)
 import Data.Map qualified as M
 import Data.Text qualified as T
+import System.FilePath ((</>))
+import System.IO.Temp (withSystemTempDirectory)
 import Test.Hspec
 import Test.Hspec.QuickCheck (prop)
 import Test.QuickCheck
@@ -60,6 +62,18 @@ spec = do
     prop "always starts with the report title" $
       forAll (inputOf arbitraryQAPair) $ \input ->
         property $ "# Certification Exam Report\n" `T.isPrefixOf` markdownOf input
+  describe "fileExtension" $ do
+    it "is md for Markdown" $
+      fileExtension Markdown `shouldBe` "md"
+    it "is json for Json" $
+      fileExtension Json `shouldBe` "json"
+  describe "writeExport" $
+    it "writes the report with the format's extension" $
+      withSystemTempDirectory "cert-prep-test" $ \dir -> do
+        path <- writeExport (dir </> "report") Markdown goldenInput
+        path `shouldBe` dir </> "report.md"
+        contents <- decodeUtf8 <$> readFileLBS path
+        contents `shouldBe` goldenOutput
 
 markdownOf :: ExportInput -> Text
 markdownOf = decodeUtf8 . export Markdown

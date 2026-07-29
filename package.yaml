@@ -85,7 +85,9 @@ tests:
       - cert-prep
       - cert-prep-tui
       - aeson
+      - brick
       - directory
+      - filepath
       - hspec
       - QuickCheck
       - temporary

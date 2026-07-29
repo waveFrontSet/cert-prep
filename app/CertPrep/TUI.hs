@@ -36,7 +36,8 @@ runApp p mExplainEnv qs earned = liftIO $ do
       app =
         App {
           appDraw = drawUI,
-          appChooseCursor = neverShowCursor,
+          -- Only the export dialog's filename editor requests a cursor.
+          appChooseCursor = showFirstCursor,
           appHandleEvent = runTuiM env . handleEvent,
           appStartEvent = pass,
           appAttrMap = const theMap
