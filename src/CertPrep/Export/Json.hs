@@ -19,7 +19,7 @@ reportValue r =
     [ "totalCorrect" .= r.totalCorrect,
       "totalQuestions" .= r.totalQuestions,
       "elapsedSeconds" .= r.elapsedSeconds,
-      "categoryStats" .= fmap statValue r.categoryStats,
+      "categoryStats" .= fmap statValue (toList r.categoryStats),
       "questionResults" .= fmap resultValue r.questionResults
     ]
 

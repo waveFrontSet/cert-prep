@@ -37,13 +37,13 @@ data ExportReport = ExportReport {
   totalCorrect :: Int,
   totalQuestions :: Int,
   elapsedSeconds :: Int,
-  categoryStats :: Map Category CategoryStat,
+  categoryStats :: Map (Maybe Category) CategoryStat,
   questionResults :: [QuestionResult]
 }
   deriving (Show, Eq, Generic)
 
 data CategoryStat = CategoryStat {
-  category :: Category,
+  category :: Maybe Category,
   correct :: Int,
   total :: Int
 }
@@ -67,20 +67,23 @@ toReport ExportInput {qaPairs = qa, elapsedSeconds = eSeconds} =
     questionResults = fmap toQuestionResult qa
   }
  where
-  categoryMap :: [(Question, Answer)] -> Map Category CategoryStat
+  categoryMap :: [(Question, Answer)] -> Map (Maybe Category) CategoryStat
   categoryMap = foldr go mempty
   go ::
     (Question, Answer) ->
-    Map Category CategoryStat ->
-    Map Category CategoryStat
-  go (q@Question {category = Just cat}, a) m = case M.lookup cat m of
-    Nothing -> M.insert cat (CategoryStat {category = cat, correct = score q a, total = 1}) m
+    Map (Maybe Category) CategoryStat ->
+    Map (Maybe Category) CategoryStat
+  go (q, a) m = case M.lookup q.category m of
+    Nothing ->
+      M.insert
+        q.category
+        (CategoryStat {category = q.category, correct = score q a, total = 1})
+        m
     Just cs ->
       M.insert
-        cat
+        q.category
         (cs {correct = cs.correct + score q a, total = cs.total + 1})
         m
-  go _ m = m
   score q a = if isCorrect q a then 1 else 0
   toQuestionResult (q, a) =
     QuestionResult {

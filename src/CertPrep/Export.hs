@@ -1,8 +1,11 @@
 module CertPrep.Export (
   ExportFormat (..),
+  ExportInput (..),
   export,
   writeExport,
 ) where
+
+import System.FilePath ((</>))
 
 import CertPrep.Export.Core
 import CertPrep.Export.Json
@@ -18,4 +21,6 @@ export :: ExportFormat -> ExportInput -> LByteString
 export f = render (exporterFor f) . toReport
 
 writeExport :: (MonadIO m) => FilePath -> ExportFormat -> ExportInput -> m ()
-writeExport path format = writeFileLBS path . export format
+writeExport path format = writeFileLBS (path </> ("export." <> ext)) . export format
+ where
+  ext = toString $ extension (exporterFor format)
