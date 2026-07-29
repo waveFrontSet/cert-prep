@@ -16,6 +16,9 @@ library
   exposed-modules:
       CertPrep.Common
       CertPrep.Export
+      CertPrep.Export.Core
+      CertPrep.Export.Json
+      CertPrep.Export.Markdown
       CertPrep.Registry
       CertPrep.Sampling
       CertPrep.Settings

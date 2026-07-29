@@ -3,11 +3,13 @@
 
 module ExportSpec (spec) where
 
+import Data.Aeson (Value, decode)
 import Test.Hspec
 import Test.Hspec.QuickCheck (prop)
 import Test.QuickCheck
 
 import CertPrep.Export
+import CertPrep.Export.Core
 import CertPrep.Types (Answer, Question)
 import Generators (arbitraryQAPair, correctlyAnsweredQAPair)
 
@@ -29,6 +31,10 @@ spec = do
     prop "recovers qa pairs" $
       onReport (inputOf arbitraryQAPair) $ \input report ->
         input.qaPairs === fmap (\r -> (r.question, r.answer)) report.questionResults
+  describe "jsonExporter" $
+    prop "produces parseable JSON" $
+      forAll (inputOf arbitraryQAPair) $ \input ->
+        decode @Value (export Json input) =/= Nothing
 
 inputOf :: Gen (Question, Answer) -> Gen ExportInput
 inputOf genPair = do

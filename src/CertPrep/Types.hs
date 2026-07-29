@@ -57,3 +57,5 @@ instance ToJSON Question
 
 instance FromJSON Config
 instance ToJSON Config
+
+instance ToJSON AnswerResult
