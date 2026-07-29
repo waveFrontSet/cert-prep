@@ -1,8 +1,5 @@
 module Exam.TransitionSpec (spec) where
 
-import Data.IntSet qualified as IS
-import Data.List ((!!))
-import Data.Vector qualified as V
 import Lens.Micro
 import Test.Hspec
 
@@ -13,30 +10,32 @@ import Generators (mkQuestion)
 
 spec :: Spec
 spec = do
-  let qs =
-        [ mkQuestion "Q1" ["A", "B", "C"] [0] Nothing,
-          mkQuestion "Q2" ["X", "Y"] [1] Nothing,
-          mkQuestion "Q3" ["M", "N"] [0] Nothing
-        ]
-      mkCore idx scr =
-        ExamCore {
-          _questions = V.fromList qs,
-          _currentIndex = idx,
-          _score = scr,
-          _elapsedSeconds = 42,
-          _questionStartTime = 0,
-          _userAnswers = V.fromList [IS.fromList [0], IS.fromList [1]]
-        }
-      mkReviewing idx =
-        ActivePhase {
-          _activeCore = mkCore idx 0,
-          _activeQuestion = qs !! idx,
-          _phaseData =
-            ReviewingData {
-              _answerResult = error "answerResult is never forced in this test",
-              _lastSelected = IS.empty
-            }
-        }
+  let
+    q1 = mkQuestion "Q1" ["A", "B", "C"] [0] Nothing
+    qs =
+      [ q1,
+        mkQuestion "Q2" ["X", "Y"] [1] Nothing,
+        mkQuestion "Q3" ["M", "N"] [0] Nothing
+      ]
+    mkCore idx scr =
+      ExamCore {
+        _questions = fromList qs,
+        _currentIndex = idx,
+        _score = scr,
+        _elapsedSeconds = 42,
+        _questionStartTime = 0,
+        _userAnswers = fromList [fromList [0], fromList [1]]
+      }
+    mkReviewing idx =
+      ActivePhase {
+        _activeCore = mkCore idx 0,
+        _activeQuestion = fromMaybe q1 (qs !!? idx),
+        _phaseData =
+          ReviewingData {
+            _answerResult = error "answerResult is never forced in this test",
+            _lastSelected = mempty
+          }
+      }
   describe "travelToQuestion" $ do
     it "travels to previous answered question" $
       let ap = travelToQuestion (-1) (mkReviewing 1)
@@ -79,7 +78,7 @@ spec = do
           Explaining
             ActivePhase {
               _activeCore = mkCore 0 0,
-              _activeQuestion = qs !! 0,
+              _activeQuestion = q1,
               _phaseData =
                 ExplainingData {
                   _explainId = rid,
@@ -87,7 +86,7 @@ spec = do
                   _reviewingData =
                     ReviewingData {
                       _answerResult = error "answerResult is never forced in this test",
-                      _lastSelected = IS.empty
+                      _lastSelected = mempty
                     }
                 }
             }

@@ -1,9 +1,5 @@
 module ExamSpec (spec) where
 
-import Data.IntSet qualified as IS
-import Data.List.NonEmpty qualified as NE
-import Data.Set qualified as Set
-import Data.Vector qualified as V
 import Lens.Micro ((^.))
 import Test.Hspec
 
@@ -17,8 +13,8 @@ spec = do
   let q1 = mkQuestion "Q1" ["A", "B", "C"] [0] Nothing
       q2 = mkQuestion "Q2" ["X", "Y"] [1] (Just "AWS Storage")
       q3 = mkQuestion "Q3" ["P", "Q", "R", "S"] [0, 2] (Just "AWS Compute")
-      qs = NE.fromList [q1, q2, q3]
-      appState0 = initialState qs Set.empty
+      qs = fromList [q1, q2, q3]
+      appState0 = initialState qs mempty
 
   let unwrapAnswering :: ExamPhase -> ActivePhase AnsweringData
       unwrapAnswering (Answering ap) = ap
@@ -35,7 +31,7 @@ spec = do
        in ap ^. activeCore . currentIndex `shouldBe` 0
     it "sets selectedAnswers to empty" $
       let ap = unwrapAnswering (appState0 ^. examPhase)
-       in ap ^. phaseData . selectedAnswers `shouldBe` IS.empty
+       in ap ^. phaseData . selectedAnswers `shouldBe` mempty
     it "sets focusedAnswer to 0" $
       let ap = unwrapAnswering (appState0 ^. examPhase)
        in ap ^. phaseData . focusedAnswer `shouldBe` 0
@@ -50,16 +46,16 @@ spec = do
        in ap ^. activeCore . questionStartTime `shouldBe` 0
     it "stores all questions" $
       let ap = unwrapAnswering (appState0 ^. examPhase)
-       in ap ^. activeCore . questions `shouldBe` V.fromList [q1, q2, q3]
+       in ap ^. activeCore . questions `shouldBe` fromList [q1, q2, q3]
     it "preserves question order" $
-      let as' = initialState (NE.fromList [q3, q1, q2]) Set.empty
+      let as' = initialState (fromList [q3, q1, q2]) mempty
           ap = unwrapAnswering (as' ^. examPhase)
-       in ap ^. activeCore . questions `shouldBe` V.fromList [q3, q1, q2]
+       in ap ^. activeCore . questions `shouldBe` fromList [q3, q1, q2]
     it "initializes currentStreak to 0" $
       appState0 ^. trophyState
         `shouldBe` TrophyState {currentStreak = 0, lastQuestionSeconds = 0}
     it "stores earned trophies" $
-      appState0 ^. earnedTrophies `shouldBe` Set.empty
+      appState0 ^. earnedTrophies `shouldBe` mempty
 
   describe "totalQuestions" $ do
     let ap = unwrapAnswering (appState0 ^. examPhase)

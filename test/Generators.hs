@@ -10,8 +10,6 @@ module Generators (
   largeQuestionsWithCategories,
 ) where
 
-import Data.IntSet qualified as IS
-import Data.Map.Strict qualified as Map
 import Test.QuickCheck
 
 import CertPrep.Types
@@ -30,7 +28,7 @@ mkQuestion text choices correct cat =
   Question {
     text = text,
     answerChoices = choices,
-    correctAnswer = IS.fromList correct,
+    correctAnswer = fromList correct,
     category = cat
   }
 
@@ -52,7 +50,7 @@ arbitraryQuestion = do
     Question {
       text = text,
       answerChoices = choices,
-      correctAnswer = IS.fromList correctIndices,
+      correctAnswer = fromList correctIndices,
       category = cat
     }
 
@@ -60,7 +58,7 @@ arbitraryQuestion = do
 (possibly empty) subset of the offered choice indices.
 -}
 answerFor :: Question -> Gen Answer
-answerFor q = IS.fromList <$> sublistOf [0 .. length (answerChoices q) - 1]
+answerFor q = fromList <$> sublistOf [0 .. length (answerChoices q) - 1]
 
 {- | Skewed towards the correct answer, which a plain 'answerFor' would
 only hit once in 2^numChoices draws.
@@ -116,7 +114,7 @@ instance Arbitrary Config where
     useWeights <- arbitrary
     weights <-
       if useWeights then
-        Just . Map.fromList <$> listOf ((,) <$> elements categoryPool <*> chooseInt (1, 10))
+        Just . fromList <$> listOf ((,) <$> elements categoryPool <*> chooseInt (1, 10))
       else
         pure Nothing
     pure

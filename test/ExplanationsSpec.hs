@@ -1,6 +1,5 @@
 module ExplanationsSpec (spec) where
 
-import Data.IntSet qualified as IS
 import Test.Hspec
 
 import CertPrep.Explanations (renderExplainPrompt)
@@ -10,7 +9,7 @@ import Generators (mkQuestion)
 spec :: Spec
 spec = do
   let q = mkQuestion "What is 1 + 1?" ["1", "2", "3"] [1] Nothing
-      a = AnswerResult {correct = IS.fromList [1], missing = IS.empty, wrong = IS.empty}
+      a = AnswerResult {correct = fromList [1], missing = mempty, wrong = mempty}
   describe "Explanations" $ do
     it "should render a prompt" $ do
       renderExplainPrompt q a

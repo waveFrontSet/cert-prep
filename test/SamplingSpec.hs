@@ -67,7 +67,7 @@ spec = do
 
   describe "Stratified sampling" $ do
     let cats = ["AWS Storage", "AWS Compute", "AWS Networking"]
-        weights = Map.fromList [("AWS Storage", 2), ("AWS Compute", 1), ("AWS Networking", 1)]
+        weights = fromList [("AWS Storage", 2), ("AWS Compute", 1), ("AWS Networking", 1)]
 
     it "result length = min(n, total matching questions)" $
       property $ \(Positive n) ->
@@ -103,7 +103,7 @@ spec = do
     it "questions not in weight map are excluded" $
       property $ \(Positive n) ->
         forAll (questionsWithCategories (cats ++ ["Unweighted"])) $ \qs ->
-          let narrowWeights = Map.fromList [("AWS Storage", 1)]
+          let narrowWeights = fromList [("AWS Storage", 1)]
               result =
                 sampleQuestions
                   (mkStdGen 42)
@@ -118,12 +118,12 @@ spec = do
     it "empty weights map returns empty" $
       property $ \(Positive n) ->
         forAll (questionsWithCategories cats) $ \qs ->
-          sampleQuestions (mkStdGen 42) n (Stratified Map.empty) qs === []
+          sampleQuestions (mkStdGen 42) n (Stratified mempty) qs === []
 
     it "no matching categories returns empty" $
       property $ \(Positive n) ->
         forAll (questionsWithCategories cats) $ \qs ->
-          let noMatchWeights = Map.fromList [("Nonexistent", 1)]
+          let noMatchWeights = fromList [("Nonexistent", 1)]
            in sampleQuestions (mkStdGen 42) n (Stratified noMatchWeights) qs === []
 
     it "same seed always produces same stratified result" $
@@ -147,7 +147,7 @@ spec = do
       all (isJust . category) result `shouldBe` True
 
     it "single category in weights" $ do
-      let singleWeight = Map.fromList [("AWS Storage", 1)]
+      let singleWeight = fromList [("AWS Storage", 1)]
           qs =
             [ mkQuestion "S1" ["A"] [0] (Just "AWS Storage"),
               mkQuestion "S2" ["B"] [0] (Just "AWS Storage"),
@@ -213,7 +213,7 @@ spec = do
                           | c <- cats
                           ]
 
-hasWeightedCategory :: Map.Map Text Int -> Question -> Bool
+hasWeightedCategory :: Map Text Int -> Question -> Bool
 hasWeightedCategory weights q = case category q of
   Just c -> Map.member c weights
   Nothing -> False
