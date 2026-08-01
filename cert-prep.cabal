@@ -64,8 +64,13 @@ library cert-prep-tui
       CertPrep.TUI.Draw
       CertPrep.TUI.Draw.Export
       CertPrep.TUI.Event
+      CertPrep.TUI.Event.Answering
       CertPrep.TUI.Event.Core
+      CertPrep.TUI.Event.Explaining
       CertPrep.TUI.Event.Export
+      CertPrep.TUI.Event.Finished
+      CertPrep.TUI.Event.Reviewing
+      CertPrep.TUI.Event.Trophy
       CertPrep.TUI.Keybindings
       CertPrep.TUI.Monad
       CertPrep.TUI.Trophy

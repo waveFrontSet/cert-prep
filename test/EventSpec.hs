@@ -5,7 +5,7 @@ import Test.Hspec
 
 import CertPrep.Exam.Core
 import CertPrep.Exam.Transition (advanceExam, nextQuestion, submitAnswer)
-import CertPrep.TUI.Event (moveFocusPure, toggleAnswerPure)
+import CertPrep.TUI.Event.Answering (moveFocusPure, toggleAnswerPure)
 import Generators (mkQuestion)
 
 spec :: Spec
