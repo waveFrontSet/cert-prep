@@ -1,5 +1,8 @@
 name: CI
 
+env:
+  GHC_VERSION: "9.14.1"
+
 on:
   push:
     branches: [main]
@@ -15,7 +18,7 @@ jobs:
 
       - uses: haskell-actions/setup@v2
         with:
-          ghc-version: "9.8.4"
+          ghc-version: ${{ env.GHC_VERSION }}
           cabal-version: "latest"
 
       - name: Cache cabal store

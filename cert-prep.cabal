@@ -26,7 +26,7 @@ library
       Paths_cert_prep
   build-depends:
       aeson
-    , base <5
+    , base <6
     , containers
     , directory
     , filepath
@@ -43,7 +43,7 @@ library
   default-extensions:
       OverloadedStrings
   ghc-options: -Wall -O2
-  default-language: GHC2021
+  default-language: GHC2024
 
 library cert-prep-tui
   exposed-modules:
@@ -72,7 +72,7 @@ library cert-prep-tui
       OverloadedStrings
   ghc-options: -Wall -O2
   build-depends:
-      base <5
+      base <6
     , brick
     , cert-prep
     , containers
@@ -93,7 +93,7 @@ library cert-prep-tui
       base hiding (Prelude)
     , relude (Relude as Prelude)
     , relude 
-  default-language: GHC2021
+  default-language: GHC2024
 
 executable cert-prep
   main-is: Main.hs
@@ -103,7 +103,7 @@ executable cert-prep
       Paths_cert_prep
   build-depends:
       aeson
-    , base <5
+    , base <6
     , brick
     , cert-prep
     , cert-prep-tui
@@ -123,7 +123,7 @@ executable cert-prep
   default-extensions:
       OverloadedStrings
   ghc-options: -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
-  default-language: GHC2021
+  default-language: GHC2024
 
 test-suite spec
   type: exitcode-stdio-1.0
@@ -152,7 +152,7 @@ test-suite spec
   build-depends:
       QuickCheck
     , aeson
-    , base <5
+    , base <6
     , cert-prep
     , cert-prep-tui
     , containers
@@ -169,4 +169,4 @@ test-suite spec
       base hiding (Prelude)
     , relude (Relude as Prelude)
     , relude 
-  default-language: GHC2021
+  default-language: GHC2024

@@ -6,13 +6,13 @@ license-file: LICENSE
 author: Paul Grillenberger
 maintainer: grillenbergerpaul@gmail.com
 
-language: GHC2021
+language: GHC2024
 default-extensions:
   - OverloadedStrings
 
 dependencies:
   - name: base
-    version: "< 5"
+    version: "< 6"
     mixin:
       - hiding (Prelude)
   - name: relude
