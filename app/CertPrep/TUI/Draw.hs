@@ -9,7 +9,7 @@ import Brick.Widgets.Edit qualified as E
 import Brick.Widgets.List qualified as L
 import Data.IntSet qualified as IS
 import Data.Text qualified as T
-import Lens.Micro ((^.))
+import Lens.Micro (Lens', (^.))
 
 import CertPrep.Common (formatTime)
 import CertPrep.Exam.Core
@@ -106,6 +106,8 @@ drawExportDialog dlg =
                 txt "[Enter] Save  [Tab] Switch  [Esc] Cancel"
               ]
  where
+  withFocus ::
+    (Named a Name) => (Bool -> a -> Widget Name) -> Lens' ExportDialogState a -> Widget Name
   withFocus render l = F.withFocusRing (dlg ^. exportFocus) render (dlg ^. l)
   renderFormat _ fmt = txt (formatLabel fmt)
   formatLabel Markdown = "Markdown"
