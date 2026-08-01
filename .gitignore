@@ -28,3 +28,7 @@ report.html
 # Ignore question banks
 *.json
 !renovate.json
+
+# Ignore exports
+export-*.json
+export-*.md

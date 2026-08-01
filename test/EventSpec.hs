@@ -1,27 +1,24 @@
 module EventSpec (spec) where
 
-import Data.IntSet qualified as IS
-import Data.List ((!!))
-import Data.Vector qualified as V
 import Lens.Micro ((^.))
 import Test.Hspec
 
 import CertPrep.Exam.Core
 import CertPrep.Exam.Transition (advanceExam, nextQuestion, submitAnswer)
-import CertPrep.TUI.Event (moveFocusPure, toggleAnswerPure)
+import CertPrep.TUI.Event.Answering (moveFocusPure, toggleAnswerPure)
 import Generators (mkQuestion)
 
 spec :: Spec
 spec = do
   describe "toggleAnswerPure" $ do
     it "inserts index into empty set" $
-      toggleAnswerPure 2 IS.empty `shouldBe` IS.fromList [2]
+      toggleAnswerPure 2 mempty `shouldBe` fromList [2]
     it "removes index if already present" $
-      toggleAnswerPure 2 (IS.fromList [1, 2, 3]) `shouldBe` IS.fromList [1, 3]
+      toggleAnswerPure 2 (fromList [1, 2, 3]) `shouldBe` fromList [1, 3]
     it "inserts index if not present" $
-      toggleAnswerPure 4 (IS.fromList [1, 2]) `shouldBe` IS.fromList [1, 2, 4]
+      toggleAnswerPure 4 (fromList [1, 2]) `shouldBe` fromList [1, 2, 4]
     it "toggling twice returns original set" $
-      let sel = IS.fromList [1, 3]
+      let sel = fromList [1, 3]
        in toggleAnswerPure 2 (toggleAnswerPure 2 sel) `shouldBe` sel
 
   describe "moveFocusPure" $ do
@@ -47,17 +44,17 @@ spec = do
           ActivePhase {
             _activeCore =
               ExamCore {
-                _questions = V.fromList qs,
+                _questions = fromList qs,
                 _currentIndex = idx,
                 _score = 0,
                 _elapsedSeconds = 0,
                 _questionStartTime = 0,
-                _userAnswers = V.empty
+                _userAnswers = mempty
               },
-            _activeQuestion = qs !! idx,
+            _activeQuestion = fromMaybe q1 (qs !!? idx),
             _phaseData =
               AnsweringData {
-                _selectedAnswers = IS.fromList sel,
+                _selectedAnswers = fromList sel,
                 _focusedAnswer = 0
               }
           }
@@ -72,7 +69,7 @@ spec = do
         _ -> expectationFailure "expected Reviewing"
     it "keeps track of user answers" $
       case submitAnswer (mkAnswering [q1, q2] 0 [0]) of
-        Reviewing ap -> ap ^. activeCore . userAnswers `shouldBe` V.fromList [IS.fromList [0]]
+        Reviewing ap -> ap ^. activeCore . userAnswers `shouldBe` fromList [fromList [0]]
         _ -> expectationFailure "expected Reviewing"
     it "does not increment score for wrong answer" $
       case submitAnswer (mkAnswering [q1, q2] 0 [1]) of
@@ -81,23 +78,23 @@ spec = do
 
   let mkCore qs idx scr =
         ExamCore {
-          _questions = V.fromList qs,
+          _questions = fromList qs,
           _currentIndex = idx,
           _score = scr,
           _elapsedSeconds = 42,
           _questionStartTime = 0,
-          _userAnswers = V.fromList $ replicate (idx + 1) (IS.fromList [0])
+          _userAnswers = fromList $ replicate (idx + 1) (fromList [0])
         }
       q1 = mkQuestion "Q1" ["A", "B", "C"] [0] Nothing
       q2 = mkQuestion "Q2" ["X", "Y"] [1] Nothing
       mkReviewing qs idx scr =
         ActivePhase {
           _activeCore = mkCore qs idx scr,
-          _activeQuestion = qs !! idx,
+          _activeQuestion = fromMaybe q1 (qs !!? idx),
           _phaseData =
             ReviewingData {
               _answerResult = error "answerResult is never forced in this test",
-              _lastSelected = IS.empty
+              _lastSelected = mempty
             }
         }
 
@@ -124,7 +121,7 @@ spec = do
         _ -> expectationFailure "expected Answering"
     it "resets selectedAnswers" $
       case advanceExam (mkCore [q1, q2] 0 1) of
-        Answering ap -> ap ^. phaseData . selectedAnswers `shouldBe` IS.empty
+        Answering ap -> ap ^. phaseData . selectedAnswers `shouldBe` mempty
         _ -> expectationFailure "expected Answering"
     it "sets questionStartTime to elapsedSeconds" $
       case advanceExam (mkCore [q1, q2] 0 1) of

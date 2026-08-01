@@ -14,6 +14,8 @@ module CertPrep.TUI.Attributes (
 where
 
 import Brick (AttrMap, AttrName, attrMap, attrName, fg, on)
+import Brick.Widgets.Edit qualified as E
+import Brick.Widgets.List qualified as L
 import Graphics.Vty qualified as V
 import Prelude hiding (on)
 
@@ -52,5 +54,8 @@ theMap =
       (focusedAttr, V.defAttr `V.withStyle` V.reverseVideo),
       (trophyTitleAttr, fg V.yellow `V.withStyle` V.bold),
       (trophyIconAttr, fg V.cyan `V.withStyle` V.bold),
-      (trophySparkleAttr, fg V.magenta `V.withStyle` V.bold)
+      (trophySparkleAttr, fg V.magenta `V.withStyle` V.bold),
+      (L.listSelectedAttr, V.defAttr `V.withStyle` V.bold),
+      (L.listSelectedFocusedAttr, V.defAttr `V.withStyle` V.reverseVideo),
+      (E.editFocusedAttr, V.white `on` V.blue)
     ]

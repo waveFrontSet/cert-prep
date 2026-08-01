@@ -94,6 +94,7 @@ cert-prep ./aws-sa-questions.json -w "AWS Storage:3" -w "AWS Security:2"
 | `h` / `l` | When reviewing, travel to previous / next question |
 | `a` | When reviewing, request an AI explanation (see below) |
 | `Ctrl-f` / `Ctrl-b` | Scroll the explanation page-wise down / up |
+| `e` | When finished, export a report of your results |
 | `q` / `Esc` | Quit |
 
 Mouse clicks on checkboxes and buttons are also supported (not in all terminals).

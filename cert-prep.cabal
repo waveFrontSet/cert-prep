@@ -15,6 +15,10 @@ build-type:    Simple
 library
   exposed-modules:
       CertPrep.Common
+      CertPrep.Export
+      CertPrep.Export.Core
+      CertPrep.Export.Json
+      CertPrep.Export.Markdown
       CertPrep.Registry
       CertPrep.Sampling
       CertPrep.Settings
@@ -58,7 +62,15 @@ library cert-prep-tui
       CertPrep.TUI.Attributes
       CertPrep.TUI.ConfigSelect
       CertPrep.TUI.Draw
+      CertPrep.TUI.Draw.Export
       CertPrep.TUI.Event
+      CertPrep.TUI.Event.Answering
+      CertPrep.TUI.Event.Core
+      CertPrep.TUI.Event.Explaining
+      CertPrep.TUI.Event.Export
+      CertPrep.TUI.Event.Finished
+      CertPrep.TUI.Event.Reviewing
+      CertPrep.TUI.Event.Trophy
       CertPrep.TUI.Keybindings
       CertPrep.TUI.Monad
       CertPrep.TUI.Trophy
@@ -134,6 +146,7 @@ test-suite spec
       Exam.TransitionSpec
       ExamSpec
       ExplanationsSpec
+      ExportSpec
       Generators
       RegistrySpec
       SamplingSpec
@@ -153,10 +166,12 @@ test-suite spec
       QuickCheck
     , aeson
     , base <5
+    , brick
     , cert-prep
     , cert-prep-tui
     , containers
     , directory
+    , filepath
     , hspec
     , microlens
     , random >=1.3

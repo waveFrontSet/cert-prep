@@ -10,12 +10,21 @@ module CertPrep.Exam.Transition (
   beginExplanation,
   applyExplainEvent,
   stepExplanation,
+  openExportDialog,
+  selectedExportFormat,
+  exportBaseName,
+  toExportInput,
+  cancelExport,
+  finishExport,
 )
 where
 
+import Brick.Focus qualified as F
+import Brick.Widgets.Edit qualified as E
+import Brick.Widgets.List qualified as L
 import Data.IntSet qualified as IS
 import Data.Vector qualified as V
-import Lens.Micro ((%~), (+~), (.~), (^.))
+import Lens.Micro ((%~), (+~), (.~), (?~), (^.))
 
 import CertPrep.Exam.Core
 import CertPrep.Explanations (
@@ -25,6 +34,7 @@ import CertPrep.Explanations (
   renderExplainError,
   renderExplainPrompt,
  )
+import CertPrep.Export (ExportFormat (..), ExportInput (ExportInput))
 import CertPrep.Trophy (EarnedTrophies, TrophyState (..))
 import CertPrep.Types (Answer, Question (..), evalAnswer, isCorrect)
 
@@ -40,8 +50,40 @@ finishExam c =
   FinishedState {
     _finalScore = c ^. score,
     _finalTotal = totalQuestions c,
-    _finalElapsed = c ^. elapsedSeconds
+    _finalElapsed = c ^. elapsedSeconds,
+    _finalPairs = V.toList (V.zip (c ^. questions) (c ^. userAnswers)),
+    _exportStatus = Nothing
   }
+
+openExportDialog :: Text -> FinishedState -> ExamPhase
+openExportDialog name fs =
+  Exporting
+    ExportingData {
+      _exportDialog =
+        ExportDialogState {
+          _exportFormats = L.list ExportFormatChooser (V.fromList [Markdown, Json]) 1,
+          _exportEditor = E.editorText ExportFilenameEditor (Just 1) name,
+          _exportFocus = F.focusRing [ExportFilenameEditor, ExportFormatChooser]
+        },
+      _exportFinished = fs
+    }
+
+selectedExportFormat :: ExportDialogState -> ExportFormat
+selectedExportFormat dlg =
+  maybe Markdown snd (L.listSelectedElement (dlg ^. exportFormats))
+
+-- | The filename typed into the dialog, without extension.
+exportBaseName :: ExportDialogState -> Text
+exportBaseName dlg = mconcat (E.getEditContents (dlg ^. exportEditor))
+
+toExportInput :: FinishedState -> ExportInput
+toExportInput fs = ExportInput (fs ^. finalPairs) (fs ^. finalElapsed)
+
+cancelExport :: ExportingData -> ExamPhase
+cancelExport ed = Finished (ed ^. exportFinished)
+
+finishExport :: Text -> ExportingData -> ExamPhase
+finishExport msg ed = Finished (ed ^. exportFinished & exportStatus ?~ msg)
 
 initialState :: NonEmpty Question -> EarnedTrophies -> AppState
 initialState (q :| qs) earned =

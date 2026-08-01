@@ -1,7 +1,6 @@
 module RegistrySpec (spec) where
 
 import Data.Aeson (decode, encode)
-import Data.Map qualified as M
 import Data.Time (UTCTime, getCurrentTime)
 import Relude.Extra (StaticMap (lookup), fmapToFst)
 import System.Environment (setEnv)
@@ -43,7 +42,7 @@ spec = do
       withSystemTempDirectory "cert-prep-test" $ \tmpDir -> do
         setEnv "XDG_CONFIG_HOME" tmpDir
         registry <- loadRegistry
-        registry `shouldBe` M.empty
+        registry `shouldBe` mempty
 
     it "roundtrips entries through save/load" $ do
       withSystemTempDirectory "cert-prep-test" $ \tmpDir -> do

@@ -1,6 +1,5 @@
 module TrophySpec (spec) where
 
-import Data.Set qualified as Set
 import System.Environment (setEnv)
 import System.IO.Temp (withSystemTempDirectory)
 import Test.Hspec
@@ -88,12 +87,12 @@ spec = do
       withSystemTempDirectory "cert-prep-test" $ \tmpDir -> do
         setEnv "XDG_CONFIG_HOME" tmpDir
         earned <- loadEarnedTrophies "/test/config.json"
-        earned `shouldBe` Set.empty
+        earned `shouldBe` mempty
 
     it "roundtrips earned trophies through save/load" $ do
       withSystemTempDirectory "cert-prep-test" $ \tmpDir -> do
         setEnv "XDG_CONFIG_HOME" tmpDir
-        let trophies = Set.fromList [FirstBlood, HatTrick]
+        let trophies = fromList [FirstBlood, HatTrick]
         saveEarnedTrophies "/test/config.json" trophies
         loaded <- loadEarnedTrophies "/test/config.json"
         loaded `shouldBe` trophies
@@ -101,8 +100,8 @@ spec = do
     it "uses separate files for different config paths" $ do
       withSystemTempDirectory "cert-prep-test" $ \tmpDir -> do
         setEnv "XDG_CONFIG_HOME" tmpDir
-        let trophiesA = Set.fromList [FirstBlood]
-            trophiesB = Set.fromList [HatTrick, OnFire]
+        let trophiesA = fromList [FirstBlood]
+            trophiesB = fromList [HatTrick, OnFire]
         saveEarnedTrophies "/config/a.json" trophiesA
         saveEarnedTrophies "/config/b.json" trophiesB
         loadedA <- loadEarnedTrophies "/config/a.json"

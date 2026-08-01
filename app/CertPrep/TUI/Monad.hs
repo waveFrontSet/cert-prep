@@ -12,6 +12,8 @@ import CertPrep.Exam (
   ExamCore,
   ExamPhase (..),
   ExplainingData,
+  ExportingData,
+  FinishedState,
   Name,
   ReviewingData,
   TrophyAwardedData,
@@ -74,6 +76,18 @@ whenTrophyAwarded f = do
   phase <- use examPhase
   case phase of
     TrophyAwarded tad -> f tad
+    _ -> pass
+whenFinished :: (FinishedState -> TuiM ()) -> TuiM ()
+whenFinished f = do
+  phase <- use examPhase
+  case phase of
+    Finished fs -> f fs
+    _ -> pass
+whenExporting :: (ExportingData -> TuiM ()) -> TuiM ()
+whenExporting f = do
+  phase <- use examPhase
+  case phase of
+    Exporting ed -> f ed
     _ -> pass
 
 instance MonadExplain TuiM where

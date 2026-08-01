@@ -11,6 +11,7 @@ import Lens.Micro ((^.))
 import CertPrep.Common (formatTime)
 import CertPrep.Exam.Core
 import CertPrep.TUI.Attributes
+import CertPrep.TUI.Draw.Export (drawExportDialog)
 import CertPrep.TUI.Trophy (drawTrophyAwarded)
 import CertPrep.Types (AnswerResult (..), Question (..))
 
@@ -40,6 +41,10 @@ drawUI appState = case appState ^. examPhase of
     ]
   CheckingTrophies _ -> [emptyWidget]
   TrophyAwarded tad -> [drawTrophyAwarded tad]
+  Exporting ed ->
+    [ drawExportDialog (ed ^. exportDialog),
+      drawFinished (ed ^. exportFinished)
+    ]
 
 drawFinished :: FinishedState -> Widget Name
 drawFinished fs =
@@ -56,10 +61,14 @@ drawFinished fs =
             hCenter $ txt $ "Total time: " <> formatTime (fs ^. finalElapsed),
             hCenter $ txt $ "Avg per question: " <> formatTime avgTime,
             txt "",
-            hCenter $ txt "Press 'q' or Esc to exit",
+            exportStatusLine,
+            hCenter $ txt "[e] Export report  [q] Quit",
             txt ""
           ]
  where
+  exportStatusLine = case fs ^. exportStatus of
+    Nothing -> emptyWidget
+    Just msg -> hCenter (txt msg) <=> txt ""
   percentage :: Int
   percentage =
     if fs ^. finalTotal == 0 then

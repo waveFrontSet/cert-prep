@@ -1,5 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-
 module CertPrep.App (
   AppEnv (..),
   Config (..),

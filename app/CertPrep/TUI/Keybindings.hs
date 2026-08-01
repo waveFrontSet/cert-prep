@@ -26,6 +26,10 @@ data KeyEvent
   | RequestAiExplanationEvent
   | DismissExplanationEvent
   | ContinueEvent
+  | OpenExportDialogEvent
+  | ExportConfirmEvent
+  | ExportCancelEvent
+  | ExportSwitchFieldEvent
   | ScrollUpEvent
   | ScrollDownEvent
   | QuitEvent
@@ -49,6 +53,10 @@ allEvents =
       ("request-ai-explanation", RequestAiExplanationEvent),
       ("dismiss-explanation", DismissExplanationEvent),
       ("continue", ContinueEvent),
+      ("open-export-dialog", OpenExportDialogEvent),
+      ("export-confirm", ExportConfirmEvent),
+      ("export-cancel", ExportCancelEvent),
+      ("export-switch-field", ExportSwitchFieldEvent),
       ("scroll-up", ScrollUpEvent),
       ("scroll-down", ScrollDownEvent)
     ]
@@ -70,6 +78,10 @@ defaultKeybindings =
     (RequestAiExplanationEvent, [bind 'a']),
     (DismissExplanationEvent, [bind Vty.KEnter]),
     (ContinueEvent, [bind Vty.KEnter]),
+    (OpenExportDialogEvent, [bind 'e']),
+    (ExportConfirmEvent, [bind Vty.KEnter]),
+    (ExportCancelEvent, [bind Vty.KEsc]),
+    (ExportSwitchFieldEvent, [bind '\t']),
     (ScrollUpEvent, [ctrl 'b']),
     (ScrollDownEvent, [ctrl 'f'])
   ]

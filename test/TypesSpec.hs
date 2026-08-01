@@ -84,70 +84,69 @@ spec = do
         Just c -> sampleAmount c `shouldBe` (-5)
 
   describe "Eval Answers" $ do
-    let q' = q {correctAnswer = IS.fromList [1, 2]}
+    let q' = q {correctAnswer = fromList [1, 2]}
     it "should check correct answers" $ do
-      isCorrect q (IS.fromList [1]) `shouldBe` True
-      isCorrect q (IS.fromList [2]) `shouldBe` False
+      isCorrect q (fromList [1]) `shouldBe` True
+      isCorrect q (fromList [2]) `shouldBe` False
     it "should correctly report missing and wrong answers" $ do
-      evalAnswer q' (IS.fromList [0, 1])
+      evalAnswer q' (fromList [0, 1])
         `shouldBe` AnswerResult {
-          correct = IS.fromList [1],
-          missing = IS.fromList [2],
-          wrong = IS.fromList [0]
+          correct = fromList [1],
+          missing = fromList [2],
+          wrong = fromList [0]
         }
     it "returns all correct when answer matches exactly" $ do
-      let result = evalAnswer q' (IS.fromList [1, 2])
-      correct result `shouldBe` IS.fromList [1, 2]
-      missing result `shouldBe` IS.empty
-      wrong result `shouldBe` IS.empty
+      let result = evalAnswer q' (fromList [1, 2])
+      correct result `shouldBe` fromList [1, 2]
+      missing result `shouldBe` mempty
+      wrong result `shouldBe` mempty
     it "returns all missing when answer is empty" $ do
-      let result = evalAnswer q' IS.empty
-      correct result `shouldBe` IS.empty
-      missing result `shouldBe` IS.fromList [1, 2]
-      wrong result `shouldBe` IS.empty
+      let result = evalAnswer q' mempty
+      correct result `shouldBe` mempty
+      missing result `shouldBe` fromList [1, 2]
+      wrong result `shouldBe` mempty
     it "returns all wrong when no correct answers selected" $ do
-      let result = evalAnswer q' (IS.fromList [0, 3])
-      correct result `shouldBe` IS.empty
-      missing result `shouldBe` IS.fromList [1, 2]
-      wrong result `shouldBe` IS.fromList [0, 3]
+      let result = evalAnswer q' (fromList [0, 3])
+      correct result `shouldBe` mempty
+      missing result `shouldBe` fromList [1, 2]
+      wrong result `shouldBe` fromList [0, 3]
     it "handles question with empty correct answer set" $ do
-      let emptyQ = q {correctAnswer = IS.empty}
-          result = evalAnswer emptyQ (IS.fromList [0, 1])
-      correct result `shouldBe` IS.empty
-      missing result `shouldBe` IS.empty
-      wrong result `shouldBe` IS.fromList [0, 1]
+      let emptyQ = q {correctAnswer = mempty}
+          result = evalAnswer emptyQ (fromList [0, 1])
+      correct result `shouldBe` mempty
+      missing result `shouldBe` mempty
+      wrong result `shouldBe` fromList [0, 1]
     it "isCorrect with both empty correct set and empty answer" $ do
-      let emptyQ = q {correctAnswer = IS.empty}
-      isCorrect emptyQ IS.empty `shouldBe` True
+      let emptyQ = q {correctAnswer = mempty}
+      isCorrect emptyQ mempty `shouldBe` True
     it "handles question with zero answer choices" $ do
       let noChoicesQ = mkQuestion "Empty?" [] [] Nothing
-          result = evalAnswer noChoicesQ IS.empty
-      correct result `shouldBe` IS.empty
-      missing result `shouldBe` IS.empty
-      wrong result `shouldBe` IS.empty
-      isCorrect noChoicesQ IS.empty `shouldBe` True
+          result = evalAnswer noChoicesQ mempty
+      correct result `shouldBe` mempty
+      missing result `shouldBe` mempty
+      wrong result `shouldBe` mempty
+      isCorrect noChoicesQ mempty `shouldBe` True
     it "partitions into disjoint sets covering all relevant indices" $
       property $ \(q'' :: Question) ->
         let numChoices = length (answerChoices q'')
          in forAll (sublistOf [0 .. numChoices - 1]) $ \selected ->
-              let ans = IS.fromList selected
+              let ans = fromList selected
                   result = evalAnswer q'' ans
                   c = correct result
                   m = missing result
                   w = wrong result
                in conjoin
-                    [ IS.intersection c m === IS.empty,
-                      IS.intersection c w === IS.empty,
-                      IS.intersection m w === IS.empty,
-                      IS.union c m
-                        === correctAnswer q'',
-                      IS.union c w === ans
+                    [ IS.intersection c m === mempty,
+                      IS.intersection c w === mempty,
+                      IS.intersection m w === mempty,
+                      c <> m === correctAnswer q'',
+                      c <> w === ans
                     ]
     it "isCorrect iff evalAnswer has empty missing and wrong" $
       property $ \(q'' :: Question) ->
         let numChoices = length (answerChoices q'')
          in forAll (sublistOf [0 .. numChoices - 1]) $ \selected ->
-              let ans = IS.fromList selected
+              let ans = fromList selected
                   result = evalAnswer q'' ans
                   m = missing result
                   w = wrong result
