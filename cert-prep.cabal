@@ -26,7 +26,7 @@ library
       Paths_cert_prep
   build-depends:
       aeson
-    , base <6
+    , base <5
     , containers
     , directory
     , filepath
@@ -72,7 +72,7 @@ library cert-prep-tui
       OverloadedStrings
   ghc-options: -Wall -O2
   build-depends:
-      base <6
+      base <5
     , brick
     , cert-prep
     , containers
@@ -103,7 +103,7 @@ executable cert-prep
       Paths_cert_prep
   build-depends:
       aeson
-    , base <6
+    , base <5
     , brick
     , cert-prep
     , cert-prep-tui
@@ -152,7 +152,7 @@ test-suite spec
   build-depends:
       QuickCheck
     , aeson
-    , base <6
+    , base <5
     , cert-prep
     , cert-prep-tui
     , containers

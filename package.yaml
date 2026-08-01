@@ -12,7 +12,7 @@ default-extensions:
 
 dependencies:
   - name: base
-    version: "< 6"
+    version: "< 5"
     mixin:
       - hiding (Prelude)
   - name: relude
