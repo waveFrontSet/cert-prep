@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=none
 name: cert-prep
-version: 0.6.1
+version: 0.7.0
 license: MIT
 license-file: LICENSE
 author: Paul Grillenberger
