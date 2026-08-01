@@ -1,3 +1,6 @@
 packages: .
 
-allow-newer: servant-multipart-client:random
+allow-newer:
+  , *:base
+  , servant-client-core:template-haskell
+  , servant-multipart-client:random

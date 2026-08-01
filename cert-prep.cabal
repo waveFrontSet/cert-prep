@@ -43,7 +43,7 @@ library
   default-extensions:
       OverloadedStrings
   ghc-options: -Wall -O2
-  default-language: GHC2021
+  default-language: GHC2024
 
 library cert-prep-tui
   exposed-modules:
@@ -93,7 +93,7 @@ library cert-prep-tui
       base hiding (Prelude)
     , relude (Relude as Prelude)
     , relude 
-  default-language: GHC2021
+  default-language: GHC2024
 
 executable cert-prep
   main-is: Main.hs
@@ -123,7 +123,7 @@ executable cert-prep
   default-extensions:
       OverloadedStrings
   ghc-options: -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
-  default-language: GHC2021
+  default-language: GHC2024
 
 test-suite spec
   type: exitcode-stdio-1.0
@@ -169,4 +169,4 @@ test-suite spec
       base hiding (Prelude)
     , relude (Relude as Prelude)
     , relude 
-  default-language: GHC2021
+  default-language: GHC2024

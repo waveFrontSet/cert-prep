@@ -6,7 +6,7 @@ license-file: LICENSE
 author: Paul Grillenberger
 maintainer: grillenbergerpaul@gmail.com
 
-language: GHC2021
+language: GHC2024
 default-extensions:
   - OverloadedStrings
 
