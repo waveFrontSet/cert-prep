@@ -13,7 +13,7 @@ import CertPrep.Export.Json
 import CertPrep.Export.Markdown
 
 data ExportFormat = Json | Markdown
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 exporterFor :: ExportFormat -> Exporter
 exporterFor Json = jsonExporter

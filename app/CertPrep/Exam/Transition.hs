@@ -11,17 +11,13 @@ module CertPrep.Exam.Transition (
   applyExplainEvent,
   stepExplanation,
   openExportDialog,
-  selectedExportFormat,
-  exportBaseName,
   toExportInput,
   cancelExport,
   finishExport,
 )
 where
 
-import Brick.Focus qualified as F
-import Brick.Widgets.Edit qualified as E
-import Brick.Widgets.List qualified as L
+import Brick.Forms (editTextField, newForm, radioField)
 import Data.IntSet qualified as IS
 import Data.Vector qualified as V
 import Lens.Micro ((%~), (+~), (.~), (?~), (^.))
@@ -60,21 +56,20 @@ openExportDialog name fs =
   Exporting
     ExportingData {
       _exportDialog =
-        ExportDialogState {
-          _exportFormats = L.list ExportFormatChooser (V.fromList [Markdown, Json]) 1,
-          _exportEditor = E.editorText ExportFilenameEditor (Just 1) name,
-          _exportFocus = F.focusRing [ExportFilenameEditor, ExportFormatChooser]
-        },
+        newForm
+          [ radioField
+              exportFormat
+              [ (Markdown, ExportFormatChooser Markdown, show Markdown),
+                (Json, ExportFormatChooser Json, show Json)
+              ],
+            editTextField exportFilename ExportFilenameEditor (Just 1)
+          ]
+          ExportDialogState {
+            _exportFormat = Markdown,
+            _exportFilename = name
+          },
       _exportFinished = fs
     }
-
-selectedExportFormat :: ExportDialogState -> ExportFormat
-selectedExportFormat dlg =
-  maybe Markdown snd (L.listSelectedElement (dlg ^. exportFormats))
-
--- | The filename typed into the dialog, without extension.
-exportBaseName :: ExportDialogState -> Text
-exportBaseName dlg = mconcat (E.getEditContents (dlg ^. exportEditor))
 
 toExportInput :: FinishedState -> ExportInput
 toExportInput fs = ExportInput (fs ^. finalPairs) (fs ^. finalElapsed)

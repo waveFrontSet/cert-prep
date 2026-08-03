@@ -9,6 +9,7 @@ import CertPrep.Exam (
   ActivePhase,
   AnsweringData,
   AppState,
+  CustomEvent (..),
   ExamCore,
   ExamPhase (..),
   ExplainingData,
@@ -21,12 +22,9 @@ import CertPrep.Exam (
  )
 import CertPrep.Explanations (
   ExplainEnv (explainStream),
-  ExplainEvent,
   ExplainRequest (..),
   MonadExplain (..),
  )
-
-data CustomEvent = Tick | ExplanationEvent Int ExplainEvent
 
 data TuiEnv = TuiEnv {
   tuiConfigPath :: FilePath,
