@@ -17,7 +17,9 @@ module CertPrep.Exam.Transition (
 )
 where
 
-import Brick.Forms (editTextField, newForm, radioField)
+import Brick (txt)
+import Brick.Forms (editTextField, newForm, radioField, (@@=))
+import Brick.Widgets.Border (borderWithLabel)
 import Data.IntSet qualified as IS
 import Data.Vector qualified as V
 import Lens.Micro ((%~), (+~), (.~), (?~), (^.))
@@ -57,10 +59,12 @@ openExportDialog name fs =
     ExportingData {
       _exportDialog =
         newForm
-          [ radioField
-              exportFormat
-              [(f, ExportFormatChooser f, show f) | f <- allExportFormats],
-            editTextField exportFilename ExportFilenameEditor (Just 1)
+          [ borderWithLabel (txt "Format")
+              @@= radioField
+                exportFormat
+                [(f, ExportFormatChooser f, show f) | f <- allExportFormats],
+            borderWithLabel (txt "Dateiname")
+              @@= editTextField exportFilename ExportFilenameEditor (Just 1)
           ]
           ExportDialogState {
             _exportFormat = Markdown,
