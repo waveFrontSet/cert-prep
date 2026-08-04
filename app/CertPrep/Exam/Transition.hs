@@ -30,7 +30,7 @@ import CertPrep.Explanations (
   renderExplainError,
   renderExplainPrompt,
  )
-import CertPrep.Export (ExportFormat (..), ExportInput (ExportInput))
+import CertPrep.Export (ExportFormat (..), ExportInput (ExportInput), allExportFormats)
 import CertPrep.Trophy (EarnedTrophies, TrophyState (..))
 import CertPrep.Types (Answer, Question (..), evalAnswer, isCorrect)
 
@@ -59,9 +59,7 @@ openExportDialog name fs =
         newForm
           [ radioField
               exportFormat
-              [ (Markdown, ExportFormatChooser Markdown, show Markdown),
-                (Json, ExportFormatChooser Json, show Json)
-              ],
+              [(f, ExportFormatChooser f, show f) | f <- allExportFormats],
             editTextField exportFilename ExportFilenameEditor (Just 1)
           ]
           ExportDialogState {
