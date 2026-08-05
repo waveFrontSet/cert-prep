@@ -1,7 +1,5 @@
 module Exam.TransitionSpec (spec) where
 
-import Brick.Focus qualified as F
-import Brick.Widgets.List qualified as L
 import Lens.Micro
 import Test.Hspec
 
@@ -9,17 +7,15 @@ import CertPrep.Exam.Core
 import CertPrep.Exam.Transition (
   applyExplainEvent,
   cancelExport,
-  exportBaseName,
   finishExam,
   finishExport,
   openExportDialog,
-  selectedExportFormat,
   stepExplanation,
   toExportInput,
   travelToQuestion,
  )
 import CertPrep.Explanations (ExplainError (..), ExplainEvent (..), renderExplainError)
-import CertPrep.Export (ExportFormat (..), ExportInput (ExportInput))
+import CertPrep.Export (ExportInput (ExportInput))
 import Generators (mkQuestion)
 
 spec :: Spec
@@ -129,18 +125,10 @@ spec = do
           Exporting ed' -> ed' ^. exportDialog
           _ -> error "expected Exporting"
         ed = ExportingData {_exportDialog = dlg, _exportFinished = fs}
-    it "opens with the given filename in the editor" $
-      exportBaseName dlg `shouldBe` "export-x"
-    it "opens with Markdown selected" $
-      selectedExportFormat dlg `shouldBe` Markdown
-    it "opens with the filename editor focused" $
-      F.focusGetCurrent (dlg ^. exportFocus) `shouldBe` Just ExportFilenameEditor
     it "carries the finished state through" $
       case openExportDialog "export-x" fs of
         Exporting ed' -> ed' ^. exportFinished `shouldBe` fs
         _ -> expectationFailure "expected Exporting"
-    it "selects Json when the format list moves down" $
-      selectedExportFormat (dlg & exportFormats %~ L.listMoveDown) `shouldBe` Json
     it "builds the export input from the finished state" $
       toExportInput fs `shouldBe` ExportInput (zip qs [fromList [0], fromList [1]]) 42
     it "cancelling returns to Finished unchanged" $

@@ -1,6 +1,7 @@
 module CertPrep.Export (
   ExportFormat (..),
   ExportInput (..),
+  allExportFormats,
   export,
   fileExtension,
   writeExport,
@@ -13,7 +14,10 @@ import CertPrep.Export.Json
 import CertPrep.Export.Markdown
 
 data ExportFormat = Json | Markdown
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord, Enum)
+
+allExportFormats :: [ExportFormat]
+allExportFormats = [Json ..]
 
 exporterFor :: ExportFormat -> Exporter
 exporterFor Json = jsonExporter

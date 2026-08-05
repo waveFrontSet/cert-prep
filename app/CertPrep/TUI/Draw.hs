@@ -11,6 +11,7 @@ import Lens.Micro ((^.))
 import CertPrep.Common (formatTime)
 import CertPrep.Exam.Core
 import CertPrep.TUI.Attributes
+import CertPrep.TUI.Draw.Core
 import CertPrep.TUI.Draw.Export (drawExportDialog)
 import CertPrep.TUI.Trophy (drawTrophyAwarded)
 import CertPrep.Types (AnswerResult (..), Question (..))
@@ -95,13 +96,10 @@ drawExam core q drawAnswer statusButton =
       statusBar
     ]
  where
-  panelWithTitle :: Text -> Widget Name -> Widget Name
-  panelWithTitle title body =
-    withBorderStyle unicode $ borderWithLabel (padLeftRight 1 $ txt title) $ padAll 1 body
-  questionPanel = panelWithTitle (renderQuestionTitle core) $ txtWrap (text q)
+  questionPanel = panelWithTitle (txt $ renderQuestionTitle core) $ txtWrap (text q)
   answersPanel =
     panelWithTitle
-      "Answers"
+      (txt "Answers")
       (vBox $ zipWith drawAnswer [0 ..] (answerChoices q))
 
   statusBar =

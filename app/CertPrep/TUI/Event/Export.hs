@@ -5,17 +5,15 @@ module CertPrep.TUI.Event.Export (
 ) where
 
 import Brick (BrickEvent (VtyEvent), nestEventM')
-import Brick.Focus qualified as F
+import Brick.Forms (Form (formState), handleFormEvent)
 import Brick.Keybindings (
   KeyDispatcher,
   onEvent,
  )
-import Brick.Widgets.Edit qualified as E
-import Brick.Widgets.List qualified as L
 import Control.Exception (IOException, try)
 import Data.Time (defaultTimeLocale, formatTime, getZonedTime)
 import Graphics.Vty qualified as V
-import Lens.Micro ((%~), (.~), (^.))
+import Lens.Micro ((.~), (^.))
 import Lens.Micro.Mtl ((.=))
 
 import CertPrep.Exam
@@ -38,13 +36,7 @@ exportingDispatcher =
       onEvent
         ExportCancelEvent
         "Cancel Export"
-        (whenExporting (\ed -> examPhase .= cancelExport ed)),
-      onEvent
-        ExportSwitchFieldEvent
-        "Switch Field"
-        ( whenExporting
-            (\ed -> examPhase .= Exporting (ed & exportDialog . exportFocus %~ F.focusNext))
-        )
+        (whenExporting (\ed -> examPhase .= cancelExport ed))
     ]
 
 handleOpenExport :: FinishedState -> TuiM ()
@@ -54,32 +46,19 @@ handleOpenExport fs = do
   examPhase .= openExportDialog name fs
 
 handleExportInput :: V.Event -> ExportingData -> TuiM ()
-handleExportInput ev ed = case F.focusGetCurrent (ed ^. exportDialog . exportFocus) of
-  Just ExportFilenameEditor -> do
-    editor' <-
-      liftEvent $
-        nestEventM' (ed ^. exportDialog . exportEditor) (E.handleEditorEvent (VtyEvent ev))
-    examPhase .= Exporting (ed & exportDialog . exportEditor .~ editor')
-  Just ExportFormatChooser -> do
-    formats' <-
-      liftEvent $
-        nestEventM'
-          (ed ^. exportDialog . exportFormats)
-          (L.handleListEventVi L.handleListEvent ev)
-    examPhase .= Exporting (ed & exportDialog . exportFormats .~ formats')
-  _ -> pass
+handleExportInput ev ed = do
+  form <- liftEvent $ nestEventM' (ed ^. exportDialog) (handleFormEvent (VtyEvent ev))
+  examPhase .= Exporting (ed & exportDialog .~ form)
 
 handleExportConfirm :: ExportingData -> TuiM ()
 handleExportConfirm ed = do
-  let dlg = ed ^. exportDialog
-      name = exportBaseName dlg
+  let dialogstate = formState $ ed ^. exportDialog
+      name = dialogstate ^. exportFilename
+      format = dialogstate ^. exportFormat
   when (name /= "") $ do
     res <-
       liftIO . try $
-        writeExport
-          (toString name)
-          (selectedExportFormat dlg)
-          (toExportInput (ed ^. exportFinished))
+        writeExport (toString name) format (toExportInput (ed ^. exportFinished))
     let msg = case res of
           Right path -> "Exported to " <> toText path
           Left (e :: IOException) -> "Export failed: " <> show e

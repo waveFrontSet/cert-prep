@@ -30,7 +30,6 @@ import CertPrep.TUI.Event.Trophy (
  )
 import CertPrep.TUI.Keybindings (KeyEvent)
 import CertPrep.TUI.Monad (
-  CustomEvent (..),
   TuiM,
   whenExporting,
  )

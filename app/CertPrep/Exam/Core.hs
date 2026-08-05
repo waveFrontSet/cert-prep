@@ -15,6 +15,7 @@ module CertPrep.Exam.Core (
   ExamPhase (..),
   AppState (..),
   ExplanationStatus (..),
+  CustomEvent (..),
   questions,
   currentIndex,
   score,
@@ -32,9 +33,8 @@ module CertPrep.Exam.Core (
   finalElapsed,
   finalPairs,
   exportStatus,
-  exportFormats,
-  exportEditor,
-  exportFocus,
+  exportFormat,
+  exportFilename,
   exportDialog,
   exportFinished,
   awardedTrophy,
@@ -53,17 +53,14 @@ module CertPrep.Exam.Core (
 )
 where
 
-import Brick.Focus qualified as F
-import Brick.Widgets.Edit qualified as E
-import Brick.Widgets.List qualified as L
+import Brick.Forms (Form (formState))
 import Data.Vector (Vector)
 import Data.Vector qualified as V
 import Lens.Micro ((^.))
 import Lens.Micro.TH (makeLenses)
--- Qualified so the manual Show instance below can define the class
--- method, which relude's prelude hides.
 import Text.Show qualified
 
+import CertPrep.Explanations (ExplainEvent)
 import CertPrep.Export (ExportFormat)
 import CertPrep.Trophy (EarnedTrophies, TrophyDef, TrophyState (..))
 import CertPrep.Types (Answer, AnswerResult, Question)
@@ -74,9 +71,11 @@ data Name
   | NextButton
   | TrophyDismiss
   | ExplanationViewport
-  | ExportFormatChooser
+  | ExportFormatChooser ExportFormat
   | ExportFilenameEditor
   deriving (Show, Eq, Ord)
+
+data CustomEvent = Tick | ExplanationEvent Int ExplainEvent
 
 data ExamCore = ExamCore {
   _questions :: Vector Question,
@@ -143,31 +142,27 @@ data FinishedState = FinishedState {
 makeLenses ''FinishedState
 
 data ExportDialogState = ExportDialogState {
-  _exportFormats :: L.List Name ExportFormat,
-  _exportEditor :: E.Editor Text Name, -- filename without extension
-  _exportFocus :: F.FocusRing Name
+  _exportFormat :: ExportFormat,
+  _exportFilename :: Text
 }
+  deriving (Show, Eq)
 
 makeLenses ''ExportDialogState
 
--- FocusRing has no Show instance, so summarize the dialog by hand.
-instance Show ExportDialogState where
-  show d =
-    "ExportDialogState {format = "
-      <> show (L.listSelectedElement (d ^. exportFormats))
-      <> ", filename = "
-      <> show (E.getEditContents (d ^. exportEditor))
-      <> ", focus = "
-      <> show (F.focusGetCurrent (d ^. exportFocus))
-      <> "}"
-
 data ExportingData = ExportingData {
-  _exportDialog :: ExportDialogState,
+  _exportDialog :: Form ExportDialogState CustomEvent Name,
   _exportFinished :: FinishedState
 }
-  deriving (Show)
 
 makeLenses ''ExportingData
+
+instance Show ExportingData where
+  show d =
+    "ExportingData {"
+      <> show (formState $ d ^. exportDialog)
+      <> ", "
+      <> show (d ^. exportFinished)
+      <> "}"
 
 -- TrophyAwardedData and ExamPhase are mutually recursive,
 -- so they must be in the same TH splice group.
