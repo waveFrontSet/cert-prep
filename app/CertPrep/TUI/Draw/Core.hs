@@ -1,4 +1,4 @@
-module CertPrep.TUI.Draw.Core where
+module CertPrep.TUI.Draw.Core (panelWithTitle) where
 
 import Brick
 import Brick.Widgets.Border

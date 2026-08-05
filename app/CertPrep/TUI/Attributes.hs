@@ -58,6 +58,6 @@ theMap =
       (trophySparkleAttr, fg V.magenta `V.withStyle` V.bold),
       (L.listSelectedAttr, V.defAttr `V.withStyle` V.bold),
       (L.listSelectedFocusedAttr, V.defAttr `V.withStyle` V.reverseVideo),
-      (focusedFormInputAttr, V.white `on` V.blue),
-      (E.editFocusedAttr, V.white `on` V.blue)
+      (focusedFormInputAttr, V.black `on` V.yellow),
+      (E.editFocusedAttr, V.black `on` V.yellow)
     ]

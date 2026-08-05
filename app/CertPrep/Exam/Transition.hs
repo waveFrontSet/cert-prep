@@ -19,7 +19,7 @@ where
 
 import Brick (txt)
 import Brick.Forms (editTextField, newForm, radioField, (@@=))
-import Brick.Widgets.Border (borderWithLabel)
+import Brick.Widgets.Center (hCenter)
 import Data.IntSet qualified as IS
 import Data.Vector qualified as V
 import Lens.Micro ((%~), (+~), (.~), (?~), (^.))
@@ -33,6 +33,7 @@ import CertPrep.Explanations (
   renderExplainPrompt,
  )
 import CertPrep.Export (ExportFormat (..), ExportInput (ExportInput), allExportFormats)
+import CertPrep.TUI.Draw.Core
 import CertPrep.Trophy (EarnedTrophies, TrophyState (..))
 import CertPrep.Types (Answer, Question (..), evalAnswer, isCorrect)
 
@@ -59,11 +60,11 @@ openExportDialog name fs =
     ExportingData {
       _exportDialog =
         newForm
-          [ borderWithLabel (txt "Format")
+          [ panelWithTitle (txt "Format") . hCenter
               @@= radioField
                 exportFormat
                 [(f, ExportFormatChooser f, show f) | f <- allExportFormats],
-            borderWithLabel (txt "Dateiname")
+            panelWithTitle (txt "Filename") . hCenter
               @@= editTextField exportFilename ExportFilenameEditor (Just 1)
           ]
           ExportDialogState {
