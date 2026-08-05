@@ -63,6 +63,13 @@ checksums:
         hash: 6cfffe6ca36d1649da135acc3b06f93b367039eb086139a13aee13d5dddf52cd
       - filename: cert-prep-windows-x86_64.zip
         hash: 3901e700f42afad52ecba8441a502c8b2d59f350a4670896fd4b37dd8a61823d
+    v0.7.1:
+      - filename: cert-prep-linux-x86_64.tar.gz
+        hash: 8e8e9034da438f9d8542bd40d81d8ab377f780b9a7189642f09cb92cc668b300
+      - filename: cert-prep-macos-aarch64.tar.gz
+        hash: bd2d91fdbf0c360237bb8c4be26db53dc29d61f3b5f9d619931226d79a31c7a7
+      - filename: cert-prep-windows-x86_64.zip
+        hash: 48e7a3d7f8634ead1c6df6ffaf0d6c5ea895b92671041d55f85b0f3800ea456a
 supported_platforms:
   - os: linux
     arch: amd64

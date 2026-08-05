@@ -421,7 +421,13 @@ EMBEDDED_CHECKSUMS="
 0.6.0:cert-prep-windows-x86_64.zip:3ed81af2c1254f7ff613427d80a85bccf58b076902ed0966964c4e46bfd1497a
 0.6.1:cert-prep-linux-x86_64.tar.gz:bfb03bba301137f069001ace01d289cdb363df99932df37f1214393b3bd56854
 0.6.1:cert-prep-macos-aarch64.tar.gz:0b492ebcccf63b6a502c742de16977fc7fd697420f35f56dd1d538f25bd150b2
-0.6.1:cert-prep-windows-x86_64.zip:39aa1d899010c0ea69bea36a6b508de11490db98119019cb230a572087418db9"
+0.6.1:cert-prep-windows-x86_64.zip:39aa1d899010c0ea69bea36a6b508de11490db98119019cb230a572087418db9
+0.7.0:cert-prep-linux-x86_64.tar.gz:2a405260f2256dc6eb635f8b243366d41d02f5d762262d9ac3d74be249369167
+0.7.0:cert-prep-macos-aarch64.tar.gz:6cfffe6ca36d1649da135acc3b06f93b367039eb086139a13aee13d5dddf52cd
+0.7.0:cert-prep-windows-x86_64.zip:3901e700f42afad52ecba8441a502c8b2d59f350a4670896fd4b37dd8a61823d
+0.7.1:cert-prep-linux-x86_64.tar.gz:8e8e9034da438f9d8542bd40d81d8ab377f780b9a7189642f09cb92cc668b300
+0.7.1:cert-prep-macos-aarch64.tar.gz:bd2d91fdbf0c360237bb8c4be26db53dc29d61f3b5f9d619931226d79a31c7a7
+0.7.1:cert-prep-windows-x86_64.zip:48e7a3d7f8634ead1c6df6ffaf0d6c5ea895b92671041d55f85b0f3800ea456a"
 
 # Find embedded checksum for a given version and filename
 find_embedded_checksum() {
