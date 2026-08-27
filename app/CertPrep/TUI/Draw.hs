@@ -105,12 +105,13 @@ drawExam core q drawAnswer statusButton =
   statusBar =
     padLeftRight 1 $
       vLimitPercent 10 $
-        hBox
-          [ txt $ renderScoreStatus core,
-            padLeft (Pad 1) (txt $ renderTimeStatus core),
-            hCenter statusButton,
-            txt $ renderKeybindings core
-          ]
+        hCenter statusButton
+          <=> hBox
+            [ txt $ renderScoreStatus core,
+              padLeft (Pad 1) (txt $ renderTimeStatus core),
+              hCenter (txt " "),
+              txt $ renderKeybindings core
+            ]
 
 renderQuestionTitle :: ExamCore -> Text
 renderQuestionTitle core =
