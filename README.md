@@ -193,11 +193,20 @@ cabal run cert-prep -- ./config.json
 
 ### Development
 
-Pre-commit hooks (hpack, fourmolu, hlint) are configured in
-`.pre-commit-config.yaml` and run with [prek](https://github.com/j178/prek).
-They expect `hpack`, `fourmolu`, and `hlint` on your PATH (e.g. via ghcup or
-`cabal install`). Activate them once per clone:
+The development environment is managed with [devenv](https://devenv.sh/). It provides GHC, Cabal, Haskell Language Server, linters, and git hooks.
 
 ```bash
-prek install
+devenv shell
 ```
+
+Entering the shell automatically installs and configures the git hooks (`hpack`, `fourmolu`, `hlint`, `yamllint`).
+
+Common tasks:
+
+```bash
+devenv tasks run cert-prep:build   # build using cabal.fast.project
+devenv tasks run cert-prep:test    # run test suite
+devenv tasks run cert-prep:lint    # run hlint
+```
+
+For AI explanations during development, set `GEMINI_API_KEY` in a `.env` file (managed via Secretspec).
